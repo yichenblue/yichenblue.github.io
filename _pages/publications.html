@@ -6,83 +6,33 @@ author_profile: true
 ---
 
 {% if site.author.googlescholar %}
-  <div class="wordwrap">You can also find my articles on <a href="{{https://scholar.google.com/citations?user=UeuamLcAAAAJ&hl=zh-CN&oi=ao}}">my Google Scholar profile</a>.</div>
-{% endif %}
-
-{% include base_path %}
-{% if site.author.googlescholar %}
   <div class="wordwrap">
-    You can also find my articles on <a href="https://scholar.google.com/citations?user=UeuamLcAAAAJ&hl=zh-CN&oi=ao" target="_blank">my Google Scholar profile</a>.
+    You can also find my articles on 
+    <a href="https://scholar.google.com/citations?user=UeuamLcAAAAJ&hl=zh-CN&oi=ao" target="_blank">my Google Scholar profile</a>.
   </div>
 {% endif %}
 
 {% include base_path %}
 
 {% if site.publication_category %}
-  {% for cat in site.publication_category %}
-    {% assign cat_key = cat[0] %}
-    {% assign cat_val = cat[1] %}
+  {% for category in site.publication_category %}
+    {% assign category_key = category[0] %}
+    {% assign category_data = category[1] %}
     {% assign title_shown = false %}
-    <ul>
+
     {% for post in site.publications reversed %}
-      {% if post.category != cat_key %}
+      {% if post.category != category_key %}
         {% continue %}
       {% endif %}
       {% unless title_shown %}
-        <h2>{{ cat_val.title }}</h2><hr />
+        <h2>{{ category_data.title }}</h2><hr />
         {% assign title_shown = true %}
       {% endunless %}
-      <li>
-        <p><em>{{ post.title }}</em>
-        {% if post.arxiv %}
-          <a href="{{ post.arxiv }}" target="_blank">[arXiv]</a>
-        {% endif %}.</p>
-
-        <p>
-          {% assign authors = post.authors %}
-          {% for author in authors %}
-            {% if author == "Fanghui Liu" %}
-              <strong>{{ author }}</strong>{% unless forloop.last %}, {% endunless %}
-            {% else %}
-              {{ author }}{% unless forloop.last %}, {% endunless %}
-            {% endif %}
-          {% endfor %}
-        </p>
-
-        {% if post.tldr %}
-          <p style="color:#d63384;">[TLDR: {{ post.tldr }}]</p>
-        {% endif %}
-      </li>
+      {% include archive-single.html %}
     {% endfor %}
-    </ul>
   {% endfor %}
 {% else %}
-  <ul>
   {% for post in site.publications reversed %}
-    <li>
-      <p><em>{{ post.title }}</em>
-      {% if post.arxiv %}
-        <a href="{{ post.arxiv }}" target="_blank">[arXiv]</a>
-      {% endif %}.</p>
-
-      <p>
-        {% assign authors = post.authors %}
-        {% for author in authors %}
-          {% if author == "Fanghui Liu" %}
-            <strong>{{ author }}</strong>{% unless forloop.last %}, {% endunless %}
-          {% else %}
-            {{ author }}{% unless forloop.last %}, {% endunless %}
-          {% endif %}
-        {% endfor %}
-      </p>
-
-      {% if post.tldr %}
-        <p style="color:#d63384;">[TLDR: {{ post.tldr }}]</p>
-      {% endif %}
-    </li>
+    {% include archive-single.html %}
   {% endfor %}
-  </ul>
 {% endif %}
-
-
-
