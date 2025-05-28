@@ -10,25 +10,33 @@ author_profile: true
 {% endif %}
 
 {% include base_path %}
+{% if site.author.googlescholar %}
+  <div class="wordwrap">
+    You can also find my articles on <a href="https://scholar.google.com/citations?user=UeuamLcAAAAJ&hl=zh-CN&oi=ao" target="_blank">my Google Scholar profile</a>.
+  </div>
+{% endif %}
+
+{% include base_path %}
 
 {% if site.publication_category %}
-  {% for category in site.publication_category %}
+  {% for cat in site.publication_category %}
+    {% assign cat_key = cat[0] %}
+    {% assign cat_val = cat[1] %}
     {% assign title_shown = false %}
+    <ul>
     {% for post in site.publications reversed %}
-      {% if post.category != category[0] %}
+      {% if post.category != cat_key %}
         {% continue %}
       {% endif %}
       {% unless title_shown %}
-        <h2>{{ category[1].title }}</h2><hr />
+        <h2>{{ cat_val.title }}</h2><hr />
         {% assign title_shown = true %}
       {% endunless %}
-
       <li>
         <p><em>{{ post.title }}</em>
         {% if post.arxiv %}
           <a href="{{ post.arxiv }}" target="_blank">[arXiv]</a>
-        {% endif %}.
-        </p>
+        {% endif %}.</p>
 
         <p>
           {% assign authors = post.authors %}
@@ -46,15 +54,16 @@ author_profile: true
         {% endif %}
       </li>
     {% endfor %}
+    </ul>
   {% endfor %}
 {% else %}
+  <ul>
   {% for post in site.publications reversed %}
     <li>
       <p><em>{{ post.title }}</em>
       {% if post.arxiv %}
         <a href="{{ post.arxiv }}" target="_blank">[arXiv]</a>
-      {% endif %}.
-      </p>
+      {% endif %}.</p>
 
       <p>
         {% assign authors = post.authors %}
@@ -72,6 +81,8 @@ author_profile: true
       {% endif %}
     </li>
   {% endfor %}
+  </ul>
 {% endif %}
+
 
 
