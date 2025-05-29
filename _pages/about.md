@@ -15,7 +15,7 @@ My research interest currently lies in statistical learning theory, focuses on d
 
 Honors and Awards
 ======
-- **National First Prize**, "TI Cup" China Undergraduate Electronics Design Contest *(Top 1%)* <span style="float: right;">2023</span>
+- **National First Prize**, China Undergraduate Electronics Design Contest *(Top 1%)* <span style="float: right;">2023</span>
 
 - **Shanghai Outstanding Graduate** *(Top 5%)* <span style="float: right;">2025</span>
 
