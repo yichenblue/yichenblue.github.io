@@ -1,17 +1,16 @@
-<li>
-  <p>
+<li style="margin-bottom: 1.5em; list-style-position: outside;">
+  <div style="display: inline;">
     <em>{{ post.title }}</em>
     {% if post.paperurl %}
       <a href="{{ post.paperurl }}" style="color: #1a0dab;">[arXiv]</a>
     {% endif %}
-    <br>
+  </div>
+  <div style="margin-top: 2px;">
     {{ post.authors | markdownify | remove: "<p>" | remove: "</p>" }}
-    {% if post.tldr %}
-      <br>
-      <span style="color: #b200b2;">
-        [TLDR: {{ post.tldr }}]
-      </span>
-    {% endif %}
-  </p>
+  </div>
+  {% if post.tldr %}
+    <div style="color: #b200b2; margin-top: 2px;">
+      [TLDR: {{ post.tldr }}]
+    </div>
+  {% endif %}
 </li>
-
