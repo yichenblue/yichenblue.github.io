@@ -17,8 +17,8 @@
       </div>
     {% endif %}
     {% if post.venue %}
-      <div style="margin-top: 2px; color: #555;">
-        {{ post.venue | markdownify | remove: "<p>" | remove: "</p>" }}
+      <div style="margin-top: 2px;">
+        {{ post.venue }} {% if post.note %}{{ post.note }}{% endif %}
       </div>
     {% endif %}
   </div>
