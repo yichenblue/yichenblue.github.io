@@ -13,6 +13,14 @@ Research
 ======
 My research interest currently lies in statistical learning theory, focuses on developing a theoretical understanding of modern machine learning systems, using tools from high-dimensional statistics.
 
+Education Experience
+======
+- PhD in Computer & Information Science, University of Wisconsin–Madison (Incoming)
+
+- BSc in Automation, Shanghai Jiao Tong University (Sept 2021 - June 2025)
+
+- Visiting, University of Warwick (Sept 2024 - Dec 2024) 
+
 Honors and Awards
 ======
 - **National First Prize**, China Undergraduate Electronics Design Contest *(Top 1%)* <span style="float: right;">2023</span>
