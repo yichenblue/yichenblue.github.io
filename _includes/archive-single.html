@@ -16,5 +16,10 @@
         [TLDR: {{ post.tldr }}]
       </div>
     {% endif %}
+    {% if post.venue %}
+      <div style="margin-top: 2px; font-style: italic; color: #555;">
+        Published in {{ post.venue }}
+      </div>
+    {% endif %}
   </div>
 </li>
