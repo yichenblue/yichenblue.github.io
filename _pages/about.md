@@ -13,3 +13,10 @@ Research
 ======
 My research interest currently lies in statistical learning theory, focuses on developing a theoretical understanding of modern machine learning systems, using tools from high-dimensional statistics.
 
+Honors and Awards
+======
+- **National First Prize**, "TI Cup" China Undergraduate Electronics Design Contest *(Top 1%)* <span style="float: right;">2023</span>
+
+- **Shanghai Outstanding Graduate** *(Top 5%)* <span style="float: right;">2025</span>
+
+- **Second Prize**, Academic Scholarship of Shanghai Jiao Tong University <span style="float: right;">2023, 2024</span>
