@@ -15,7 +15,7 @@ My research interest currently lies in statistical learning theory, focuses on d
 
 Education Experience
 ======
-- PhD in Computer Science, University of Wisconsin–Madison 
+- PhD in Computer Science, University of Wisconsin–Madison (Sept 2025 - now)
 
 - BSc in Automation, Shanghai Jiao Tong University (Sept 2021 - June 2025)
 
