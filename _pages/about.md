@@ -31,4 +31,5 @@ Honors and Awards
 
 Teaching
 ======
-- CS 200: Programming I — *Teaching Assistant*, UW–Madison  
+- CS 200: Programming I — *Teaching Assistant*, UW–Madison
+  Fall 2025
