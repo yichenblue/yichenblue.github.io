@@ -7,7 +7,7 @@ redirect_from:
   - /about.html
 ---
 
-Welcome to my homepage! I am a first year PhD student in the [Computer Science Department](https://www.cs.wisc.edu/) at the [University of Wisconsin–Madison](https://www.wisc.edu/). I graduated from Shanghai Jiao Tong University. During my undergraduate education, I was fortunate to be advised by [Prof. Xiaolin Huang](http://www.pami.sjtu.edu.cn/en/xiaolin), [Prof. Fanghui Liu](https://www.lfhsgre.org/index.html), and [Prof. Yudong Chen](https://pages.cs.wisc.edu/~yudongchen/).
+Welcome to my homepage! I am a first year PhD student in the [Computer Science Department](https://www.cs.wisc.edu/) at the [University of Wisconsin–Madison](https://www.wisc.edu/), working with [Prof. Yudong Chen](https://pages.cs.wisc.edu/~yudongchen/). I graduated from Shanghai Jiao Tong University. During my undergraduate education, I was fortunate to be advised by [Prof. Xiaolin Huang](http://www.pami.sjtu.edu.cn/en/xiaolin) and [Prof. Fanghui Liu](https://www.lfhsgre.org/index.html).
 
 Research
 ======
