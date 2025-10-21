@@ -25,11 +25,11 @@ author:
   avatar           : "yichen_photo.png"
   name             : "Yichen Wang"
   pronouns         : # example: "she/her"  
-  bio              : "Incoming phd @ UW-Madison"
-  location         : "Shanghai"
-  employer         : "Shanghai Jiao Tong University"
+  bio              : "phd @ UW-Madison"
+  location         : "Madison, WI"
+  employer         : "University of Wisconsin-Madison"
   uri              : # URL
-  email            : "wang-yi-chen@sjtu.edu.cn" 
+  email            : "yichen.wang@wisc.edu" 
 
   # Academic websites
   academia         : # URL
