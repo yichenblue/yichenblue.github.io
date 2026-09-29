@@ -17,7 +17,7 @@ header:
   teaser: /images/power-laws-have-a-clock/main-fig1-intrinsic-time.png
 ---
 
-*Why cumulative learning rate and \(B/\eta\) organize controlled LLM training curves—and what spectra have to do with it*
+*Why cumulative learning rate and \\(B/\eta\\) organize controlled LLM training curves—and what spectra have to do with it*
 
 Power-law learning curves are often treated as fingerprints of a model and its data. Fit an exponent early, the usual story goes, and extrapolate the rest of training.
 
@@ -55,13 +55,13 @@ T_t=\sum_{s<t}\eta_s,
 r_t=\frac{B_t}{\eta_t}.
 $$
 
-The first quantity, **intrinsic time** \(T_t\), measures accumulated optimization progress. The second, the **noise-control ratio** \(r_t\), determines stochastic-error injection per unit intrinsic time: larger \(B_t/\eta_t\) means less injected noise.
+The first quantity, **intrinsic time** \\(T_t\\), measures accumulated optimization progress. The second, the **noise-control ratio** \\(r_t\\), determines stochastic-error injection per unit intrinsic time: larger \\(B_t/\eta_t\\) means less injected noise.
 
-The relevant object is not only the terminal ratio, but the whole path \(r(T)\). Two runs may finish with the same ratio yet expose the dynamics to different streams of earlier noise.
+The relevant object is not only the terminal ratio, but the whole path \\(r(T)\\). Two runs may finish with the same ratio yet expose the dynamics to different streams of earlier noise.
 
-Suppose we prescribe a ratio path \(r(T)\). We can realize it by keeping batch size fixed and varying learning rate, or by keeping learning rate fixed and varying batch size. The two implementations may require different numbers of optimizer updates. In the proxy's controlled continuum regime, matching the intrinsic-time increments and the ratio path gives the same leading response; in the tested plain-SGD LLM runs, this invariance is approximate.
+Suppose we prescribe a ratio path \\(r(T)\\). We can realize it by keeping batch size fixed and varying learning rate, or by keeping learning rate fixed and varying batch size. The two implementations may require different numbers of optimizer updates. In the proxy's controlled continuum regime, matching the intrinsic-time increments and the ratio path gives the same leading response; in the tested plain-SGD LLM runs, this invariance is approximate.
 
-This does **not** say that learning rate and batch size are operationally identical. It says that their leading roles in this plain-SGD response are organized by \(T\) and \(B/\eta\), rather than by either hyperparameter in isolation.
+This does **not** say that learning rate and batch size are operationally identical. It says that their leading roles in this plain-SGD response are organized by \\(T\\) and \\(B/\eta\\), rather than by either hyperparameter in isolation.
 
 ## Two questions hidden in one scaling law
 
@@ -86,7 +86,7 @@ F(T)
 \,k(T-u)\,\mathrm du.
 $$
 
-The first term is unresolved signal. The integral adds the surviving effect of all past stochastic injections. The function \(k(T-u)\) tells us how much an injection of age \(T-u\) is remembered.
+The first term is unresolved signal. The integral adds the surviving effect of all past stochastic injections. The function \\(k(T-u)\\) tells us how much an injection of age \\(T-u\\) is remembered.
 
 This immediately explains why the observed exponent need not equal a single spectral exponent. The final loss is produced only after clean learning and accumulated stochastic memory have competed with each other.
 
@@ -94,7 +94,7 @@ This immediately explains why the observed exponent need not equal a single spec
 
 Every fixed spectral mode decays exponentially. A power law emerges because an infinite collection of modes contains many different time scales.
 
-At intrinsic time \(T\), modes with eigenvalue \(\lambda\gg T^{-1}\) have largely relaxed, while modes with \(\lambda\ll T^{-1}\) remain almost untouched. Training therefore sweeps a moving cutoff through the spectrum. Long-time behavior is determined by how much weighted spectral mass remains below \(T^{-1}\).
+At intrinsic time \\(T\\), modes with eigenvalue \\(\lambda\gg T^{-1}\\) have largely relaxed, while modes with \\(\lambda\ll T^{-1}\\) remain almost untouched. Training therefore sweeps a moving cutoff through the spectrum. Long-time behavior is determined by how much weighted spectral mass remains below \\(T^{-1}\\).
 
 There are two relevant spectral weights:
 
@@ -124,7 +124,7 @@ A controlled construction makes the separation concrete: forcing can disappear f
   <figcaption><strong>Forcing and memory need not obey the same law.</strong> In this finite-width construction, target-weighted forcing and its cumulative spectral mass fall faster than every inverse power (left), while one-injection memory and its spectral mass track \(T^{-3/4}\) (middle). The minibatch-SGD loss then crosses from the fast forcing transient to the \(T^{-3/4}\) memory tail (right; mean over 20 runs).</figcaption>
 </figure>
 
-For a fixed finite model, this is not the literal \(T\to\infty\) law. It describes an infinite-spectrum limit or an extended joint width–time scaling window.
+For a fixed finite model, this is not the literal \\(T\to\infty\\) law. It describes an infinite-spectrum limit or an extended joint width–time scaling window.
 
 ## Preserve, change, or destroy
 
@@ -134,13 +134,13 @@ $$
 k(v)\sim v^{-q_{\mathcal K}},
 $$
 
-and the ratio path grows approximately as \(r(T)\sim T^\vartheta\). The observed stochastic response is a convolution: the schedule decides how much noise is injected at every time, and memory decides how long each injection survives.
+and the ratio path grows approximately as \\(r(T)\sim T^\vartheta\\). The observed stochastic response is a convolution: the schedule decides how much noise is injected at every time, and memory decides how long each injection survives.
 
 Three behaviors follow.
 
 ### 1. Destroy
 
-If \(r(T)\) grows too slowly, new stochastic error is introduced faster than the dynamics can forget it. The noisy–clean gap then fails to decay with a positive power, so the clean positive-power law is destroyed.
+If \\(r(T)\\) grows too slowly, new stochastic error is introduced faster than the dynamics can forget it. The noisy–clean gap then fails to decay with a positive power, so the clean positive-power law is destroyed.
 
 ### 2. Change
 
@@ -150,7 +150,7 @@ At intermediate growth rates, the stochastic gap decays, but more slowly than cl
 
 If the stochastic response decays faster than clean learning above the floor, the schedule preserves the clean exponent. It may still change the prefactor, but not the leading power.
 
-There is also a **memory ceiling**. Making late-stage noise arbitrarily small cannot erase old injections that are still remembered. Once the response reaches this ceiling, increasing \(B/\eta\) more aggressively no longer improves the decay exponent.
+There is also a **memory ceiling**. Making late-stage noise arbitrarily small cannot erase old injections that are still remembered. Once the response reaches this ceiling, increasing \\(B/\eta\\) more aggressively no longer improves the decay exponent.
 
 These cases are not separate heuristics: for a fixed memory exponent, they form one schedule-response phase diagram.
 
@@ -159,11 +159,11 @@ These cases are not separate heuristics: for a fixed memory exponent, they form 
   <figcaption><strong>How a schedule transforms the clean power law.</strong> The horizontal coordinate \(\vartheta\) controls the growth of \(r(T)=B(T)/\eta(T)\), while \(q_0\) is the clean-loss exponent. The red boundary marks the loss of positive-power decay, the black curve separates changed from preserved scaling, and its plateau is the memory ceiling. This pure-power diagram excludes the marginal case \(q_{\mathcal K}=1\), where logarithmic corrections appear.</figcaption>
 </figure>
 
-The marginal case \(q_{\mathcal K}=1\) separates long memory from integrable memory. At this boundary, cumulative memory grows logarithmically, so pure-power formulas acquire logarithmic corrections. This turns out to be especially relevant empirically: the LLM fits described below consistently place the effective response close to this boundary.
+The marginal case \\(q_{\mathcal K}=1\\) separates long memory from integrable memory. At this boundary, cumulative memory grows logarithmically, so pure-power formulas acquire logarithmic corrections. This turns out to be especially relevant empirically: the LLM fits described below consistently place the effective response close to this boundary.
 
-In the power-law random-feature specialization, these distinctions become three long-memory regimes, three integrable-memory regimes, and two finite-bulk regimes in which memory remains explicitly coupled to width. This \(3+3(+2)\) map classifies propagation mechanisms—not eight universal exponents for total loss.
+In the power-law random-feature specialization, these distinctions become three long-memory regimes, three integrable-memory regimes, and two finite-bulk regimes in which memory remains explicitly coupled to width. This \\(3+3(+2)\\) map classifies propagation mechanisms—not eight universal exponents for total loss.
 
-The \(3+3(+2)\) structure has two useful views: response coordinates describe what the schedule sees, while power-law random-feature coordinates show one microscopic way those responses can arise.
+The \\(3+3(+2)\\) structure has two useful views: response coordinates describe what the schedule sees, while power-law random-feature coordinates show one microscopic way those responses can arise.
 
 <figure>
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem;align-items:center;">
@@ -173,7 +173,7 @@ The \(3+3(+2)\) structure has two useful views: response coordinates describe wh
   <figcaption><strong>One propagation structure, two coordinate systems.</strong> Left: forcing and memory exponents \((q_{\mathcal F},q_{\mathcal K})\) divide long-memory (LM), integrable-memory (IM), and finite-bulk (FB) responses. Right: the corresponding partition in microscopic source–capacity coordinates \((\alpha,\beta)\). The red band marks the fitted finite-window LLM response near the LM/IM boundary; it does not identify a transformer spectrum or an asymptotic random-feature phase. These are propagation regimes, not eight universal total-loss exponents.</figcaption>
 </figure>
 
-The theory also gives a sharp converse below the long-memory ceiling: the complete asymptotic noisy–clean gap identifies the ratio path \(B/\eta\), including its slowly varying factor, but cannot identify learning rate and batch size separately. At the ceiling, this identification is lost.
+The theory also gives a sharp converse below the long-memory ceiling: the complete asymptotic noisy–clean gap identifies the ratio path \\(B/\eta\\), including its slowly varying factor, but cannot identify learning rate and batch size separately. At the ceiling, this identification is lost.
 
 ## Three tests in language models
 
@@ -181,11 +181,11 @@ The proxy admits an exact conditional risk recurrence; its spectral and schedule
 
 ### Test 1: different ratio paths at the same intrinsic-time horizon
 
-Starting from one mature 30M checkpoint, we forked eleven plain-SGD tails with different growth rates of \(B/\eta\). Every run stopped at the same intrinsic-time horizon, but used a different number of optimizer updates and tokens.
+Starting from one mature 30M checkpoint, we forked eleven plain-SGD tails with different growth rates of \\(B/\eta\\). Every run stopped at the same intrinsic-time horizon, but used a different number of optimizer updates and tokens.
 
-The validation trajectories were systematically ordered by the ratio-growth rate: increasing \(B/\eta\) produced lower validation loss, with diminishing improvement at the largest growth rates.
+The validation trajectories were systematically ordered by the ratio-growth rate: increasing \\(B/\eta\\) produced lower validation loss, with diminishing improvement at the largest growth rates.
 
-This provides qualitative evidence that intrinsic time alone is insufficient and that the ratio path matters as well. The experiment uses one seed, total validation cross-entropy rather than a noisy–clean gap, and no independent estimate of \(q_{\mathcal K}\). It therefore does not identify the LM/IM boundary or verify an asymptotic exponent. The runs were also not matched in updates or tokens, so this is not a fixed-compute comparison or a quantitative measurement of the memory ceiling.
+This provides qualitative evidence that intrinsic time alone is insufficient and that the ratio path matters as well. The experiment uses one seed, total validation cross-entropy rather than a noisy–clean gap, and no independent estimate of \\(q_{\mathcal K}\\). It therefore does not identify the LM/IM boundary or verify an asymptotic exponent. The runs were also not matched in updates or tokens, so this is not a fixed-compute comparison or a quantitative measurement of the memory ceiling.
 
 ### Test 2: the same ratio path through learning rate or batch size
 
@@ -194,17 +194,17 @@ We next trained a 300M nanoGPT model on 6.5B OpenWebText tokens. After a shared 
 - a learning-rate schedule at fixed batch size;
 - a batch-size schedule at fixed learning rate.
 
-The construction matches the same intrinsic-time advance, the same \(B/\eta\) value, and the same contiguous data segment at every completed macro step.
+The construction matches the same intrinsic-time advance, the same \\(B/\eta\\) value, and the same contiguous data segment at every completed macro step.
 
 Against optimizer step, the paired trajectories differ because the two implementations use different numbers of updates. Against intrinsic time, each fixed-batch and fixed-learning-rate pair nearly collapses.
 
-A separate hybrid-Muon extension shows an analogous factorization collapse under the empirically calibrated coordinates \(\widetilde T=\sum_t\eta_t^2\) and \(\widetilde r=B/\eta^2\). This observation is optimizer-specific and is not implied by our plain-SGD theory.
+A separate hybrid-Muon extension shows an analogous factorization collapse under the empirically calibrated coordinates \\(\widetilde T=\sum_t\eta_t^2\\) and \\(\widetilde r=B/\eta^2\\). This observation is optimizer-specific and is not implied by our plain-SGD theory.
 
 ### Test 3: fit one schedule, predict another
 
 Approximate collapse is useful, but prediction is a stronger test. We built a seven-parameter finite-window surrogate inspired by the theoretical forcing–memory decomposition. It contains a clean forcing term and a memory integral whose injection strength depends on the observed ratio path.
 
-In the main 300M analysis shown below, we fix \(q_{\mathcal K}=1\) and fit the remaining six parameters only to the raw fixed-batch 8-1-1 trajectory. With those parameters frozen, the surrogate predicts the held-out WSD learning-rate trajectory without refitting. In complementary unrestricted analyses at 124M and 300M, all seven parameters are fitted only on fixed-batch 8-1-1 and then frozen; those fits also track the alternative 8-1-1 factorization and both WSD trajectories without refitting.
+In the main 300M analysis shown below, we fix \\(q_{\mathcal K}=1\\) and fit the remaining six parameters only to the raw fixed-batch 8-1-1 trajectory. With those parameters frozen, the surrogate predicts the held-out WSD learning-rate trajectory without refitting. In complementary unrestricted analyses at 124M and 300M, all seven parameters are fitted only on fixed-batch 8-1-1 and then frozen; those fits also track the alternative 8-1-1 factorization and both WSD trajectories without refitting.
 
 The three panels separate the claims that matter: in-schedule fit, zero-refit transfer, and where held-out prediction error is minimized.
 
@@ -221,7 +221,7 @@ The frozen surrogate tracks the long-horizon loss decay and the schedule-induced
 
 We repeated the analysis across datasets and model scales:
 
-| Dataset and setting | Effective \(q_{\mathcal K}\) | Effective \(q_{\mathcal F}\) |
+| Dataset and setting | Effective \\(q_{\mathcal K}\\) | Effective \\(q_{\mathcal F}\\) |
 |---|---:|---:|
 | OpenWebText, 124M, 2.5B tokens | 1.017 | 0.374 |
 | FineWeb sample-10BT subset, 124M, 2.5B tokens | 0.952 | 0.405 |
@@ -230,7 +230,7 @@ We repeated the analysis across datasets and model scales:
 
 Across the tested web and scientific-text corpora, the fitted memory coordinate stays close to one, while the forcing coordinate remains below one. This places the finite-window response near the boundary between long and integrable memory.
 
-The number near one should be interpreted as an **effective finite-window response coordinate**, not as a directly measured asymptotic exponent. Separately from the displayed fit, we scan fixed candidate values of \(q_{\mathcal K}\); at each value, we refit the other six parameters only on 8-1-1 and evaluate post-fork WSD prediction error without refitting. That transfer error is minimized near one. This sensitivity profile is not an independent estimate of the LLM memory exponent. An unrestricted seven-parameter fit gives \(q_{\mathcal K}=0.989\). Together, these results support a near-one finite-window description, but identify neither an asymptotic memory exponent nor an LLM spectrum.
+The number near one should be interpreted as an **effective finite-window response coordinate**, not as a directly measured asymptotic exponent. Separately from the displayed fit, we scan fixed candidate values of \\(q_{\mathcal K}\\); at each value, we refit the other six parameters only on 8-1-1 and evaluate post-fork WSD prediction error without refitting. That transfer error is minimized near one. This sensitivity profile is not an independent estimate of the LLM memory exponent. An unrestricted seven-parameter fit gives \\(q_{\mathcal K}=0.989\\). Together, these results support a near-one finite-window description, but identify neither an asymptotic memory exponent nor an LLM spectrum.
 
 ## What changes in practice?
 
@@ -238,13 +238,13 @@ Three consequences seem most immediate.
 
 **Report the clock and schedule with the exponent.** A learning-curve exponent is incomplete without saying whether the horizontal axis is optimizer step, tokens, compute, or intrinsic time—and without specifying the ratio path that produced the curve.
 
-**Design learning rate and batch size jointly.** Within the plain-SGD theory—and approximately in the tested nanoGPT runs—the target object is a path \(r(T)\), not a unique pair of schedules. This suggests choosing a hardware-compatible factorization while checking that the expected response remains intact, rather than assuming that learning-rate and batch-size schedules are uniquely determined. In the LM/IM proxy at fixed terminal time and data budget, the optimal ratio follows a square-root principle: allocate more samples where an injection is both large when created and likely to survive.
+**Design learning rate and batch size jointly.** Within the plain-SGD theory—and approximately in the tested nanoGPT runs—the target object is a path \\(r(T)\\), not a unique pair of schedules. This suggests choosing a hardware-compatible factorization while checking that the expected response remains intact, rather than assuming that learning-rate and batch-size schedules are uniquely determined. In the LM/IM proxy at fixed terminal time and data budget, the optimal ratio follows a square-root principle: allocate more samples where an injection is both large when created and likely to survive.
 
 **Prefer transferable response models to isolated curve fits.** A power law fitted independently to each schedule describes what happened. A forcing–memory surrogate aims to predict what happens when the schedule changes.
 
 ## Scope
 
-The theorems concern noisy online SGD with frozen linear random features, together with stability and scaling assumptions. The end-to-end LLM experiments are external-validity checks of response-level consequences—organization by intrinsic time and \(B/\eta\), approximate factorization collapse, and cross-schedule prediction—not theorem-facing tests that a transformer has the proxy model's spectrum or occupies an asymptotic random-feature phase. The fitted \(q_{\mathcal K}\approx1\) is a finite-window coordinate, where logarithmic corrections are difficult to distinguish from a pure power. Muon's \(\sum_t\eta_t^2\) and \(B/\eta^2\) coordinates are empirically calibrated rather than derived by the theory; momentum, AdamW, representation drift, and production-scale nonstationarity remain outside its present scope.
+The theorems concern noisy online SGD with frozen linear random features, together with stability and scaling assumptions. The end-to-end LLM experiments are external-validity checks of response-level consequences—organization by intrinsic time and \\(B/\eta\\), approximate factorization collapse, and cross-schedule prediction—not theorem-facing tests that a transformer has the proxy model's spectrum or occupies an asymptotic random-feature phase. The fitted \\(q_{\mathcal K}\approx1\\) is a finite-window coordinate, where logarithmic corrections are difficult to distinguish from a pure power. Muon's \\(\sum_t\eta_t^2\\) and \\(B/\eta^2\\) coordinates are empirically calibrated rather than derived by the theory; momentum, AdamW, representation drift, and production-scale nonstationarity remain outside its present scope.
 
 ## The larger lesson
 
