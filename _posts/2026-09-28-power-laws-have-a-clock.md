@@ -21,7 +21,7 @@ header:
 
 Why should a learning curve follow a power law when every fixed spectral mode decays exponentially?
 
-Our answer is that power laws are not primitive empirical laws. They are collective dynamical responses. For each of the two components that drive noisy learning—unresolved target signal and remembered stochastic error—a temporal power law appears precisely when the corresponding cumulative weighted spectrum has matching scale-free mass near zero.
+Power laws are not primitive empirical laws; they are collective dynamical responses. For unresolved target signal and remembered stochastic error, a temporal power law appears precisely when the corresponding cumulative weighted spectrum has matching scale-free mass near zero.
 
 That is the paper's central result. It separates three questions that are often conflated:
 
@@ -29,15 +29,11 @@ That is the paper's central result. It separates three questions that are often 
 2. **Transformation:** once they exist, how do learning-rate and batch-size schedules preserve, change, or destroy the power visible in total loss?
 3. **External validity:** can the same response coordinates predict controlled LLM learning curves beyond the tractable model?
 
-The theory gives necessary-and-sufficient spectral conditions for the first question and sharp schedule laws for the second. In controlled LLM pretraining, a forcing–memory surrogate fitted on one schedule predicts a held-out schedule without refitting, while matched learning-rate and batch-size implementations nearly collapse in the intrinsic clock.
+We give necessary-and-sufficient spectral conditions for the first question and sharp schedule laws for the second. In controlled LLM pretraining, a surrogate fitted on one schedule predicts a held-out schedule without refitting, while matched learning-rate and batch-size implementations nearly collapse in the intrinsic clock.
 
 ## Two dynamical responses behind a learning curve
 
-We study noisy online SGD in a frozen random-feature model, where the prediction risk admits an exact recurrence. Conditional on the representation, two objects govern the dynamics.
-
-**Forcing** is unresolved target error. It describes how the part of the signal not yet learned propagates through the dynamics.
-
-**Memory** is the response to one stochastic injection. It asks how much of noise injected now remains visible later.
+In frozen-feature SGD, **forcing** propagates unresolved target error, while **memory** measures how much of one stochastic injection remains visible later.
 
 Suppressing finite-width and feedback details, total loss above its irreducible floor has the schematic form
 
@@ -49,7 +45,7 @@ F(T)
 a(u)\,k(T-u)\,\mathrm du.
 $$
 
-The first term is unresolved signal. The integral sums the surviving effects of the noise-injection history \\(a(u)\\). The observed loss is therefore not governed by one exponent in isolation: forcing, memory, and the history of noise injection compete.
+The first term is unresolved signal; the integral accumulates the noise-injection history \\(a(u)\\). Observed loss is therefore a competition between forcing, memory, and past injections.
 
 ## The spectral if-and-only-if criterion
 
@@ -77,13 +73,9 @@ $$
 
 The equivalence holds separately for forcing and memory. It is an **if and only if** statement: the low-spectrum weighted mass produces the temporal power, and observing that componentwise temporal power constrains the corresponding low-spectrum mass.
 
-This changes the usual interpretation of “power-law data.” A coordinatewise power-law eigenspectrum alone is not sufficient, and coordinatewise power laws are not necessary:
+The forward direction explains the emergence of the power law; the converse says that a componentwise temporal power cannot appear without the matching low-spectrum mass law.
 
-- a power-law eigenspectrum can fail to produce power-law forcing if the target places too little mass in slow directions;
-- irregular eigenvalues and targets can still produce a clean temporal power law when their cumulative weighted mass has the right behavior near zero;
-- forcing and memory can have different exponents because they weight the same spectrum differently.
-
-The following construction makes the last point explicit.
+Thus a power-law eigenspectrum alone is not sufficient: forcing can decay faster than every inverse power if the target places too little mass in slow directions. Coordinatewise power laws are not necessary either; irregular spectra and targets can produce a clean temporal power through their cumulative mass. Forcing and memory may also have different exponents because they weight the spectrum differently.
 
 <figure>
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;align-items:end;">
@@ -94,17 +86,11 @@ The following construction makes the last point explicit.
   <figcaption><strong>Spectral structure determines whether a power law exists.</strong> Target-weighted forcing and its cumulative spectral mass decay faster than every inverse power (left), while one-injection memory and its spectral mass follow \(T^{-3/4}\) (middle). The minibatch-SGD loss consequently crosses from a fast forcing transient to the \(T^{-3/4}\) memory tail (right; mean over 20 runs).</figcaption>
 </figure>
 
-For a fixed finite model, the literal asymptotic decay is eventually exponential. The power law describes an infinite-spectrum limit or an extended joint width–time scaling window. The theorem is also componentwise: it characterizes forcing and memory, not total observed loss without further analysis of their competition.
+At fixed finite width, decay is eventually exponential. The power law describes an infinite-spectrum limit or a joint width–time scaling window. The theorem is componentwise: it does not by itself characterize total loss.
 
 ## From component laws to propagation regimes
 
-The forcing and memory exponents provide response coordinates \\((q_{\mathcal F},q_{\mathcal K})\\). They separate three qualitatively different propagation mechanisms:
-
-- **long memory (LM):** old stochastic injections remain influential over long horizons;
-- **integrable memory (IM):** the total memory mass is finite;
-- **finite bulk (FB):** width-dependent bulk effects remain coupled to the dynamics.
-
-In the power-law random-feature specialization, these become three LM regimes, three IM regimes, and two FB regimes—the paper's \\(3+3(+2)\\) phase map. This is a classification of propagation mechanisms, not eight universal exponents for total loss.
+The response coordinates \\((q_{\mathcal F},q_{\mathcal K})\\) separate long memory (old injections persist), integrable memory (total memory mass is finite), and finite bulk (width remains coupled to the dynamics). In the power-law random-feature specialization, these become the paper's \\(3+3(+2)\\) phase map—a classification of propagation mechanisms, not eight universal total-loss exponents.
 
 <figure>
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem;align-items:center;">
@@ -118,9 +104,7 @@ We return below to the LLM fits that locate the red band.
 
 ## How training schedules transform the response
 
-Only after establishing when the componentwise power laws exist do we ask how a training schedule changes what is observed.
-
-For plain SGD, learning rate and batch size enter through two natural coordinates:
+Once the componentwise power laws exist, plain-SGD learning-rate and batch-size schedules enter through two natural coordinates:
 
 $$
 T_t=\sum_{s<t}\eta_s,
@@ -130,21 +114,11 @@ $$
 
 Intrinsic time \\(T_t\\) measures accumulated optimization progress. The ratio path \\(r(T)\\) controls stochastic-error injection per unit intrinsic time: larger \\(B/\eta\\) means less injected noise. The full path matters because loss remembers earlier injections. In the response formula above, the leading schedule-dependent scale of \\(a(u)\\) is \\(1/r(u)\\).
 
-Suppose one-injection memory has tail \\(k(v)\sim v^{-q_{\mathcal K}}\\) and \\(r(T)\sim T^\vartheta\\). Their convolution gives three possibilities.
-
-### Destroy
-
-If \\(r(T)\\) grows too slowly, fresh stochastic error is injected faster than it can be forgotten. The noisy–clean gap then fails to decay with a positive power.
-
-### Change
-
-At intermediate growth rates, the stochastic gap decays, but more slowly than clean loss above the floor. The schedule changes the exponent visible in total loss.
-
-### Preserve
-
-If the stochastic response decays faster than clean learning, the schedule preserves the clean exponent, though it may change the prefactor.
+If memory has tail \\(k(v)\sim v^{-q_{\mathcal K}}\\) and \\(r(T)\sim T^\vartheta\\), their convolution gives three outcomes. If \\(r\\) grows too slowly, fresh noise cannot be forgotten and positive-power decay is **destroyed**. At intermediate growth, the stochastic gap decays more slowly than clean loss, so the exponent is **changed**. With sufficiently fast growth, stochastic error becomes subleading and the clean exponent is **preserved**.
 
 There is also a **memory ceiling**: reducing late-stage noise cannot erase old injections that are still remembered. Past that ceiling, making \\(B/\eta\\) grow faster no longer improves the decay exponent.
+
+At the marginal boundary \\(q_{\mathcal K}=1\\), cumulative memory grows logarithmically, so the pure-power laws acquire logarithmic corrections.
 
 <figure>
   <img src="{{ '/images/power-laws-have-a-clock/main-fig4-schedule-map.png' | relative_url }}" alt="Phase diagram showing when a schedule preserves, changes, or destroys a clean power law." style="display:block;width:min(100%,760px);margin-inline:auto;">
@@ -155,22 +129,15 @@ The theory also gives a converse below the long-memory ceiling: the complete noi
 
 ## Testing the response picture in LLM pretraining
 
-The theorems concern frozen random features, not transformers. We therefore treat the LLM experiments as external-validity tests of response-level predictions. They ask whether the same coordinates organize end-to-end loss and whether a response model fitted on one schedule predicts another.
+The theorems concern frozen random features, not transformers. Our LLM experiments therefore test response-level predictions: whether the coordinates organize end-to-end loss and whether a model fitted on one schedule predicts another.
 
 ### Test 1: the ratio path affects loss
 
-Starting from one mature 30M checkpoint, we forked eleven plain-SGD tails with different growth rates of \\(B/\eta\\). Every run stopped at the same intrinsic-time horizon but used a different number of optimizer updates and tokens.
-
-The validation trajectories were systematically ordered by ratio growth: increasing \\(B/\eta\\) lowered validation loss, with diminishing improvements at the largest values. This shows that intrinsic time alone is insufficient and that the injection path matters. Because this was a one-seed, finite-window, unequal-compute comparison, it does not identify an asymptotic memory exponent or quantitatively verify the ceiling.
+From one mature 30M checkpoint, eleven plain-SGD tails reached the same intrinsic-time horizon with different \\(B/\eta\\) growth rates. Faster growth systematically lowered validation loss, with diminishing gains. This one-seed, unequal-compute test shows that the injection path matters, but does not identify an asymptotic exponent or measure the ceiling.
 
 ### Test 2: two factorizations of the same schedule
 
-We next trained a 300M nanoGPT model on 6.5B OpenWebText tokens. After a shared 5.2B-token prefix, each schedule used a 1.3B-token tail. We considered WSD and 8-1-1 ratio paths, each implemented in two ways:
-
-- a learning-rate schedule at fixed batch size;
-- a batch-size schedule at fixed learning rate.
-
-The construction matches the intrinsic-time advance, the \\(B/\eta\\) value, and the contiguous data segment at every completed macro step. Against optimizer step, the paired trajectories differ because the factorizations use different numbers of updates. Against intrinsic time, each pair nearly collapses.
+For a 300M nanoGPT trained on 6.5B OpenWebText tokens, a shared 5.2B-token prefix branches into 1.3B-token tails. We implemented both WSD and 8-1-1 ratio paths as either a learning-rate schedule at fixed batch size or a batch-size schedule at fixed learning rate. Each macro step matches intrinsic-time advance, \\(B/\eta\\), and data. The pairs differ against optimizer step but nearly collapse against intrinsic time.
 
 <figure>
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem;align-items:end;">
@@ -180,7 +147,7 @@ The construction matches the intrinsic-time advance, the \\(B/\eta\\) value, and
   <figcaption><strong>Matched schedule factorizations share a response in the intrinsic clock.</strong> Left: learning-rate and batch-size implementations of the same ratio paths differ against optimizer step. Right: in intrinsic time \(T=\sum_t\eta_t\), each pair nearly coincides, and the forcing–memory prediction tracks both schedule shapes. This is an approximate finite-window observation, not an exact identity for end-to-end LLMs.</figcaption>
 </figure>
 
-A separate hybrid-Muon extension shows analogous collapse under empirically calibrated coordinates \\(\widetilde T=\sum_t\eta_t^2\\) and \\(\widetilde r=B/\eta^2\\). Those coordinates are optimizer-specific and are not derived by the plain-SGD theory.
+A hybrid-Muon extension shows analogous collapse under empirically calibrated coordinates \\(\widetilde T=\sum_t\eta_t^2\\) and \\(\widetilde r=B/\eta^2\\); these are not derived by the plain-SGD theory.
 
 ### Test 3: fit one schedule, predict another
 
@@ -206,7 +173,7 @@ In the main 300M analysis, we fix \\(q_{\mathcal K}=1\\) and fit the remaining s
   <figcaption><strong>Fit once, then predict a new schedule.</strong> Left: after fixing \(q_{\mathcal K}=1\), the remaining six parameters are fitted only to fixed-batch 8-1-1. Middle: the frozen surrogate predicts held-out WSD without refitting. Right: when \(q_{\mathcal K}\) is scanned and the other parameters are refitted only on 8-1-1, WSD prediction error is minimized near one. This is a finite-window response diagnostic, not a direct measurement of a transformer spectrum.</figcaption>
 </figure>
 
-The important test is not whether a flexible curve fits one trajectory. It is whether the fitted response model predicts what happens when the schedule changes.
+The stronger test is not whether the surrogate fits one curve, but whether parameters inferred from that curve predict what happens after a schedule intervention.
 
 In complementary unrestricted seven-parameter fits across model scales and datasets, we obtain:
 
@@ -221,17 +188,13 @@ Across the tested web and scientific-text corpora, the fitted memory coordinate 
 
 ## What the results change
 
-Three practical consequences follow from the full picture.
-
-**A fitted exponent needs a mechanism.** Before extrapolating a learning curve, ask which response dominates and whether the relevant weighted low-spectrum mass actually supports a stable power law.
-
-**The clock and schedule are part of the observation.** Once forcing and memory laws exist, the horizontal axis and noise-injection path determine how they combine. An exponent should therefore be reported with its clock and schedule.
-
-**Cross-schedule prediction is stronger than an isolated fit.** A power law fitted separately to each run describes what happened. A forcing–memory model that transfers without refitting tests whether the proposed mechanism survives a controlled intervention.
+- **A fitted exponent needs a mechanism:** ask which response dominates and whether the weighted low spectrum supports a stable power.
+- **The clock and schedule are part of the observation:** report both with the exponent.
+- **Cross-schedule prediction is stronger than an isolated fit:** transfer without refitting tests the mechanism under intervention.
 
 ## Scope
 
-The spectral and schedule theorems concern noisy online SGD with frozen linear random features, under stability and scaling assumptions. The LLM experiments test organization by intrinsic time and \\(B/\eta\\), approximate factorization collapse, and cross-schedule prediction. They do not prove that a transformer has the proxy model's spectrum or occupies an asymptotic random-feature phase. Momentum, AdamW, representation drift, and production-scale nonstationarity remain outside the present theory.
+The theorems concern noisy online SGD with frozen linear random features. The LLM tests do not prove that a transformer has the proxy's spectrum or an asymptotic random-feature phase. In particular, \\(q_{\mathcal K}\approx1\\) is an effective finite-window response coordinate. Momentum, AdamW, and representation drift remain outside the theory.
 
 ## The larger lesson
 
