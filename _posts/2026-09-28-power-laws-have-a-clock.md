@@ -51,9 +51,18 @@ $$
 \operatorname{Cov}_t(\xi_t)=\frac{\Sigma(\theta_t)}{B_t}.
 $$
 
-Here \\(\Sigma(\theta_t)\\) is the covariance of a single-example gradient; the expectations condition on the training history. For independently sampled examples, averaging over a larger batch reduces the covariance by \\(B_t\\). The parameter update therefore injects noise with scale \\(\eta_t^2/B_t\\).
+Here \\(\Sigma(\theta_t)\\) is the covariance of a single-example gradient; the expectations condition on the training history. Averaging independent examples divides the covariance by \\(B_t\\), and multiplying the gradient by \\(\eta_t\\) multiplies that covariance by \\(\eta_t^2\\). The injected parameter noise therefore has covariance \\(\eta_t^2\Sigma(\theta_t)/B_t\\): its variance prefactor is \\(\eta_t^2/B_t\\), while its root-mean-square amplitude scales as \\(\eta_t/\sqrt{B_t}\\) at fixed \\(\Sigma\\).
 
-Now follow one injection. Imagine running full-gradient training from the same initialization, producing a reference trajectory \\(\bar\theta_t\\), and adding a small perturbation at update \\(s\\). Every later update acts on the perturbed state. To first order, its displacement at a later update \\(n\\) is
+Now follow one injection. Imagine running full-gradient training from the same initialization, producing a reference trajectory \\(\bar\theta_t\\), and adding a small perturbation at update \\(s\\). Let \\(\delta_t^{(s)}\\) be the resulting displacement from the reference path. Subtracting the two gradient updates and Taylor-expanding gives
+
+$$
+\delta_{t+1}^{(s)}
+\approx
+\left[I-\eta_t\nabla^2\mathcal L(\bar\theta_t)\right]\delta_t^{(s)}
+=A_t\delta_t^{(s)}.
+$$
+
+Starting with \\(\delta_{s+1}^{(s)}=-\eta_s\xi_s\\), successive updates therefore give
 
 $$
 \delta_n^{(s)}
@@ -65,7 +74,17 @@ $$
 
 Each matrix \\(A_t\\) describes how one update changes a nearby perturbation. Their product tells us how training transports, amplifies, or forgets an earlier fluctuation. The model remains nonlinear: these matrices change along its trajectory.
 
-We observe validation loss \\(L_{\mathrm{val}}(\theta_n)\\), a single number summarizing this large parameter state. A zero-mean injection has no average first-order effect around the reference path; its leading effect on expected loss is second order, hence proportional to \\(\eta_s^2/B_s\\). Summing these responses gives the leading noise-response expansion
+We observe validation loss \\(L_{\mathrm{val}}(\theta_n)\\), a single number summarizing this large parameter state. To connect the perturbation to this observable, let \\(G(x)\\) be the final validation loss obtained by running the remaining full-gradient updates from a post-update state \\(x\\). For a small zero-mean kick \\(h\\), Taylor expansion gives
+
+$$
+\mathbb E[G(x+h)]-G(x)
+\approx
+\frac12\operatorname{Tr}\!\left[
+\operatorname{Cov}(h)\nabla^2G(x)
+\right].
+$$
+
+The linear term averages to zero; the quadratic term is proportional to the injected covariance. With \\(h=-\eta_s\xi_s\\), its prefactor is \\(\eta_s^2/B_s\\). Accumulating these responses gives
 
 $$
 \mathbb E L_{\mathrm{val}}(\theta_n)
@@ -81,6 +100,151 @@ The baseline \\(F_{\mathrm{det}}(n)=L_{\mathrm{val}}(\bar\theta_n)\\) follows fu
 This is the intuition behind **forcing–memory as a coarse-grained response law of SGD**. Training continually injects fluctuations; later dynamics determine how long they remain visible in loss. When we compress the parameter trajectory into a scalar learning curve, those accumulated effects appear as memory. Two models with the same current loss can respond differently to the next update because their hidden states retain different training histories.
 
 The general response depends on the evolving trajectory and both times \\((n,s)\\). The next question is what makes it simple enough to calculate—and when it becomes a power law.
+
+<details markdown="1">
+<summary><strong>Derivation details: from SGD updates to the memory response</strong></summary>
+
+The argument below uses discrete SGD throughout. Fix an initialization, a deterministic learning-rate and batch-size schedule, and a finite terminal update \\(n\\). Assume fresh independent batches, unbiased stochastic gradients, and enough smoothness and moments for the Taylor expansions and expectations below.
+
+**1. The injected covariance.** Write \\(g(\theta;z)=\nabla_\theta\ell(f_\theta;z)\\) for a single-example gradient. The mini-batch estimate and its sampling error are
+
+$$
+\widehat g_t=\frac1{B_t}\sum_{i=1}^{B_t}g(\theta_t;z_{t,i}),
+\qquad
+\xi_t=\widehat g_t-\nabla\mathcal L(\theta_t).
+$$
+
+Conditioning on the history before drawing batch \\(t\\) fixes \\(\theta_t\\). Each centered sample gradient has mean zero and covariance \\(\Sigma(\theta_t)\\). Independence removes the cross-sample terms, so
+
+$$
+\mathbb E_t[\xi_t]=0,
+\qquad
+\mathbb E_t[\xi_t\xi_t^{\!\top}]
+=\frac1{B_t^2}\sum_{i=1}^{B_t}\Sigma(\theta_t)
+=\frac{\Sigma(\theta_t)}{B_t}.
+$$
+
+The parameter kick is \\(h_t=-\eta_t\xi_t\\). Hence \\(\operatorname{Cov}_t(h_t)=\eta_t^2\Sigma(\theta_t)/B_t\\) and \\(\mathbb E_t\|h_t\|^2=\eta_t^2\operatorname{Tr}\Sigma(\theta_t)/B_t\\). This explains the variance prefactor and the corresponding root-mean-square amplitude.
+
+**2. Propagating one kick.** Define the full-gradient update map and its reference trajectory by
+
+$$
+D_t(x)=x-\eta_t\nabla\mathcal L(x),
+\qquad
+\bar\theta_{t+1}=D_t(\bar\theta_t),
+\qquad
+\bar\theta_0=\theta_0.
+$$
+
+Inject a kick only at update \\(s\\), then follow full-gradient updates. For \\(t\ge s+1\\), subtracting the reference update yields
+
+$$
+\begin{aligned}
+\delta_{t+1}^{(s)}
+&=D_t(\bar\theta_t+\delta_t^{(s)})-D_t(\bar\theta_t)\\
+&=\left[I-\eta_t\nabla^2\mathcal L(\bar\theta_t)\right]\delta_t^{(s)}
++O\!\left(\eta_t\|\delta_t^{(s)}\|^2\right).
+\end{aligned}
+$$
+
+The remainder estimate follows from a locally Lipschitz Hessian. Iterating the linear term from \\(\delta_{s+1}^{(s)}=-\eta_s\xi_s\\) gives
+
+$$
+\delta_n^{(s)}\approx-\eta_s P_{n,s+1}\xi_s,
+\qquad
+P_{n,s+1}=A_{n-1}\cdots A_{s+1}.
+$$
+
+The empty product is \\(I\\) when \\(n=s+1\\). Every factor is the Jacobian of one update along the reference path; later updates multiply on the left.
+
+**3. Measuring the effect on final loss.** Define a future-loss function
+
+$$
+G_{n,s}(x)
+=L_{\mathrm{val}}\!\left((D_{n-1}\circ\cdots\circ D_s)(x)\right),
+\qquad
+G_{n,n}(x)=L_{\mathrm{val}}(x).
+$$
+
+It takes a parameter state just before update \\(s\\), runs the remaining full-gradient updates, and returns the final validation loss. In particular, \\(G_{n,s}=G_{n,s+1}\circ D_s\\).
+
+For the actual SGD state, set \\(x_s=D_s(\theta_s)\\), so \\(\theta_{s+1}=x_s+h_s\\). Conditional Taylor expansion gives
+
+$$
+\begin{aligned}
+&\mathbb E_s\!\left[G_{n,s+1}(x_s+h_s)-G_{n,s+1}(x_s)\right]\\
+&\quad=\frac12\mathbb E_s\!\left[
+h_s^{\!\top}\nabla^2G_{n,s+1}(x_s)h_s\right]+\rho_{n,s}\\
+&\quad=\frac{\eta_s^2}{2B_s}\operatorname{Tr}\!\left[
+\Sigma(\theta_s)\nabla^2G_{n,s+1}(x_s)
+\right]+\rho_{n,s}.
+\end{aligned}
+$$
+
+The first-order term vanishes because \\(\mathbb E_s[h_s]=0\\). The last equality uses \\(\mathbb E[h^{\!\top}Mh]=\operatorname{Tr}(M\mathbb E[hh^{\!\top}])\\). The term \\(\rho_{n,s}\\) is the conditional expected Taylor remainder.
+
+The Hessian here belongs to the **entire future-loss function**. To see what this includes, write \\(G_{n,s+1}=L_{\mathrm{val}}\circ\Psi\\), where \\(\Psi=D_{n-1}\circ\cdots\circ D_{s+1}\\). For \\(p\\) parameters, the chain rule gives
+
+$$
+\begin{aligned}
+\nabla^2G_{n,s+1}(x)
+={}&[\mathrm D\Psi(x)]^{\!\top}
+\nabla^2L_{\mathrm{val}}(\Psi(x))\,\mathrm D\Psi(x)\\
+&+\sum_{i=1}^{p}
+\partial_i L_{\mathrm{val}}(\Psi(x))\,\nabla^2\Psi_i(x).
+\end{aligned}
+$$
+
+Here \\(\mathrm D\Psi\\) is the Jacobian, equal to \\(P_{n,s+1}\\) on the reference path. The first term measures propagated parameter spread. The second accounts for the mean displacement generated by nonlinear subsequent updates. Both contribute at the same order in the injected variance.
+
+**4. Accumulating the history.** The future-loss functions also give an exact telescoping identity along the actual noisy trajectory:
+
+$$
+\begin{aligned}
+L_{\mathrm{val}}(\theta_n)-G_{n,0}(\theta_0)
+&=\sum_{s<n}\left[G_{n,s+1}(\theta_{s+1})-G_{n,s}(\theta_s)\right]\\
+&=\sum_{s<n}\left[
+G_{n,s+1}(x_s+h_s)-G_{n,s+1}(x_s)
+\right].
+\end{aligned}
+$$
+
+Take expectations and insert the conditional expansion above. With \\(F_{\mathrm{det}}(n)=G_{n,0}(\theta_0)\\), define
+
+$$
+\mathcal K(n,s)
+:=\frac12\mathbb E\!\left[
+\operatorname{Tr}\!\left(
+\Sigma(\theta_s)\nabla^2G_{n,s+1}(D_s(\theta_s))
+\right)\right].
+$$
+
+Then
+
+$$
+\mathbb E L_{\mathrm{val}}(\theta_n)
+=F_{\mathrm{det}}(n)
++\sum_{s<n}\frac{\eta_s^2}{B_s}\mathcal K(n,s)
++\mathcal R_n,
+\qquad
+\mathcal R_n=\sum_{s<n}\mathbb E[\rho_{n,s}].
+$$
+
+This derivation follows the full noisy history: earlier injections affect the distribution of \\(\theta_s\\), and their interactions enter through that distribution. In an expansion around the deterministic path, cross-time quadratic terms also vanish because centered gradient noises are martingale differences.
+
+**5. What the approximation retains.** If \\(\|\nabla^3G_{n,s+1}\|\le M_{n,s}\\) along the relevant Taylor segments, the remainder satisfies
+
+$$
+|\mathcal R_n|
+\le\frac16\sum_{s<n}
+M_{n,s}\eta_s^3\mathbb E\|\xi_s\|^3.
+$$
+
+Dropping this higher-order remainder gives the response formula in the main text. For a fixed horizon, multiplying every noise term by a small amplitude \\(\epsilon\\) makes the remainder \\(O(\epsilon^3)\\) under uniform derivative and moment bounds, while the leading response is \\(O(\epsilon^2)\\).
+
+The kernel \\(\mathcal K(n,s)\\) includes nonlinear propagation and the state distribution induced by the schedule. A positive power-law lag kernel is a further response model: it becomes computable in the spectral theory and is tested by the LLM surrogate's transfer across schedules.
+
+</details>
 
 ## Where spectral modes enter
 
