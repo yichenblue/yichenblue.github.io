@@ -150,7 +150,9 @@ $$
 The remainder estimate follows from a locally Lipschitz Hessian. Iterating the linear term from \\(\delta_{s+1}^{(s)}=-\eta_s\xi_s\\) gives
 
 $$
-\delta_n^{(s)}\approx-\eta_s A_{n-1}\cdots A_{s+1}\xi_s.
+\delta_n^{(s)}\approx-\eta_s A_{n-1}\cdots A_{s+1}\xi_s,
+\qquad
+A_t=I-\eta_t\nabla^2\mathcal L(\bar\theta_t).
 $$
 
 The empty product is \\(I\\) when \\(n=s+1\\). Every factor is the Jacobian of one update along the reference path; later updates multiply on the left.
@@ -172,14 +174,16 @@ $$
 \begin{aligned}
 &\mathbb E_s\!\left[G_{n,s+1}(\theta_s^+ +h_s)-G_{n,s+1}(\theta_s^+)\right]\\
 &\quad=\frac12\mathbb E_s\!\left[
-h_s^{\!\top}\nabla^2G_{n,s+1}(\theta_s^+)h_s\right]+\rho_{n,s}\\
+h_s^{\!\top}\nabla^2G_{n,s+1}(\theta_s^+)h_s\right]\\
+&\qquad+O\!\left(\eta_s^3\mathbb E_s\|\xi_s\|^3\right)\\
 &\quad=\frac{\eta_s^2}{2B_s}\operatorname{Tr}\!\left[
 \Sigma(\theta_s)\nabla^2G_{n,s+1}(\theta_s^+)
-\right]+\rho_{n,s}.
+\right]\\
+&\qquad+O\!\left(\eta_s^3\mathbb E_s\|\xi_s\|^3\right).
 \end{aligned}
 $$
 
-The first-order term vanishes because \\(\mathbb E_s[h_s]=0\\). The last equality uses \\(\mathbb E[h^{\top}Mh]=\operatorname{Tr}(M\mathbb E[hh^{\top}])\\). The term \\(\rho_{n,s}\\) is the conditional expected Taylor remainder.
+The first-order term vanishes because \\(\mathbb E_s[h_s]=0\\). The last equality uses \\(\mathbb E[h^{\top}Mh]=\operatorname{Tr}(M\mathbb E[hh^{\top}])\\). The \\(O(\cdot)\\) term is the higher-order Taylor remainder, with its constant controlled by the third derivatives of the future-loss function \\(G_{n,s+1}\\) along the Taylor segment.
 
 The Hessian here belongs to the **entire future-loss function**. To see what this includes, write \\(G_{n,s+1}=L_{\mathrm{val}}\circ\Psi\\), where \\(\Psi=D_{n-1}\circ\cdots\circ D_{s+1}\\). For \\(p\\) parameters, the chain rule gives
 
@@ -223,10 +227,10 @@ $$
 \mathbb E L_{\mathrm{val}}(\theta_n)
 =F_{\mathrm{det}}(n)
 +\sum_{s<n}\frac{\eta_s^2}{B_s}\mathcal K(n,s)
-+\mathcal R_n,
-\qquad
-\mathcal R_n=\sum_{s<n}\mathbb E[\rho_{n,s}].
++\mathcal R_n.
 $$
+
+Here \\(\mathcal R_n\\) collects the expected higher-order remainders over all updates.
 
 This derivation follows the full noisy history: earlier injections affect the distribution of \\(\theta_s\\), and their interactions enter through that distribution. In an expansion around the deterministic path, cross-time quadratic terms also vanish because centered gradient noises are martingale differences.
 
