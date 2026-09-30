@@ -124,7 +124,7 @@ $$
 =\frac{\Sigma(\theta_t)}{B_t}.
 $$
 
-The parameter kick is \\(h_t=-\eta_t\xi_t\\). Hence \\(\operatorname{Cov}_t(h_t)=\eta_t^2\Sigma(\theta_t)/B_t\\) and \\(\mathbb E_t\|h_t\|^2=\eta_t^2\operatorname{Tr}\Sigma(\theta_t)/B_t\\). This explains the variance prefactor and the corresponding root-mean-square amplitude.
+The parameter kick is \\(h_t=-\eta_t\xi_t\\). Hence \\(\operatorname{Cov}_t(h_t)=\eta_t^2\Sigma(\theta_t)/B_t\\) and \\(\mathbb E_t\lVert h_t\rVert^2=\eta_t^2\operatorname{Tr}\Sigma(\theta_t)/B_t\\). This explains the variance prefactor and the corresponding root-mean-square amplitude.
 
 **2. Propagating one kick.** Define the full-gradient update map and its reference trajectory by
 
@@ -181,7 +181,7 @@ h_s^{\!\top}\nabla^2G_{n,s+1}(x_s)h_s\right]+\rho_{n,s}\\
 \end{aligned}
 $$
 
-The first-order term vanishes because \\(\mathbb E_s[h_s]=0\\). The last equality uses \\(\mathbb E[h^{\!\top}Mh]=\operatorname{Tr}(M\mathbb E[hh^{\!\top}])\\). The term \\(\rho_{n,s}\\) is the conditional expected Taylor remainder.
+The first-order term vanishes because \\(\mathbb E_s[h_s]=0\\). The last equality uses \\(\mathbb E[h^{\top}Mh]=\operatorname{Tr}(M\mathbb E[hh^{\top}])\\). The term \\(\rho_{n,s}\\) is the conditional expected Taylor remainder.
 
 The Hessian here belongs to the **entire future-loss function**. To see what this includes, write \\(G_{n,s+1}=L_{\mathrm{val}}\circ\Psi\\), where \\(\Psi=D_{n-1}\circ\cdots\circ D_{s+1}\\). For \\(p\\) parameters, the chain rule gives
 
@@ -232,7 +232,7 @@ $$
 
 This derivation follows the full noisy history: earlier injections affect the distribution of \\(\theta_s\\), and their interactions enter through that distribution. In an expansion around the deterministic path, cross-time quadratic terms also vanish because centered gradient noises are martingale differences.
 
-**5. What the approximation retains.** If \\(\|\nabla^3G_{n,s+1}\|\le M_{n,s}\\) along the relevant Taylor segments, the remainder satisfies
+**5. What the approximation retains.** If \\(\lVert\nabla^3G_{n,s+1}\rVert\le M_{n,s}\\) along the relevant Taylor segments, the remainder satisfies
 
 $$
 |\mathcal R_n|
@@ -248,7 +248,7 @@ The kernel \\(\mathcal K(n,s)\\) includes nonlinear propagation and the state di
 
 ## Where spectral modes enter
 
-A frozen-feature model makes the propagation explicit. It predicts with \\(f_a(x)=a^{\!\top}\phi(x)\\), where the feature map \\(\phi\\) is fixed and only the coefficients \\(a\\) are trained. Squared loss gives a fixed curvature matrix \\(H\\). If \\(u_j\\) is an eigenvector and \\(\rho_{j,t}\\) is the perturbation along it, full-gradient training gives
+A frozen-feature model makes the propagation explicit. It predicts with \\(f_a(x)=a^{\top}\phi(x)\\), where the feature map \\(\phi\\) is fixed and only the coefficients \\(a\\) are trained. Squared loss gives a fixed curvature matrix \\(H\\). If \\(u_j\\) is an eigenvector and \\(\rho_{j,t}\\) is the perturbation along it, full-gradient training gives
 
 $$
 Hu_j=\lambda_j u_j,
