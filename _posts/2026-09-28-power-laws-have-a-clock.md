@@ -51,7 +51,7 @@ $$
 \operatorname{Cov}_t(\xi_t)=\frac{\Sigma(\theta_t)}{B_t}.
 $$
 
-Here \\(\Sigma(\theta_t)\\) is the covariance of a single-example gradient; the expectations condition on the training history. Averaging independent examples divides the covariance by \\(B_t\\), and multiplying the gradient by \\(\eta_t\\) multiplies that covariance by \\(\eta_t^2\\). The injected parameter noise therefore has covariance \\(\eta_t^2\Sigma(\theta_t)/B_t\\): its variance prefactor is \\(\eta_t^2/B_t\\), while its root-mean-square amplitude scales as \\(\eta_t/\sqrt{B_t}\\) at fixed \\(\Sigma\\).
+Here \\(\Sigma(\theta_t)\\) is the covariance of a single-example gradient; the expectations condition on the training history. Averaging independent examples divides the covariance by \\(B_t\\), and multiplying the gradient by \\(\eta_t\\) multiplies that covariance by \\(\eta_t^2\\). The injected parameter noise therefore has covariance \\(\eta_t^2\Sigma(\theta_t)/B_t\\): its variance prefactor is \\(\eta_t^2/B_t\\), while the typical size of the parameter perturbation scales as \\(\eta_t/\sqrt{B_t}\\) at fixed \\(\Sigma\\).
 
 Now follow one injection. Imagine running full-gradient training from the same initialization, producing a reference trajectory \\(\bar\theta_t\\), and adding a small perturbation at update \\(s\\). Let \\(\delta_t^{(s)}\\) be the resulting displacement from the reference path. Subtracting the two gradient updates and Taylor-expanding gives
 
@@ -74,13 +74,13 @@ $$
 
 Each matrix \\(A_t\\) describes how one update changes a nearby perturbation. Their product tells us how training transports, amplifies, or forgets an earlier fluctuation. The model remains nonlinear: these matrices change along its trajectory.
 
-We observe validation loss \\(L_{\mathrm{val}}(\theta_n)\\), a single number summarizing this large parameter state. To connect the perturbation to this observable, let \\(G(x)\\) be the final validation loss obtained by running the remaining full-gradient updates from a post-update state \\(x\\). For a small zero-mean kick \\(h\\), Taylor expansion gives
+We observe validation loss \\(L_{\mathrm{val}}(\theta_n)\\), a single number summarizing this large parameter state. To connect the perturbation to this observable, let \\(G(\theta)\\) be the final validation loss obtained by running the remaining full-gradient updates from a post-update parameter state \\(\theta\\). For a small zero-mean kick \\(h\\), Taylor expansion gives
 
 $$
-\mathbb E[G(x+h)]-G(x)
+\mathbb E[G(\theta+h)]-G(\theta)
 \approx
 \frac12\operatorname{Tr}\!\left[
-\operatorname{Cov}(h)\nabla^2G(x)
+\operatorname{Cov}(h)\nabla^2G(\theta)
 \right].
 $$
 
@@ -124,12 +124,12 @@ $$
 =\frac{\Sigma(\theta_t)}{B_t}.
 $$
 
-The parameter kick is \\(h_t=-\eta_t\xi_t\\). Hence \\(\operatorname{Cov}_t(h_t)=\eta_t^2\Sigma(\theta_t)/B_t\\) and \\(\mathbb E_t\lVert h_t\rVert^2=\eta_t^2\operatorname{Tr}\Sigma(\theta_t)/B_t\\). This explains the variance prefactor and the corresponding root-mean-square amplitude.
+The parameter kick is \\(h_t=-\eta_t\xi_t\\). Hence \\(\operatorname{Cov}_t(h_t)=\eta_t^2\Sigma(\theta_t)/B_t\\) and \\(\mathbb E_t\lVert h_t\rVert^2=\eta_t^2\operatorname{Tr}\Sigma(\theta_t)/B_t\\). This explains the variance prefactor and the typical size of the parameter perturbation.
 
 **2. Propagating one kick.** Define the full-gradient update map and its reference trajectory by
 
 $$
-D_t(x)=x-\eta_t\nabla\mathcal L(x),
+D_t(\theta)=\theta-\eta_t\nabla\mathcal L(\theta),
 \qquad
 \bar\theta_{t+1}=D_t(\bar\theta_t),
 \qquad
@@ -150,9 +150,7 @@ $$
 The remainder estimate follows from a locally Lipschitz Hessian. Iterating the linear term from \\(\delta_{s+1}^{(s)}=-\eta_s\xi_s\\) gives
 
 $$
-\delta_n^{(s)}\approx-\eta_s P_{n,s+1}\xi_s,
-\qquad
-P_{n,s+1}=A_{n-1}\cdots A_{s+1}.
+\delta_n^{(s)}\approx-\eta_s A_{n-1}\cdots A_{s+1}\xi_s.
 $$
 
 The empty product is \\(I\\) when \\(n=s+1\\). Every factor is the Jacobian of one update along the reference path; later updates multiply on the left.
@@ -160,23 +158,23 @@ The empty product is \\(I\\) when \\(n=s+1\\). Every factor is the Jacobian of o
 **3. Measuring the effect on final loss.** Define a future-loss function
 
 $$
-G_{n,s}(x)
-=L_{\mathrm{val}}\!\left((D_{n-1}\circ\cdots\circ D_s)(x)\right),
+G_{n,s}(\theta)
+=L_{\mathrm{val}}\!\left((D_{n-1}\circ\cdots\circ D_s)(\theta)\right),
 \qquad
-G_{n,n}(x)=L_{\mathrm{val}}(x).
+G_{n,n}(\theta)=L_{\mathrm{val}}(\theta).
 $$
 
 It takes a parameter state just before update \\(s\\), runs the remaining full-gradient updates, and returns the final validation loss. In particular, \\(G_{n,s}=G_{n,s+1}\circ D_s\\).
 
-For the actual SGD state, set \\(x_s=D_s(\theta_s)\\), so \\(\theta_{s+1}=x_s+h_s\\). Conditional Taylor expansion gives
+For the actual SGD state, let \\(\theta_s^+=D_s(\theta_s)\\) denote the parameter state after the full-gradient step and before the perturbation, so \\(\theta_{s+1}=\theta_s^+ +h_s\\). Conditional Taylor expansion gives
 
 $$
 \begin{aligned}
-&\mathbb E_s\!\left[G_{n,s+1}(x_s+h_s)-G_{n,s+1}(x_s)\right]\\
+&\mathbb E_s\!\left[G_{n,s+1}(\theta_s^+ +h_s)-G_{n,s+1}(\theta_s^+)\right]\\
 &\quad=\frac12\mathbb E_s\!\left[
-h_s^{\!\top}\nabla^2G_{n,s+1}(x_s)h_s\right]+\rho_{n,s}\\
+h_s^{\!\top}\nabla^2G_{n,s+1}(\theta_s^+)h_s\right]+\rho_{n,s}\\
 &\quad=\frac{\eta_s^2}{2B_s}\operatorname{Tr}\!\left[
-\Sigma(\theta_s)\nabla^2G_{n,s+1}(x_s)
+\Sigma(\theta_s)\nabla^2G_{n,s+1}(\theta_s^+)
 \right]+\rho_{n,s}.
 \end{aligned}
 $$
@@ -187,15 +185,15 @@ The Hessian here belongs to the **entire future-loss function**. To see what thi
 
 $$
 \begin{aligned}
-\nabla^2G_{n,s+1}(x)
-={}&[\mathrm D\Psi(x)]^{\!\top}
-\nabla^2L_{\mathrm{val}}(\Psi(x))\,\mathrm D\Psi(x)\\
+\nabla^2G_{n,s+1}(\theta)
+={}&[\mathrm D\Psi(\theta)]^{\!\top}
+\nabla^2L_{\mathrm{val}}(\Psi(\theta))\,\mathrm D\Psi(\theta)\\
 &+\sum_{i=1}^{p}
-\partial_i L_{\mathrm{val}}(\Psi(x))\,\nabla^2\Psi_i(x).
+\partial_i L_{\mathrm{val}}(\Psi(\theta))\,\nabla^2\Psi_i(\theta).
 \end{aligned}
 $$
 
-Here \\(\mathrm D\Psi\\) is the Jacobian, equal to \\(P_{n,s+1}\\) on the reference path. The first term measures propagated parameter spread. The second accounts for the mean displacement generated by nonlinear subsequent updates. Both contribute at the same order in the injected variance.
+Here \\(\mathrm D\Psi\\) is the Jacobian, equal to \\(A_{n-1}\cdots A_{s+1}\\) on the reference path. The first term measures propagated parameter spread. The second accounts for the mean displacement generated by nonlinear subsequent updates. Both contribute at the same order in the injected variance.
 
 **4. Accumulating the history.** The future-loss functions also give an exact telescoping identity along the actual noisy trajectory:
 
@@ -204,7 +202,7 @@ $$
 L_{\mathrm{val}}(\theta_n)-G_{n,0}(\theta_0)
 &=\sum_{s<n}\left[G_{n,s+1}(\theta_{s+1})-G_{n,s}(\theta_s)\right]\\
 &=\sum_{s<n}\left[
-G_{n,s+1}(x_s+h_s)-G_{n,s+1}(x_s)
+G_{n,s+1}(\theta_s^+ +h_s)-G_{n,s+1}(\theta_s^+)
 \right].
 \end{aligned}
 $$
