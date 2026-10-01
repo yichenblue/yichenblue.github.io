@@ -104,9 +104,11 @@ The general response depends on the evolving trajectory and both times \\((n,s)\
 <details markdown="1">
 <summary><strong>Derivation details: from SGD updates to the memory response</strong></summary>
 
-The argument below uses discrete SGD throughout. Fix an initialization, a deterministic learning-rate and batch-size schedule, and a finite terminal update \\(n\\). Assume fresh independent batches, unbiased stochastic gradients, and enough smoothness and moments for the Taylor expansions and expectations below.
+We follow \\(n\\) SGD updates, numbered \\(t=0,\ldots,n-1\\). The vector \\(\theta_t\\) contains the model's \\(p\\) parameters before update \\(t\\), so \\(\theta_n\\) is the final parameter vector. The initial parameters \\(\theta_0\\), learning rates \\(\eta_t\\), and batch sizes \\(B_t\\) are fixed in advance. Each update draws fresh, independent examples from the same data distribution. We assume the derivatives used below exist and the stated averages are finite.
 
-**1. The injected covariance.** Write \\(g(\theta;z)=\nabla_\theta\ell(f_\theta;z)\\) for a single-example gradient. The mini-batch estimate and its sampling error are
+**1. The size of the sampling noise.** Let \\(f_\theta\\) be the model with parameters \\(\theta\\), \\(z\\) one training example, and \\(\ell(f_\theta;z)\\) its loss. The average training loss is \\(\mathcal L(\theta)=\mathbb E_z[\ell(f_\theta;z)]\\), where \\(\mathbb E_z\\) averages over a fresh example. The symbol \\(\nabla\\) collects derivatives with respect to the parameters into a vector. Thus \\(g(\theta;z)=\nabla_\theta\ell(f_\theta;z)\\) is the gradient from one example, and \\(\nabla\mathcal L(\theta)\\) is its average over the data.
+
+At update \\(t\\), let \\(z_{t,i}\\) be example \\(i\\) in the batch. Write \\(\widehat g_t\\) for the average gradient of these \\(B_t\\) examples and \\(\xi_t\\) for its difference from the average over all data:
 
 $$
 \widehat g_t=\frac1{B_t}\sum_{i=1}^{B_t}g(\theta_t;z_{t,i}),
@@ -114,7 +116,9 @@ $$
 \xi_t=\widehat g_t-\nabla\mathcal L(\theta_t).
 $$
 
-Conditioning on the history before drawing batch \\(t\\) fixes \\(\theta_t\\). Each centered sample gradient has mean zero and covariance \\(\Sigma(\theta_t)\\). Independence removes the cross-sample terms, so
+Write \\(\mathbb E_t\\) for an average over the new batch while holding all earlier batches fixed; \\(\mathbb E\\) without a subscript averages over all batches. Let \\(\Sigma(\theta_t)\\) record how a single-example gradient fluctuates around its average: each matrix entry is the average product of two gradient coordinates after their means are subtracted. A superscript \\(\top\\) swaps rows and columns, turning a column vector into a row vector. Thus \\(\xi_t\xi_t^{\top}\\) lists these coordinate products for the batch error.
+
+Each example's error has average zero. Errors from different examples are independent, so their products average to zero. Only the \\(B_t\\) same-example terms remain:
 
 $$
 \mathbb E_t[\xi_t]=0,
@@ -124,9 +128,9 @@ $$
 =\frac{\Sigma(\theta_t)}{B_t}.
 $$
 
-The parameter kick is \\(h_t=-\eta_t\xi_t\\). Hence \\(\operatorname{Cov}_t(h_t)=\eta_t^2\Sigma(\theta_t)/B_t\\) and \\(\mathbb E_t\lVert h_t\rVert^2=\eta_t^2\operatorname{Tr}\Sigma(\theta_t)/B_t\\). This explains the variance prefactor and the typical size of the parameter perturbation.
+The extra parameter change caused by this error is \\(h_t=-\eta_t\xi_t\\). Multiplying by \\(\eta_t\\) multiplies its squared size by \\(\eta_t^2\\). Here \\(\lVert h_t\rVert^2\\) means the sum of the squared parameter changes, and \\(\operatorname{Tr}\\) adds the diagonal entries of a matrix. Therefore \\(\mathbb E_t\lVert h_t\rVert^2=\eta_t^2\operatorname{Tr}\Sigma(\theta_t)/B_t\\). This is why the variance scale is \\(\eta_t^2/B_t\\).
 
-**2. Propagating one kick.** Define the full-gradient update map and its reference trajectory by
+**2. How one perturbation travels through later updates.** Let \\(D_t(\theta)\\) be the parameters after one update using the average gradient, with no sampling noise. Let \\(\bar\theta_t\\) be the parameters reached when every update uses that average, starting from the same \\(\theta_0\\):
 
 $$
 D_t(\theta)=\theta-\eta_t\nabla\mathcal L(\theta),
@@ -136,7 +140,9 @@ D_t(\theta)=\theta-\eta_t\nabla\mathcal L(\theta),
 \bar\theta_0=\theta_0.
 $$
 
-Inject a kick only at update \\(s\\), then follow full-gradient updates. For \\(t\ge s+1\\), subtracting the reference update yields
+Choose one update \\(s\\). Add \\(h_s=-\eta_s\xi_s\\) at that update, but use the average gradient at all other updates. Let \\(\delta_t^{(s)}\\) be the difference between this perturbed run and \\(\bar\theta_t\\). The superscript \\((s)\\) labels where we added the perturbation; it is not a power.
+
+The matrix \\(I\\) leaves a vector unchanged. The notation \\(\nabla^2\\) collects second derivatives, which describe how the gradient changes when the parameters change. Assume these second derivatives change at most in proportion to the parameter change nearby. The \\(O(\cdot)\\) below means an error bounded by a constant times the expression in parentheses, for small perturbations. Subtracting the two updates and expanding in \\(\delta_t^{(s)}\\), for \\(t\ge s+1\\), gives
 
 $$
 \begin{aligned}
@@ -147,7 +153,7 @@ $$
 \end{aligned}
 $$
 
-The remainder estimate follows from a locally Lipschitz Hessian. Iterating the linear term from \\(\delta_{s+1}^{(s)}=-\eta_s\xi_s\\) gives
+Immediately after the perturbed update, \\(\delta_{s+1}^{(s)}=-\eta_s\xi_s\\). Let \\(A_t\\) denote the matrix multiplying the displacement in the first term above. Keeping this term and applying the following updates in order gives
 
 $$
 \delta_n^{(s)}\approx-\eta_s A_{n-1}\cdots A_{s+1}\xi_s,
@@ -155,9 +161,9 @@ $$
 A_t=I-\eta_t\nabla^2\mathcal L(\bar\theta_t).
 $$
 
-The empty product is \\(I\\) when \\(n=s+1\\). Every factor is the Jacobian of one update along the reference path; later updates multiply on the left.
+The matrix \\(A_{s+1}\\) acts first, followed by \\(A_{s+2}\\), and so on. Each matrix tells us how one update changes a small difference in parameters. If \\(n=s+1\\), no later updates remain, so the product is \\(I\\).
 
-**3. Measuring the effect on final loss.** Define a future-loss function
+**3. How the perturbation changes the final loss.** Write \\(L_{\mathrm{val}}(\theta)\\) for the validation loss at parameters \\(\theta\\). Define \\(G_{n,s}(\theta)\\) to mean: start from \\(\theta\\) just before update \\(s\\), run all remaining updates using the average gradient, and measure validation loss at the end. The symbol \\(\circ\\) means applying one function after another, starting from the right:
 
 $$
 G_{n,s}(\theta)
@@ -166,9 +172,9 @@ G_{n,s}(\theta)
 G_{n,n}(\theta)=L_{\mathrm{val}}(\theta).
 $$
 
-It takes a parameter state just before update \\(s\\), runs the remaining full-gradient updates, and returns the final validation loss. In particular, \\(G_{n,s}=G_{n,s+1}\circ D_s\\).
+When \\(s=n\\), no updates remain and we simply evaluate the loss. Also, \\(G_{n,s}=G_{n,s+1}\circ D_s\\): taking update \\(s\\) first and then running the rest gives the same final loss.
 
-To connect this function to the propagation formula above, write \\(G_{n,s+1}=L_{\mathrm{val}}\circ\Psi\\), where \\(\Psi=D_{n-1}\circ\cdots\circ D_{s+1}\\) is the map from the post-update state to the final parameters. For \\(p\\) parameters, the chain rule gives
+To connect this loss to the matrix product above, write \\(\Psi=D_{n-1}\circ\cdots\circ D_{s+1}\\) for the remaining updates after update \\(s\\). It returns the final parameters, so \\(G_{n,s+1}=L_{\mathrm{val}}\circ\Psi\\). If no updates remain, \\(\Psi\\) leaves its input unchanged. Its coordinate \\(\Psi_i\\) returns final parameter \\(i\\), for \\(i=1,\ldots,p\\). The matrix \\(\frac{\partial\Psi}{\partial\theta}\\) lists how each final parameter changes with each starting parameter; \\(\partial_i L_{\mathrm{val}}\\) is the derivative of validation loss with respect to parameter \\(i\\). Differentiating the final loss twice gives
 
 $$
 \begin{aligned}
@@ -180,7 +186,7 @@ $$
 \end{aligned}
 $$
 
-Here \\(\frac{\partial\Psi}{\partial\theta}\\) is the Jacobian, equal to \\(A_{n-1}\cdots A_{s+1}\\) on the reference path. Substituting this product gives the explicit connection to the propagation formula:
+At \\(\bar\theta_{s+1}\\), the remaining updates end at \\(\bar\theta_n\\), and \\(\frac{\partial\Psi}{\partial\theta}\\) equals \\(A_{n-1}\cdots A_{s+1}\\). Substituting gives
 
 $$
 \begin{aligned}
@@ -193,9 +199,9 @@ $$
 \end{aligned}
 $$
 
-Thus the propagation matrices enter the future-loss curvature that determines the memory response below. The first term measures propagated parameter spread. The sum is the second-order contribution from nonlinear propagation: it accounts for the mean displacement generated by nonlinear subsequent updates. Both contribute at the same order in the injected variance, so we keep the Hessian of the **entire future-loss function**.
+This is where the earlier matrix product enters the loss calculation. The first term measures how loss responds to the spread in final parameters. The sum captures another effect: a perturbation with average zero can shift the average final parameters because the later updates are nonlinear. Both effects can contribute at the same order in the squared perturbation size, so we keep both terms.
 
-For the actual SGD state, let \\(\theta_s^+=D_s(\theta_s)\\) denote the parameter state after the full-gradient step and before the perturbation, so \\(\theta_{s+1}=\theta_s^+ +h_s\\). Conditional Taylor expansion gives
+Now return to the actual SGD run, where every update uses a sampled batch. Let \\(\theta_s^+=D_s(\theta_s)\\) be the parameters after the average-gradient part of update \\(s\\), before adding its sampling error. The \\(+\\) is just a label for this intermediate state. The complete update is \\(\theta_{s+1}=\theta_s^+ +h_s\\). Hold the earlier batches fixed, expand the future loss in \\(h_s\\), and average over the new batch:
 
 $$
 \begin{aligned}
@@ -210,9 +216,9 @@ h_s^{\!\top}\nabla^2G_{n,s+1}(\theta_s^+)h_s\right]
 \end{aligned}
 $$
 
-The first-order term vanishes because \\(\mathbb E_s[h_s]=0\\). The last equality uses \\(\mathbb E[h^{\top}Mh]=\operatorname{Tr}(M\mathbb E[hh^{\top}])\\). The \\(O(\cdot)\\) term is the higher-order Taylor remainder, with its constant controlled by the third derivatives of the future-loss function \\(G_{n,s+1}\\) along the Taylor segment.
+The term proportional to \\(h_s\\) averages to zero because \\(\mathbb E_s[h_s]=0\\). The second equality uses \\(\mathbb E_s[h_sh_s^{\top}]=\eta_s^2\Sigma(\theta_s)/B_s\\); the trace adds the resulting contributions across parameter coordinates. The \\(O(\cdot)\\) term is the error left after keeping terms through second order. Its constant is controlled by third derivatives of \\(G_{n,s+1}\\) between \\(\theta_s^+\\) and \\(\theta_s^+ +h_s\\).
 
-**4. Accumulating the history.** The future-loss functions also give an exact telescoping identity along the actual noisy trajectory:
+**4. Adding the effects of all updates.** Write one difference for each update \\(s=0,\ldots,n-1\\). Adding them makes all the intermediate values cancel, leaving only the final loss minus the loss obtained without sampling noise. Below, \\(\sum_{s<n}\\) means adding over these updates:
 
 $$
 \begin{aligned}
@@ -224,7 +230,7 @@ G_{n,s+1}(\theta_s^+ +h_s)-G_{n,s+1}(\theta_s^+)
 \end{aligned}
 $$
 
-Take expectations and insert the conditional expansion above. With \\(F(n)=G_{n,0}(\theta_0)\\), define
+Now average over all batches. Define \\(F(n)=G_{n,0}(\theta_0)\\) as the final validation loss when every update uses the average gradient. Define \\(K(n,s)\\) as the coefficient multiplying the noise scale \\(\eta_s^2/B_s\\) from update \\(s\\) in the averaged expression above:
 
 $$
 K(n,s)
@@ -234,7 +240,7 @@ K(n,s)
 \right)\right].
 $$
 
-Then
+Let \\(\mathcal E_n\\) be the sum of the higher-order errors from all updates, averaged over all batches. Inserting the expansion from step 3 gives
 
 $$
 \mathbb E L_{\mathrm{val}}(\theta_n)
@@ -243,11 +249,9 @@ $$
 +\mathcal E_n.
 $$
 
-Here \\(\mathcal E_n\\) collects the expected higher-order remainders over all updates.
+Earlier noise has not been removed from this calculation: \\(\theta_s\\) already depends on all preceding batches. The average defining \\(K(n,s)\\) therefore includes how earlier noise changes the state reached at update \\(s\\).
 
-This derivation follows the full noisy history: earlier injections affect the distribution of \\(\theta_s\\), and their interactions enter through that distribution. In an expansion around the deterministic path, cross-time quadratic terms also vanish because centered gradient noises are martingale differences.
-
-**5. What the approximation retains.** If \\(\lVert\nabla^3G_{n,s+1}\rVert\le M_{n,s}\\) along the relevant Taylor segments, the remainder satisfies
+**5. The error left by the approximation.** The notation \\(\nabla^3G_{n,s+1}\\) collects the third derivatives of the future loss. Its norm is the largest absolute value it gives when applied to three parameter directions of length one. Let \\(M_{n,s}\\) be an upper bound on this norm between \\(\theta_s^+\\) and \\(\theta_s^+ +h_s\\), valid for all sampled histories under consideration. These derivatives control the error left by the second-order expansion, giving
 
 $$
 |\mathcal E_n|
@@ -255,9 +259,9 @@ $$
 M_{n,s}\eta_s^3\mathbb E\|\xi_s\|^3.
 $$
 
-Dropping this higher-order remainder gives the response formula in the main text. For a fixed horizon, multiplying every noise term by a small amplitude \\(\epsilon\\) makes the remainder \\(O(\epsilon^3)\\) under uniform derivative and moment bounds, while the leading response is \\(O(\epsilon^2)\\).
+Leaving out \\(\mathcal E_n\\) gives the approximate response formula in the main text. To see the difference in size, let \\(\epsilon>0\\) be a factor multiplying every sampling-noise term, with the number of updates \\(n\\) fixed. The retained noise contribution scales as \\(\epsilon^2\\), while the error is bounded by a constant times \\(\epsilon^3\\), provided the derivative bounds and the averages of \\(\lVert\xi_s\rVert^3\\) remain bounded as \\(\epsilon\\) shrinks.
 
-The kernel \\(K(n,s)\\) includes nonlinear propagation and the state distribution induced by the schedule. A positive power-law lag kernel is a further response model: it becomes computable in the spectral theory and is tested by the LLM surrogate's transfer across schedules.
+The calculation tells us what \\(K(n,s)\\) measures: how noise added at update \\(s\\) affects loss at update \\(n\\), including the effects of the states reached during training. Describing that response by a positive power law in the time since the perturbation is a further modeling step. The next sections explain how the spectral model produces such a law and how the LLM experiments test whether it predicts loss under a new schedule.
 
 </details>
 
