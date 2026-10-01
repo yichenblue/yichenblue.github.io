@@ -382,18 +382,18 @@ At intrinsic time \\(T\\), modes with \\(\lambda\gg1/T\\) have mostly decayed, w
 
 Let \\(\nu_W^{\mathcal F}((0,x])\\) be the target-weighted spectral mass in \\(0<\lambda\le x\\), and \\(\nu_W^{\mathcal K}((0,x])\\) the sum of squared eigenvalues in that interval. These weight forcing and memory, respectively; \\(W\\) denotes the random-feature realization.
 
-Write \\(F_{W,>0}\\) for forcing with the permanent error floor removed, and \\(K_W\\) for the one-injection memory kernel at constant schedules. Their decay exponents are \\(q_{\mathcal F}\\) and \\(q_{\mathcal K}\\); \\(\ell_{\mathcal F}\\) and \\(\ell_{\mathcal K}\\) are slowly varying factors, allowing corrections such as logarithms.
+Write \\(F_{W,>0}\\) for forcing with the permanent error floor removed, and \\(K_W\\) for the one-injection memory kernel at constant schedules. Their decay exponents are \\(q_{\mathcal F},q_{\mathcal K}>0\\).
 
-Our spectral theorem gives necessary and sufficient conditions for these component powers. It considers a joint large-time, large-width limit, so progressively slower modes remain available:
+Our spectral theorem gives necessary and sufficient conditions for these component powers. It considers a joint large-time, large-width limit, so progressively slower modes remain available. Informally:
 
 $$
 \begin{aligned}
-\nu_W^{\mathcal F}((0,x])\asymp x^{q_{\mathcal F}}\ell_{\mathcal F}(1/x)
+\nu_W^{\mathcal F}((0,x])\propto x^{q_{\mathcal F}}
 &\quad\Longleftrightarrow\quad
-F_{W,>0}(T)\asymp T^{-q_{\mathcal F}}\ell_{\mathcal F}(T),\\
-\nu_W^{\mathcal K}((0,x])\asymp x^{q_{\mathcal K}}\ell_{\mathcal K}(1/x)
+F_{W,>0}(T)\propto T^{-q_{\mathcal F}},\\
+\nu_W^{\mathcal K}((0,x])\propto x^{q_{\mathcal K}}
 &\quad\Longleftrightarrow\quad
-\frac{B}{\eta^2}K_W(T)\asymp T^{-q_{\mathcal K}}\ell_{\mathcal K}(T).
+\frac{B}{\eta^2}K_W(T)\propto T^{-q_{\mathcal K}}.
 \end{aligned}
 $$
 
@@ -471,7 +471,7 @@ At the marginal boundary \\(q_{\mathcal K}=1\\), cumulative memory grows logarit
   <figcaption><strong>Changing the schedule can preserve, change, or destroy the loss power law.</strong> The outcome depends on how quickly \(B/\eta\) grows. The flat part of the black boundary shows where faster growth stops improving the noise-decay exponent: old noise still sets the rate. At \(q_{\mathcal K}=1\), logarithmic factors enter.</figcaption>
 </figure>
 
-We can also work backward. Below the long-memory ceiling, the extra loss identifies the long-time shape of \\(B/\eta\\), including slower-varying factors, but not learning rate and batch size separately. At the ceiling, different ratio paths produce the same decay, so this identification is lost.
+We can also work backward. Below the long-memory ceiling, the extra loss identifies the long-time shape of \\(B/\eta\\), but not learning rate and batch size separately. At the ceiling, different ratio paths produce the same decay, so this identification is lost.
 
 ## From schedule laws to schedule design
 
