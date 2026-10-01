@@ -269,7 +269,7 @@ The calculation tells us what \\(K(n,s)\\) measures: how noise added at update \
 
 Random-feature models provide a tractable setting for studying these dynamics, as in [Paquette et al.'s analysis of compute-optimal scaling](https://proceedings.neurips.cc/paper_files/paper/2024/hash/1dccfc3ee01871d05e33457c61037d59-Abstract-Conference.html).
 
-Consider a fixed-feature model \\(f_a(x)=a^{\top}\phi(x)\\), where only \\(a\\) is trained. Under squared loss, its Hessian \\(H\\) is constant. Let \\((\lambda_j,u_j)\\) be its eigenpairs and \\(\rho_{j,t}\\) the component of a parameter perturbation along \\(u_j\\). Full-gradient updates give
+Consider a fixed-feature model \\(f_a(x)=a^{\top}\phi(x)\\), where only \\(a\\) is trained. Under squared loss, its Hessian \\(H\\) is constant. Let \\(a_\star\\) be a minimizer, \\((\lambda_j,u_j)\\) the eigenpairs of \\(H\\) with unit eigenvectors, and \\(\rho_{j,t}=u_j^\top(a_t-a_\star)\\) the error along direction \\(u_j\\). Full-gradient updates give
 
 $$
 Hu_j=\lambda_j u_j,
@@ -277,7 +277,7 @@ Hu_j=\lambda_j u_j,
 \rho_{j,t+1}=(1-\eta_t\lambda_j)\rho_{j,t}.
 $$
 
-These **spectral modes** have different learning speeds. At small learning rates, directions with large positive \\(\lambda_j\\) relax quickly, while those with small \\(\lambda_j\\) retain errors for much longer.
+These **spectral modes** have different learning speeds. At small learning rates, directions with large positive \\(\lambda_j\\) relax quickly, while those with small \\(\lambda_j\\) retain errors for much longer. The derivation at the end of this section connects the squared-loss gradient to this recurrence and the learning time scale \\(1/\lambda_j\\).
 
 In our random-feature model, summing the mode contributions gives an exact equation for the expected prediction risk \\(R_t\\). Here \\(F_t\\) is the contribution from initialization, \\(\sigma^2\\) is the label-noise variance, and \\(K_{t,s}\\) is the memory kernel:
 
@@ -290,6 +290,89 @@ The factor \\(R_s+\sigma^2\\) is the noise source: it combines remaining predict
 At constant learning rate \\(\eta\\) and batch size \\(B\\), use **intrinsic time** \\(T=\eta t\\). A slow mode's squared error decays approximately as \\(e^{-2\lambda_j T}\\). Forcing weights these decays by the initial error in each direction. Memory weights them by noise injection and their contribution to loss. The same spectrum can therefore produce different forcing and memory exponents.
 
 **The learning speeds tell us how long errors last. The schedule tells us how much new noise is added. Together, they determine the loss curve.**
+
+<details markdown="1">
+<summary><strong>Derivation details: from squared loss to learning time</strong></summary>
+
+**1. From squared loss to the gradient.** Let \\(\phi(x)\\) be the fixed feature vector for input \\(x\\), \\(y\\) its target, and \\(a\\) the trainable weights. Define the population squared loss and its Hessian:
+
+$$
+\mathcal L(a)=\frac12\mathbb E\!\left[(a^\top\phi(x)-y)^2\right],
+\qquad
+H=\mathbb E[\phi(x)\phi(x)^\top].
+$$
+
+For a minimizer \\(a_\star\\), the condition \\(\nabla\mathcal L(a_\star)=0\\) gives \\(\mathbb E[\phi(x)y]=Ha_\star\\). Hence
+
+$$
+\nabla\mathcal L(a)
+=\mathbb E\!\left[\phi(x)(a^\top\phi(x)-y)\right]
+=H(a-a_\star).
+$$
+
+The gradient is the remaining parameter error transformed by \\(H\\). This identity is exact for squared loss with fixed features.
+
+**2. From the gradient to error dynamics.** First consider full-gradient training, without batch-sampling noise. With learning rate \\(\eta_t\\) and parameter error \\(e_t=a_t-a_\star\\), the update becomes
+
+$$
+\begin{aligned}
+a_{t+1}&=a_t-\eta_t\nabla\mathcal L(a_t),\\
+e_{t+1}&=e_t-\eta_tHe_t=(I-\eta_tH)e_t.
+\end{aligned}
+$$
+
+Let \\((\lambda_j,u_j)\\) be an orthonormal eigensystem of the symmetric matrix \\(H\\), and define \\(\rho_{j,t}=u_j^\top e_t\\). Projecting the update onto \\(u_j\\) gives
+
+$$
+\begin{aligned}
+\rho_{j,t+1}
+&=u_j^\top(I-\eta_tH)e_t\\
+&=(1-\eta_t\lambda_j)\rho_{j,t},
+\qquad Hu_j=\lambda_j u_j.
+\end{aligned}
+$$
+
+Along direction \\(u_j\\), the gradient is \\(\lambda_j\\) times the remaining error. In the small-step regime, one update therefore removes a fraction \\(\eta_t\lambda_j\\) of that error.
+
+**3. From the recurrence to a learning time scale.** Iterating from the initial error \\(\rho_{j,0}\\) gives
+
+$$
+\rho_{j,t}
+=\rho_{j,0}\prod_{s<t}(1-\eta_s\lambda_j).
+$$
+
+For \\(\eta_s\lambda_j\ll1\\), using \\(\log(1-x)\approx-x\\) yields the intrinsic-time approximation
+
+$$
+\rho_{j,t}\approx\rho_{j,0}e^{-\lambda_jT_t},
+\qquad
+T_t=\sum_{s<t}\eta_s.
+$$
+
+For \\(\lambda_j>0\\), let \\(T_{\mathrm{learn},j}\\) denote the intrinsic time needed to reduce the error magnitude by a fixed factor, and \\(t_{\mathrm{learn},j}\\) the corresponding number of updates. At constant learning rate \\(\eta\\),
+
+$$
+T_{\mathrm{learn},j}\asymp\frac1{\lambda_j},
+\qquad
+t_{\mathrm{learn},j}\asymp\frac1{\eta\lambda_j}.
+$$
+
+Large eigenvalues mean short learning times; small eigenvalues mean persistent errors. At time \\(T\\), modes with \\(\lambda_jT\gg1\\) have largely decayed, while those with \\(\lambda_jT\ll1\\) remain close to their initial values.
+
+**4. From directional errors to loss.** The excess squared loss is
+
+$$
+\begin{aligned}
+\mathcal L(a_t)-\mathcal L(a_\star)
+&=\frac12e_t^\top He_t
+=\frac12\sum_j\lambda_j\rho_{j,t}^2\\
+&\approx\frac12\sum_j\lambda_j\rho_{j,0}^2e^{-2\lambda_jT_t}.
+\end{aligned}
+$$
+
+The eigenvalues set the decay speeds, while the initial error in each direction sets its weight in the loss. This is why knowing the eigenvalues alone is not enough: we also need to know which directions matter for the target. Batch sampling adds new errors during SGD; the full-gradient calculation above isolates how existing errors decay.
+
+</details>
 
 ## When do these learning speeds produce a power law?
 
