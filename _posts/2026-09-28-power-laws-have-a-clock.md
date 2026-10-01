@@ -89,13 +89,13 @@ The linear term averages to zero; the quadratic term is proportional to the inje
 $$
 \mathbb E L_{\mathrm{val}}(\theta_n)
 \approx
-\underbrace{F_{\mathrm{det}}(n)}_{\text{baseline learning}}
+\underbrace{F(n)}_{\text{baseline learning}}
 +\sum_{s<n}
 \underbrace{\frac{\eta_s^2}{B_s}}_{\text{injected variance scale}}
-\underbrace{\mathcal K(n,s)}_{\text{effect on the final loss}}.
+\underbrace{K(n,s)}_{\text{effect on the final loss}}.
 $$
 
-The baseline \\(F_{\mathrm{det}}(n)=L_{\mathrm{val}}(\bar\theta_n)\\) follows full-gradient training. To obtain \\(\mathcal K(n,s)\\), expand the final loss after all subsequent updates as a function of the injected perturbation. This includes both parameter spread and the shift of the mean trajectory caused by nonlinear updates. The resulting scalar response summarizes the noise directions, their propagation, and the loss that observes them.
+The baseline \\(F(n)=L_{\mathrm{val}}(\bar\theta_n)\\) follows full-gradient training. To obtain \\(K(n,s)\\), expand the final loss after all subsequent updates as a function of the injected perturbation. This includes both parameter spread and the shift of the mean trajectory caused by nonlinear updates. The resulting scalar response summarizes the noise directions, their propagation, and the loss that observes them.
 
 This is the intuition behind **forcing–memory as a coarse-grained response law of SGD**. Training continually injects fluctuations; later dynamics determine how long they remain visible in loss. When we compress the parameter trajectory into a scalar learning curve, those accumulated effects appear as memory. Two models with the same current loss can respond differently to the next update because their hidden states retain different training histories.
 
@@ -224,10 +224,10 @@ G_{n,s+1}(\theta_s^+ +h_s)-G_{n,s+1}(\theta_s^+)
 \end{aligned}
 $$
 
-Take expectations and insert the conditional expansion above. With \\(F_{\mathrm{det}}(n)=G_{n,0}(\theta_0)\\), define
+Take expectations and insert the conditional expansion above. With \\(F(n)=G_{n,0}(\theta_0)\\), define
 
 $$
-\mathcal K(n,s)
+K(n,s)
 :=\frac12\mathbb E\!\left[
 \operatorname{Tr}\!\left(
 \Sigma(\theta_s)\nabla^2G_{n,s+1}(D_s(\theta_s))
@@ -238,26 +238,26 @@ Then
 
 $$
 \mathbb E L_{\mathrm{val}}(\theta_n)
-=F_{\mathrm{det}}(n)
-+\sum_{s<n}\frac{\eta_s^2}{B_s}\mathcal K(n,s)
-+\mathcal R_n.
+=F(n)
++\sum_{s<n}\frac{\eta_s^2}{B_s}K(n,s)
++\mathcal E_n.
 $$
 
-Here \\(\mathcal R_n\\) collects the expected higher-order remainders over all updates.
+Here \\(\mathcal E_n\\) collects the expected higher-order remainders over all updates.
 
 This derivation follows the full noisy history: earlier injections affect the distribution of \\(\theta_s\\), and their interactions enter through that distribution. In an expansion around the deterministic path, cross-time quadratic terms also vanish because centered gradient noises are martingale differences.
 
 **5. What the approximation retains.** If \\(\lVert\nabla^3G_{n,s+1}\rVert\le M_{n,s}\\) along the relevant Taylor segments, the remainder satisfies
 
 $$
-|\mathcal R_n|
+|\mathcal E_n|
 \le\frac16\sum_{s<n}
 M_{n,s}\eta_s^3\mathbb E\|\xi_s\|^3.
 $$
 
 Dropping this higher-order remainder gives the response formula in the main text. For a fixed horizon, multiplying every noise term by a small amplitude \\(\epsilon\\) makes the remainder \\(O(\epsilon^3)\\) under uniform derivative and moment bounds, while the leading response is \\(O(\epsilon^2)\\).
 
-The kernel \\(\mathcal K(n,s)\\) includes nonlinear propagation and the state distribution induced by the schedule. A positive power-law lag kernel is a further response model: it becomes computable in the spectral theory and is tested by the LLM surrogate's transfer across schedules.
+The kernel \\(K(n,s)\\) includes nonlinear propagation and the state distribution induced by the schedule. A positive power-law lag kernel is a further response model: it becomes computable in the spectral theory and is tested by the LLM surrogate's transfer across schedules.
 
 </details>
 
@@ -280,6 +280,8 @@ R_t=F_t+\sum_{s<t}K_{t,s}\bigl(R_s+\sigma^2\bigr).
 $$
 
 Here \\(R_t\\) is expected prediction risk, \\(F_t\\) propagates the initial error without stochastic feedback, and \\(K_{t,s}\\) is the response to a variance injection at update \\(s\\). The injection amplitude \\(R_s+\sigma^2\\) combines current prediction error with label-noise variance. This equation closes exactly on the scalar risk: all individual mode coordinates have been summed out.
+
+The linear-model kernel \\(K_{t,s}\\) uses this risk-dependent injection convention; it is not the same coefficient as \\(K(n,s)\\), whose update-scale factor \\(\eta_s^2/B_s\\) is written separately above.
 
 At constant learning rate \\(\eta\\), a slow mode's squared error survives for intrinsic time \\(T=\eta t\\) with factor approximately \\(e^{-2\lambda_j T}\\). Forcing sums these responses weighted by initial target energy; memory sums them weighted by noise injection and the loss observable. The same set of learning timescales can therefore produce different forcing and memory laws.
 
@@ -413,7 +415,7 @@ A hybrid-Muon extension reveals the analogous optimizer-specific coordinates \\(
 
 ### Test 3: fit one schedule, predict another
 
-The two-time response \\(\mathcal K(n,s)\\) summarizes how nonlinear training turns each injection into a change in loss. Our surrogate compresses it into an injection amplitude and a lag response, \\(\mathcal K(n,s)\approx J(T_s)k(T_n-T_s)\\). We model the baseline decline and the lag response by shifted powers, giving seven parameters:
+The two-time response \\(K(n,s)\\) summarizes how nonlinear training turns each injection into a change in loss. Our surrogate compresses it into an injection amplitude and a lag response, \\(K(n,s)\approx J(T_s)k(T_n-T_s)\\). We model the baseline decline and the lag response by shifted powers, giving seven parameters:
 
 $$
 \widehat L(T)
