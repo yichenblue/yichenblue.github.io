@@ -19,7 +19,9 @@ header:
 
 *Why training loss follows power laws, how learning rate and batch size change those laws, and how the resulting formulas predict LLM learning curves.*
 
-Power-law fits summarize how training loss falls, but an exponent alone does not explain **why training produces that curve**.
+[Paper (arXiv)](https://arxiv.org/abs/2609.40148) · [Code (GitHub)](https://github.com/yichenblue/spectra-to-schedules-in-pretraining)
+
+Power-law fits have become central to [understanding language-model scaling](https://arxiv.org/abs/2001.08361). They summarize how loss changes with training resources, but an exponent alone does not explain **why training produces that curve**.
 
 Two processes shape it: training removes initial error, while each sampled batch adds fluctuations that can affect later updates. We call the remaining initial-error contribution **forcing**, and the lasting response to fluctuations **memory**.
 
@@ -265,6 +267,8 @@ The calculation tells us what \\(K(n,s)\\) measures: how noise added at update \
 
 ## Different directions learn at different speeds
 
+Random-feature models provide a tractable setting for studying these dynamics, as in [Paquette et al.'s analysis of compute-optimal scaling](https://proceedings.neurips.cc/paper_files/paper/2024/hash/1dccfc3ee01871d05e33457c61037d59-Abstract-Conference.html).
+
 Consider a fixed-feature model \\(f_a(x)=a^{\top}\phi(x)\\), where only \\(a\\) is trained. Under squared loss, its Hessian \\(H\\) is constant. Let \\((\lambda_j,u_j)\\) be its eigenpairs and \\(\rho_{j,t}\\) the component of a parameter perturbation along \\(u_j\\). Full-gradient updates give
 
 $$
@@ -357,6 +361,8 @@ $$
 
 One update advances this clock by \\(\Delta T_t=T_{t+1}-T_t=\eta_t\\). Its noise scale is therefore \\(\eta_t^2/B_t=\Delta T_t/r_t\\). In words, \\(1/r_t\\) sets the noise scale per unit of intrinsic time. We write \\(r(T)\\) for this ratio as a function of the new clock. The whole path matters, because noise from earlier updates can still affect the current loss.
 
+The connection between learning rate and batch size also motivates [Smith et al.'s proposal to increase batch size instead of decaying the learning rate](https://arxiv.org/abs/1711.00489). Here we ask how the full ratio path shapes the accumulation of memory.
+
 Let \\(L(T)\\) be expected loss, \\(L_\infty\\) its floor, and \\(F(T)\\) the baseline excess loss. Approximating the response by a source amplitude \\(J(u)\\) and a lag-dependent kernel \\(k(T-u)\\) gives
 
 $$
@@ -400,6 +406,8 @@ Here \\(F(u)\\) is the theoretical baseline risk, including the finite-feature e
 
 We can then optimize training duration and model width. Each phase gives a best loss-versus-data rate and a best rate under compute budgets proportional to width times data. The diagram thus guides resource choices as well as explaining curves.
 
+A complementary approach is [Bordelon and Mori's optimal-control analysis](https://arxiv.org/abs/2602.04774), which derives learning-rate schedules for a power-law random-feature model.
+
 ## From theory to LLM pretraining
 
 The theory poses a practical LLM question: **can a low-dimensional forcing–memory response predict how loss changes under a new schedule?** We test it in three steps.
@@ -427,6 +435,8 @@ For each schedule, we compared two factorizations: fixed batch size with varying
 We also ran a hybrid-Muon version. A short calibration selected a different clock and ratio for those runs: \\(\widetilde T=\sum_t\eta_t^2\\) and \\(\widetilde r=B/\eta^2\\). Using these quantities brought its paired curves together as well.
 
 ### Test 3: fit one schedule, predict another
+
+Building on [Li et al.'s functional-scaling-law approach](https://arxiv.org/abs/2509.19189) to fitting and predicting LLM learning curves, we test a forcing–memory surrogate across schedule shapes and learning-rate–batch-size factorizations.
 
 We approximate the effective response by \\(K(n,s)\approx J(T_s)k(T_n-T_s)\\): the source amplitude depends on when noise enters, while the propagation kernel depends on how long it has been present.
 
@@ -492,8 +502,14 @@ Training removes old error and continually adds new fluctuations. The spectrum t
 
 The theory tells us when these parts follow power laws and how to allocate training resources. The LLM tests show the idea's predictive value: matching ratio paths aligns curves in intrinsic time, and fitting one schedule predicts another. **Forcing–memory connects a theory we can calculate to learning curves we can measure.**
 
+## Further reading
+
+- **Empirical scaling laws:** Kaplan et al. (2020), [Scaling Laws for Neural Language Models](https://arxiv.org/abs/2001.08361). How language-model loss depends on model size, data, and compute.
+- **Spectral models:** Paquette et al. (2024), [4+3 Phases of Compute-Optimal Neural Scaling Laws](https://proceedings.neurips.cc/paper_files/paper/2024/hash/1dccfc3ee01871d05e33457c61037d59-Abstract-Conference.html). A solvable model connecting data and target structure to compute-optimal regimes.
+- **Learning rate and batch size:** Smith et al. (2018), [Don't Decay the Learning Rate, Increase the Batch Size](https://arxiv.org/abs/1711.00489). Experiments replacing learning-rate decay with batch-size growth.
+- **Predicting full trajectories:** Li et al. (2025), [Functional Scaling Laws in Kernel Regression: Loss Dynamics and Learning Rate Schedules](https://arxiv.org/abs/2509.19189). Intrinsic-time theory and surrogate prediction of LLM learning curves.
+- **Optimal schedules:** Bordelon and Mori (2026), [Theory of Optimal Learning Rate Schedules and Scaling Laws for a Random Feature Model](https://arxiv.org/abs/2602.04774). How optimal annealing depends on the spectrum and task.
+
 ---
 
 *This post describes joint work by Yichen Wang, Fanghui Liu, and Yudong Chen.*
-
-<!-- Add public paper and code links here when they are available. -->
