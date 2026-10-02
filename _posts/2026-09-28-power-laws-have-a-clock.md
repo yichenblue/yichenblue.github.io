@@ -21,28 +21,17 @@ header:
 
 [Paper (arXiv)](https://arxiv.org/abs/2609.40148) · [Code (GitHub)](https://github.com/yichenblue/spectra-to-schedules-in-pretraining)
 
-In a linear model, individual directions can lose error exponentially. Yet a broad collection of learning speeds can combine into a much slower power-law curve, like those familiar from [language-model scaling](https://arxiv.org/abs/2001.08361). Which collections produce this behavior—and which do not?
+In a linear model, individual directions can lose error exponentially, yet their combined loss can follow a power law, like those familiar from [language-model scaling](https://arxiv.org/abs/2001.08361). What makes that happen?
 
-**A power law is a phenomenon to explain, not an explanation.** Its exponent alone does not tell us whether the curve comes from remaining initial error or the memory of earlier training noise. In a random-feature model, we identify necessary and sufficient spectral conditions for these two contributions—**forcing** and **memory**—to decay as power laws. A power-law tail can persist even when forcing has already faded much faster.
+**A power law is a phenomenon to explain, not an explanation.** We separate remaining initial error—**forcing**—from the **memory** of training noise. In a random-feature model, we identify necessary and sufficient spectral conditions for each to produce a power law, and show how schedules reshape the resulting curve.
 
-This distinction also changes how we think about training schedules. Learning rate and batch size control the stream of new errors. Changing that stream can change the loss exponent, rather than merely speed up the same curve.
-
-**Can this response structure predict an LLM learning curve it was not fitted to?** We fit a forcing–memory formula to an 8-1-1 learning-rate schedule, freeze its parameters, and use it to predict WSD. The prediction follows the measured validation loss, without using WSD loss measurements to fit the parameters.
-
-To explain a power law, we first need to identify what is decaying. Initial error is one source; errors added during training are another. Start with one batch: why should its influence remain after its update is over?
+The same idea also predicts LLM loss: fit a forcing–memory formula on an 8-1-1 schedule, freeze its parameters, and predict WSD. To understand why this might work, start with one batch: why does its influence outlast its update?
 
 ## Why SGD has memory
 
-A batch's influence does not end when its update is over. It changes the parameters from which every later update starts. Two runs can reach the same current loss with different parameters and histories, then respond differently to the next update. To describe training through loss alone, we need to account for how earlier errors still affect it.
+A batch changes the parameters from which every later update starts. Two runs can have the same current loss but different histories and respond differently to the next update. Loss alone does not record everything that matters.
 
-We can follow that influence without assuming a linear model. Let \\(f_\theta\\) be a model, such as a transformer, with parameters \\(\theta\\) and per-example loss \\(\ell(f_\theta;z)\\). Its training objective is
-
-$$
-\mathcal L(\theta)
-=\mathbb E_z[\ell(f_\theta;z)].
-$$
-
-At update \\(t\\), let \\(\eta_t\\) be the learning rate, \\(B_t\\) the batch size, and \\(\xi_t\\) the difference between the batch gradient and the full gradient. With fresh i.i.d. examples, SGD takes the form
+For a model \\(f_\theta\\) with training objective \\(\mathcal L\\), let \\(\eta_t\\) be the learning rate, \\(B_t\\) the batch size, and \\(\xi_t\\) the batch-gradient error. With fresh i.i.d. examples, SGD takes the form
 
 $$
 \theta_{t+1}
@@ -53,44 +42,9 @@ $$
 \operatorname{Cov}_t(\xi_t)=\frac{\Sigma(\theta_t)}{B_t}.
 $$
 
-Here \\(\mathbb E_t\\) and \\(\operatorname{Cov}_t\\) are conditional on the training history, and \\(\Sigma(\theta_t)\\) is the single-example gradient covariance. Batch averaging reduces the variance by \\(B_t\\), while the learning rate scales the parameter perturbation by \\(\eta_t\\). The injected variance therefore has scale \\(\eta_t^2/B_t\\); at fixed parameters, the typical size of the parameter perturbation is proportional to \\(\eta_t/\sqrt{B_t}\\).
+Here expectations are conditional on the training history, and \\(\Sigma\\) is the single-example gradient covariance. The parameter perturbation \\(-\eta_t\xi_t\\) therefore has variance scale \\(\eta_t^2/B_t\\). Later updates reshape this perturbation rather than simply erasing it.
 
-Compare the full-gradient trajectory \\(\bar\theta_t\\) with a run from the same initialization that receives a single noise perturbation at update \\(s\\). Let \\(\delta_t^{(s)}\\) be their parameter difference. Linearizing each subsequent update around \\(\bar\theta_t\\) gives
-
-$$
-\delta_{t+1}^{(s)}
-\approx
-\left[I-\eta_t\nabla^2\mathcal L(\bar\theta_t)\right]\delta_t^{(s)}
-=A_t\delta_t^{(s)}.
-$$
-
-Starting from \\(\delta_{s+1}^{(s)}=-\eta_s\xi_s\\), the perturbation after \\(n\\) updates is approximately
-
-$$
-\delta_n^{(s)}
-\approx
--\eta_s\underbrace{A_{n-1}\cdots A_{s+1}}_{\text{propagation through later updates}}\xi_s,
-\qquad
-A_t=I-\eta_t\nabla^2\mathcal L(\bar\theta_t).
-$$
-
-Each update Jacobian \\(A_t\\) can shrink, amplify, or rotate the perturbation. Their product describes how one batch affects the model many updates later. This does not require a globally linear model: the Jacobians change along the training trajectory.
-
-Let \\(G(\theta)\\) be the final validation loss \\(L_{\mathrm{val}}\\) obtained by starting from \\(\theta\\) after update \\(s\\) and following the remaining full-gradient updates. **The propagation matrices enter the curvature of this future loss, and therefore the memory response**, as shown below.
-
-For a small, mean-zero parameter perturbation \\(h\\), a second-order expansion gives
-
-$$
-\mathbb E[G(\theta+h)]-G(\theta)
-\approx
-\frac12\operatorname{Tr}\!\left[
-\operatorname{Cov}(h)\nabla^2G(\theta)
-\right].
-$$
-
-The linear term averages to zero. The quadratic term measures how the perturbation's variance interacts with the curvature of the future loss. For \\(h=-\eta_s\xi_s\\), this gives the factor \\(\eta_s^2/B_s\\).
-
-Define the noise-free baseline \\(F(n)=L_{\mathrm{val}}(\bar\theta_n)\\), and let \\(K(n,s)\\) describe the loss response to noise injected at update \\(s\\), after factoring out \\(\eta_s^2/B_s\\). Summing over updates gives
+A small-noise expansion, derived below, adds up these lasting effects. Write \\(F(n)\\) for the noise-free validation loss and \\(K(n,s)\\) for the response to noise injected at update \\(s\\), after removing its variance scale:
 
 $$
 \mathbb E L_{\mathrm{val}}(\theta_n)
@@ -101,11 +55,11 @@ $$
 \underbrace{K(n,s)}_{\text{effect on the final loss}}.
 $$
 
-The coefficient \\(K(n,s)\\) includes both the spread in final parameters and shifts in their average caused by nonlinear updates.
+This motivates our working hypothesis: **forcing–memory may be an effective response law of SGD, not merely a description of a linear model.** Loss could follow a transferable, coarse-grained law even while parameters and representations change.
 
-This motivates a working hypothesis: **forcing–memory may be an effective response law of SGD, not merely a convenient description of a linear model.** Such a coarse-grained law would predict how training history affects loss without first explaining every change inside the network. It is the loss response that needs to transfer—not the parameters, representations, or local curvature.
+The goal is not to reconstruct every change inside the network. It is to describe how those changes affect one observable: loss. Different internal trajectories could share a similar response to training noise. The linear model gives us a setting where we can calculate that response; LLM experiments test whether it travels further.
 
-This explains why past noise can affect current loss. It does not yet tell us how quickly that influence fades, or why it should follow a power law. To answer that, we turn to a model where we can calculate the different learning speeds explicitly.
+Memory has a reason to exist. What determines how quickly it fades?
 
 <details markdown="1">
 <summary><strong>Derivation details: from SGD updates to the memory response</strong></summary>
@@ -267,29 +221,21 @@ The calculation tells us what \\(K(n,s)\\) measures: how noise added at update \
 
 ## Different directions learn at different speeds
 
-What determines how long an error lasts? It depends on its direction: training removes some components quickly and others slowly. In a fixed-feature model, the spectrum gives these learning speeds explicitly, as in [Paquette et al.'s analysis of compute-optimal scaling](https://proceedings.neurips.cc/paper_files/paper/2024/hash/1dccfc3ee01871d05e33457c61037d59-Abstract-Conference.html).
+An error's lifetime depends on its direction. In a fixed-feature model, the Hessian spectrum gives these learning speeds explicitly, as in [Paquette et al.'s analysis of compute-optimal scaling](https://proceedings.neurips.cc/paper_files/paper/2024/hash/1dccfc3ee01871d05e33457c61037d59-Abstract-Conference.html).
 
-Consider a fixed-feature model \\(f_a(x)=a^{\top}\phi(x)\\), where only \\(a\\) is trained. Under squared loss, its Hessian \\(H\\) is constant. Let \\(a_\star\\) be a minimizer, \\((\lambda_j,u_j)\\) the eigenpairs of \\(H\\) with unit eigenvectors, and \\(\rho_{j,t}=u_j^\top(a_t-a_\star)\\) the error along direction \\(u_j\\). Full-gradient updates give
+Consider \\(f_a(x)=a^\top\phi(x)\\), with fixed features \\(\phi\\), trainable weights \\(a\\), and squared loss. Let \\(\rho_{j,t}\\) be the parameter error along a Hessian eigenvector with eigenvalue \\(\lambda_j\\). Under small full-gradient steps,
 
 $$
-Hu_j=\lambda_j u_j,
+\rho_{j,t}\approx\rho_{j,0}e^{-\lambda_jT_t},
 \qquad
-\rho_{j,t+1}=(1-\eta_t\lambda_j)\rho_{j,t}.
+T_t=\sum_{s<t}\eta_s.
 $$
 
-These **spectral modes** have different learning speeds. At small learning rates, directions with large positive \\(\lambda_j\\) relax quickly, while those with small \\(\lambda_j\\) retain errors for much longer. The derivation at the end of this section connects the squared-loss gradient to this recurrence and the learning time scale \\(1/\lambda_j\\).
+The clock \\(T_t\\) is **intrinsic time**. Large positive eigenvalues mean fast learning; small ones mean persistent errors, with learning time proportional to \\(1/\lambda_j\\).
 
-In our random-feature model, summing the mode contributions gives an exact equation for the expected prediction risk \\(R_t\\). Here \\(F_t\\) is the contribution from initialization, \\(\sigma^2\\) is the label-noise variance, and \\(K_{t,s}\\) is the memory kernel:
+Loss combines squared errors across these directions. A slow direction matters only if it carries appreciable weight: an error can persist for a long time without contributing much to total loss. Learning speed and importance are different pieces of information.
 
-$$
-R_t=F_t+\sum_{s<t}K_{t,s}\bigl(R_s+\sigma^2\bigr).
-$$
-
-The factor \\(R_s+\sigma^2\\) is the noise source: it combines remaining prediction error with label noise. The kernel describes how much of that injection survives. The equation closes on the risk history, without tracking individual parameters. Compared with the general response above, the state-dependent source is now explicit, and \\(K_{t,s}\\) includes the schedule factor \\(\eta_s^2/B_s\\). The terms are regrouped: \\(F_t\\) also absorbs part of the sampling noise into the propagation of initial error, so it is not the pure full-gradient baseline \\(F(n)\\).
-
-At constant learning rate \\(\eta\\) and batch size \\(B\\), use **intrinsic time** \\(T=\eta t\\). A slow mode's squared error decays approximately as \\(e^{-2\lambda_j T}\\). Forcing weights these decays by the initial error in each direction. Memory weights them by noise injection and their contribution to loss. The same spectrum can therefore produce different forcing and memory exponents.
-
-We now know how each direction loses error. But a collection of exponential decays need not add up to a power law. **Which distributions of speeds and weights make that happen?**
+Forcing weights the squared decays by initial error; memory weights them by noise injection and their effect on loss. The same learning speeds can therefore produce different forcing and memory curves. But why should either weighted sum be a power law?
 
 <details markdown="1">
 <summary><strong>Derivation details: from squared loss to learning time</strong></summary>
@@ -372,19 +318,21 @@ $$
 
 The eigenvalues set the decay speeds, while the initial error in each direction sets its weight in the loss. This is why knowing the eigenvalues alone is not enough: we also need to know which directions matter for the target. Batch sampling adds new errors during SGD; the full-gradient calculation above isolates how existing errors decay.
 
+**5. Connecting the linear and general responses.** In our random-feature model, summing the mode contributions gives an exact equation for expected prediction risk \\(R_t\\):
+
+$$
+R_t=F_t+\sum_{s<t}K_{t,s}\bigl(R_s+\sigma^2\bigr).
+$$
+
+Here \\(F_t\\) is the contribution from initialization, \\(\sigma^2\\) is label-noise variance, and \\(K_{t,s}\\) is the memory kernel. The source \\(R_s+\sigma^2\\) combines remaining prediction error with label noise; the kernel describes how much survives. Compared with the general response, the source is explicit and \\(K_{t,s}\\) includes \\(\eta_s^2/B_s\\). The terms are regrouped: \\(F_t\\) also absorbs part of the sampling noise into the propagation of initial error, so it is not the pure full-gradient baseline \\(F(n)\\).
+
 </details>
 
 ## When do these learning speeds produce a power law?
 
-Having slow directions is not enough; we need to know how much forcing and memory weight they carry. **Individual eigenvalues need not follow a power law. Their weighted totals near zero are what matter.** Conversely, even an exact power-law spectrum can fail to produce power-law forcing if the target barely uses its slow directions.
+**Individual eigenvalues need not follow a power law. Their weighted totals near zero are what matter.** At time \\(T\\), fast directions have mostly decayed; directions with \\(\lambda\lesssim1/T\\) still retain error. Their combined weight determines the tail.
 
-At intrinsic time \\(T\\), modes with \\(\lambda\gg1/T\\) have mostly decayed, while those with \\(\lambda\ll1/T\\) have barely changed. Training progressively removes faster modes, leaving slower ones behind. The remaining loss is therefore governed by the total weight near the bottom of the spectrum.
-
-Let \\(\nu_W^{\mathcal F}((0,x])\\) be the target-weighted spectral mass in \\(0<\lambda\le x\\), and \\(\nu_W^{\mathcal K}((0,x])\\) the sum of squared eigenvalues in that interval. These weight forcing and memory, respectively; \\(W\\) denotes the random-feature realization.
-
-Write \\(F_{W,>0}\\) for forcing with the permanent error floor removed, and \\(K_W\\) for the one-injection memory kernel at constant schedules. Their decay exponents are \\(q_{\mathcal F},q_{\mathcal K}>0\\).
-
-Our spectral theorem gives necessary and sufficient conditions for these component powers. It considers a joint large-time, large-width limit, so progressively slower modes remain available. Informally:
+Our random-feature theorem makes this an **if-and-only-if** criterion in the large-width, long-time limit. Let \\(\nu_W^{\mathcal F}((0,x])\\) collect target-weighted spectral mass below \\(x\\), and \\(\nu_W^{\mathcal K}((0,x])\\) collect squared eigenvalues there. For a feature realization \\(W\\), write \\(F_{W,>0}\\) for forcing above its floor and \\(K_W\\) for the constant-schedule memory kernel. Schematically,
 
 $$
 \begin{aligned}
@@ -397,9 +345,9 @@ F_{W,>0}(T)\propto T^{-q_{\mathcal F}},\\
 \end{aligned}
 $$
 
-The **if-and-only-if** result applies separately to forcing and memory: their temporal powers correspond to power laws in the relevant cumulative spectral weights.
+The positive exponents \\(q_{\mathcal F}\\) and \\(q_{\mathcal K}\\) describe forcing and memory separately. Given the weighted spectrum, we can predict the component's temporal exponent. Conversely, a component power law constrains how its weight accumulates among slow directions. The exponent is linked to a property of the learning problem, rather than introduced only as a fitting parameter.
 
-The example below makes the distinction visible: forcing disappears faster than every inverse power, yet memory leaves a power-law tail in the loss.
+Even an exact power-law spectrum can fail to produce power-law forcing if the target barely uses its slow directions. In the example below, forcing disappears faster than every inverse power, yet memory leaves a power-law loss tail.
 
 <figure>
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;align-items:end;">
@@ -407,22 +355,26 @@ The example below makes the distinction visible: forcing disappears faster than 
     <img src="{{ '/images/power-laws-have-a-clock/main-fig2-memory.png' | relative_url }}" alt="One-injection memory following a three-quarter power-law tail.">
     <img src="{{ '/images/power-laws-have-a-clock/main-fig2-loss.png' | relative_url }}" alt="Minibatch-SGD risk crossing into the memory-controlled power-law tail.">
   </div>
-  <figcaption><strong>Forcing can disappear quickly while memory leaves a power law.</strong> Left: the target puts so little weight in slow directions that forcing falls faster than every inverse power. Middle: the effect of one noise injection falls as \(T^{-3/4}\). Right: the average SGD loss over 20 runs first drops quickly, then follows the slower \(T^{-3/4}\) memory curve.</figcaption>
+  <figcaption><strong>Fast forcing decay, slow memory tail.</strong> Left: forcing vanishes faster than every inverse power. Middle: one-injection memory decays as \(T^{-3/4}\). Right: SGD loss, averaged over 20 runs, eventually follows that memory tail.</figcaption>
 </figure>
 
-**Slow loss decay is not, by itself, evidence of slow signal learning.** A similar-looking curve can be controlled by error in the target directions or by noise that training has not yet erased. A fitted exponent is therefore a starting point, not a mechanism. How much about learning can we really infer from a scaling curve without separating these contributions?
+**Slow loss decay is not, by itself, evidence of slow signal learning.** The curve can reflect remaining target error or noise that training has not erased. A fitted exponent does not distinguish them.
+
+This is why separating forcing and memory matters: a familiar-looking scaling curve can conceal very different reasons for slow improvement.
 
 ## Three kinds of memory
 
-A power-law kernel tells us how one noise injection fades. SGD keeps adding new ones. If equally strong injections keep arriving, does their accumulated response approach a finite total, keep growing with the training horizon, or remain tied to model width? This is why we need three kinds of memory—not just a fitted decay exponent:
+A kernel describes one injection; SGD keeps adding more. For equally weighted injections, does the accumulated response saturate or keep growing? This separates three behaviors:
 
-- **Long memory (LM):** \\(0<q_{\mathcal K}<1\\). The cumulative memory mass diverges: old injections remain important even as the training horizon grows.
-- **Integrable memory (IM):** \\(q_{\mathcal K}>1\\). The cumulative memory mass is finite: the total response to equally weighted past injections saturates.
-- **Finite bulk (FB):** the size of the memory response remains tied to the number of features. A single positive decay exponent independent of model width does not describe it.
+- **Long memory (LM):** \\(0<q_{\mathcal K}<1\\). Cumulative memory keeps growing with the training horizon.
+- **Integrable memory (IM):** \\(q_{\mathcal K}>1\\). Cumulative memory approaches a finite total.
+- **Finite bulk (FB):** the response remains tied to model width, rather than a width-independent positive decay exponent.
 
-In the power-law random-feature model, comparing the forcing and memory rates gives three LM cases, three IM cases, and two FB cases: the \\(3+3(+2)\\) in the title. These describe the two ingredients of the learning curve; the schedule still determines how they combine.
+Comparing forcing and memory rates gives three LM cases, three IM cases, and two FB cases: the \\(3+3(+2)\\) in the title.
 
-To read the right-hand diagram, consider the power-law model
+These are distinctions about the response to past errors, not three recipes for training. A schedule still determines when and how strongly noise is injected into that response.
+
+The right-hand diagram uses the spectrum and target parameters
 
 $$
 \lambda_j=j^{-2\alpha},
@@ -430,9 +382,9 @@ $$
 |\theta_j^\star|=j^{-\beta}.
 $$
 
-Here \\(\lambda_j\\) are the data-covariance eigenvalues, ordered from largest to smallest, and \\(\theta_j^\star\\) is the target coefficient along the corresponding direction. Larger \\(\alpha\\) makes the eigenvalues fall faster. Larger \\(\beta\\) puts less target weight in the small-eigenvalue directions that take longer to learn.
+Here \\(\lambda_j\\) are ordered data-covariance eigenvalues and \\(\theta_j^\star\\) the corresponding target coefficients. Larger \\(\alpha\\) steepens the spectrum; larger \\(\beta\\) reduces target weight in slow directions.
 
-For \\(\alpha>1/4\\) and finite target energy, \\(2\alpha+2\beta>1\\), these model parameters give the response exponents
+In the LM/IM region with finite target energy, the exponents are
 
 $$
 q_{\mathcal F}=\frac{2\alpha+2\beta-1}{2\alpha},
@@ -445,16 +397,14 @@ $$
     <img src="{{ '/images/power-laws-have-a-clock/main-fig1-response-map.png' | relative_url }}" alt="Long-memory, integrable-memory, and finite-bulk regimes in forcing-memory response coordinates." style="display:block;width:100%;height:auto;margin:0;">
     <img src="{{ '/images/power-laws-have-a-clock/main-fig3-plrf-map.png' | relative_url }}" alt="The corresponding propagation regimes in power-law random-feature source-capacity coordinates." style="display:block;width:100%;height:auto;margin:0;">
   </div>
-  <figcaption><strong>Different learning speeds lead to different kinds of memory.</strong> Left: the diagram is organized by how fast forcing and memory decay. Right: the same classification is shown using the spectrum and target parameters \((\alpha,\beta)\), with the width-dependent FB cases shown separately. The red band marks the LLM fits near \(q_{\mathcal K}=1\), between LM and IM.</figcaption>
+  <figcaption><strong>Memory regimes in two coordinate systems.</strong> Left: response exponents. Right: spectrum and target parameters, with FB shown separately. The red band marks LLM fits near the LM/IM boundary, \(q_{\mathcal K}=1\).</figcaption>
 </figure>
 
-The red band marks a question for the LLM experiments: why do their fitted responses sit near the LM/IM boundary? First, we need to understand what these memory regimes imply when training changes the strength of new noise injections.
+These regimes describe how errors persist. What happens when a schedule changes how much new noise enters?
 
 ## How training schedules transform the response
 
-The memory regime describes how past errors persist. A schedule changes how much new error enters. Can it therefore change the power law itself, rather than only how quickly training moves along it? **Our theory shows that it can change the exponent:** the loss depends on both the memory and the stream of noise it accumulates.
-
-To separate progress from noise injection in plain SGD, track two quantities: intrinsic time \\(T_t\\), the sum of learning rates so far, and the ratio \\(r_t\\) of batch size to learning rate:
+**A schedule can change the loss exponent, not just the speed of training.** For plain SGD, the useful coordinates are intrinsic time and the batch-to-learning-rate ratio:
 
 $$
 T_t=\sum_{s<t}\eta_s,
@@ -462,11 +412,13 @@ T_t=\sum_{s<t}\eta_s,
 r_t=\frac{B_t}{\eta_t}.
 $$
 
-One update advances this clock by \\(\Delta T_t=T_{t+1}-T_t=\eta_t\\). Its noise scale is therefore \\(\eta_t^2/B_t=\Delta T_t/r_t\\). In words, \\(1/r_t\\) sets the noise scale per unit of intrinsic time. We write \\(r(T)\\) for this ratio as a function of the new clock. The whole path matters, because noise from earlier updates can still affect the current loss.
+An update advances the clock by \\(\eta_t\\) and injects variance at scale \\(\eta_t^2/B_t\\). Thus \\(1/r_t\\) is the noise scale per unit of intrinsic time. Write \\(r(T)\\) for the ratio along this clock.
 
-The connection between learning rate and batch size also motivates [Smith et al.'s proposal to increase batch size instead of decaying the learning rate](https://arxiv.org/abs/1711.00489). Here we ask how the full ratio path shapes the accumulation of memory.
+This connects to [increasing batch size instead of decaying learning rate](https://arxiv.org/abs/1711.00489). Memory explains why the whole ratio path matters, not just its current value.
 
-In the PLRF model’s LM and IM regimes, the forcing–memory scaling law takes the continuum form
+Two runs can reach the same current learning rate and batch size after very different noise histories. Their losses need not agree. To compare schedules, we therefore match the ratio along intrinsic time—not merely the final ratio or the number of optimizer updates.
+
+In the power-law random-feature model's LM and IM regimes,
 
 $$
 R(T)\asymp
@@ -476,34 +428,26 @@ F(T)+
 \,k(T-u)\,\mathrm du.
 $$
 
-Here \\(R(T)\\) is the prediction risk, and \\(F(T)\\) is the forcing profile, including the finite-width error floor. The relation holds up to multiplicative constants.
+Here \\(R\\) is prediction risk, \\(F\\) is forcing including its finite-width floor, and \\(\sigma^2\\) is label-noise variance. The integral combines **the noise source**, \\(F(u)+\sigma^2\\); **its strength**, controlled by \\(r(u)\\); and **what survives**, described by \\(k(T-u)\\). The relation holds up to multiplicative constants.
 
-The integral combines three effects. The remaining prediction error generates minibatch noise even with clean labels, represented by \\(F(u)\\); label noise adds \\(\sigma^2\\). The ratio \\(r(u)\\) controls the strength of these injections, and \\(k(T-u)\\) describes how much of their effect survives until time \\(T\\).
+For power-law memory and ratio growth, our theorem compares label-noisy SGD with clean-label SGD:
 
-Suppose \\(k(v)\sim v^{-q_{\mathcal K}}\\) and \\(r(T)\sim T^\vartheta\\), where \\(v\\) is the time since injection and \\(\vartheta\\) is the ratio-growth exponent. Our schedule theorem compares label-noisy SGD with its clean-label counterpart. The label-noise contribution leads to three outcomes:
+- **Destroy:** the extra loss does not decay as a positive power.
+- **Change:** it decays more slowly than the clean loss and sets a new exponent.
+- **Preserve:** it decays at least as fast, leaving the clean exponent unchanged.
 
-- **Destroy:** the ratio grows too slowly, and the extra loss does not fall as a positive power of time.
-- **Change:** the extra loss falls, but more slowly than the clean loss, so it sets a new, slower exponent.
-- **Preserve:** the extra loss falls at least as fast as the clean loss, so the original exponent remains.
+The limit is the **memory ceiling**: reducing new noise cannot erase old noise faster than memory decays. Beyond this ceiling, faster growth of \\(B/\eta\\) no longer improves the noise-decay exponent.
 
-There is a limit to what increasing \\(B/\eta\\) can achieve. Even if late updates add very little noise, earlier noise may still be present. Once that old noise sets the decay rate, increasing the ratio faster no longer improves the exponent. This is the **memory ceiling**. It can prevent preservation when memory fades more slowly than the clean loss.
-
-At the marginal boundary \\(q_{\mathcal K}=1\\), cumulative memory grows logarithmically, introducing logarithmic corrections to the power laws.
+This separates two obstacles to lower loss: noise still being added and noise already present. A schedule can suppress the first while the second continues to control the curve.
 
 <figure>
   <img src="{{ '/images/power-laws-have-a-clock/main-fig4-schedule-map.png' | relative_url }}" alt="Phase diagram showing when a schedule preserves, changes, or destroys a clean power law." style="display:block;width:min(100%,760px);margin-inline:auto;">
-  <figcaption><strong>Changing the schedule can preserve, change, or destroy the loss power law.</strong> The outcome depends on how quickly \(B/\eta\) grows. The flat part of the black boundary shows where faster growth stops improving the noise-decay exponent: old noise still sets the rate. At \(q_{\mathcal K}=1\), logarithmic factors enter.</figcaption>
+  <figcaption><strong>Preserve, change, or destroy.</strong> The ratio-growth exponent \(\vartheta\), defined by \(r(T)\sim T^\vartheta\), controls the outcome. The flat boundary marks the memory ceiling; \(q_{\mathcal K}=1\) introduces logarithmic corrections.</figcaption>
 </figure>
-
-We can also work backward. Below the long-memory ceiling, the extra loss identifies the long-time shape of \\(B/\eta\\), but not learning rate and batch size separately. At the ceiling, different ratio paths produce the same decay, so this identification is lost.
 
 ## From schedule laws to schedule design
 
-Knowing what a schedule does is not yet a rule for choosing one. With a fixed data budget, where should extra samples go? **Where they reduce noise that would otherwise matter most at the end of training.** In the LM/IM design problem, the forcing–memory formula makes this principle explicit.
-
-Fix an ending intrinsic time \\(T\\) and a budget of \\(D\\) training examples. Since one update uses \\(B_t=r_t\Delta T_t\\) examples, the total budget becomes \\(\int_0^T r(u)\,\mathrm du=D\\).
-
-In the theoretical response model, the optimal ratio schedule is
+With a fixed data budget and ending intrinsic time \\(T\\), where should extra samples go? **Where they reduce noise that would otherwise matter most at the end.** In the LM/IM response model, the optimal ratio is
 
 $$
 r_T^\star(u)
@@ -511,66 +455,37 @@ r_T^\star(u)
 \sqrt{k(T-u)\bigl[F(u)+\sigma^2\bigr]}.
 $$
 
-Here \\(F(u)\\) is the theoretical baseline risk, including the finite-feature error floor. The product combines the strength of the noise source, \\(F(u)+\sigma^2\\), with its influence on terminal loss, \\(k(T-u)\\). The rule allocates more samples where noise is both strong and persistent, with the normalization fixed by the budget \\(D\\). Learning-rate and batch-size schedules can implement the same ratio path.
+The product measures how much noise is generated and how much survives until \\(T\\); the data budget fixes the normalization. Learning-rate and batch-size schedules can implement the same ratio path. Optimizing duration and width then gives phase-dependent loss-versus-data and loss-versus-compute rates.
 
-We can then optimize training duration and model width. Each phase gives a best loss-versus-data rate and a best rate under compute budgets proportional to width times data. The diagram thus guides resource choices as well as explaining curves.
+Spending samples only where current error is large ignores what happens afterward. Some early noise will fade before training ends; other injections remain influential. The square-root rule balances source strength against this future impact under the shared budget.
 
-A complementary approach is [Bordelon and Mori's optimal-control analysis](https://arxiv.org/abs/2602.04774), which derives learning-rate schedules for a power-law random-feature model.
+[Bordelon and Mori's optimal-control analysis](https://arxiv.org/abs/2602.04774) offers a complementary route to learning-rate design.
 
 ## From theory to LLM pretraining
 
-The spectral model explains the source of power laws and how schedules reshape them. But an LLM does not have fixed features. **Can its loss still follow a forcing–memory response that transfers across schedules?**
+An LLM does not have fixed features. Can its loss still follow this response structure? **A learning-curve model should predict what happens when training changes.** We test that by changing how a schedule is implemented, then predicting a different schedule.
 
-**A learning-curve model should predict what happens when training changes.** A good fit shows that a formula can describe observations. Holding its parameters fixed and changing the training process tests whether that description can be reused. We think this should be a central test of a learning-curve theory. The three tests below ask whether the ratio path matters, whether its two implementations agree, and whether a fitted response predicts a different path.
+A preliminary 30M SGD experiment confirmed that the clock alone was insufficient: at the same final intrinsic time, faster growth of \\(B/\eta\\) lowered loss, with diminishing gains.
 
-### Test 1: the ratio path affects loss
+### Two implementations of the same ratio path
 
-Is intrinsic time alone enough to describe training progress? **The same intrinsic time did not give the same loss.** Increasing \\(B/\eta\\) more quickly lowered validation loss, with diminishing gains. The ratio path mattered as well as the clock.
+Does it matter whether learning rate or batch size changes? For a 300M plain-SGD LLM, we compared fixed-batch and fixed-learning-rate implementations of two schedule shapes: gradual decay (WSD) and two successive drops (8-1-1).
 
-We tested this by continuing plain-SGD training from one mature 30M checkpoint in eleven ways. All runs ended at the same intrinsic time, but \\(B/\eta\\) grew at different rates.
+**Matched in intrinsic time and ratio path, the paired validation-loss curves nearly coincide.** Their optimizer-step curves differ because the implementations take different numbers of updates.
 
-### Test 2: two ways to produce the same ratio path
-
-The ratio path matters. Does it also matter whether we produce it by changing learning rate or batch size? **Decaying the learning rate and increasing the batch size produced nearly the same validation-loss curve when matched in intrinsic time and ratio path.** The two implementations used different numbers of optimizer updates, so their curves looked different on the step axis.
-
-For a 300M nanoGPT trained on 6.5B OpenWebText tokens, we shared a 5.2B-token training prefix and branched into 1.3B-token tails from the same checkpoint.
-
-We compared two schedule shapes. In their fixed-batch versions, WSD keeps the learning rate constant for the first 80% of training, then lowers it gradually over the last 20%. The 8-1-1 schedule uses the same first 80%, followed by two lower-rate stages lasting 10% each.
-
-For each schedule, we compared two factorizations: fixed batch size with varying learning rate, and fixed learning rate with varying batch size. We matched data, intrinsic-time increments, and \\(B/\eta\\) over groups of updates.
+The comparison asks whether learning rate and batch size need to be modeled separately, or mainly through the clock and ratio. The alignment supports the latter description for these experiments: changing the implementation preserves the main loss response.
 
 <figure>
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem;align-items:end;">
     <img src="{{ '/images/power-laws-have-a-clock/main-fig1-step.png' | relative_url }}" alt="Validation risk for matched learning-rate and batch-size schedules plotted against optimizer step.">
     <img src="{{ '/images/power-laws-have-a-clock/main-fig1-intrinsic-time.png' | relative_url }}" alt="The same validation trajectories plotted against intrinsic time, together with the transferred surrogate.">
   </div>
-  <figcaption><strong>The same ratio path gives nearly the same loss curve on the right clock.</strong> Left: changing learning rate or changing batch size gives different curves against update number. Right: adding up learning rates to form \(T=\sum_t\eta_t\) brings each pair together. The forcing–memory formula also follows both schedule shapes.</figcaption>
+  <figcaption><strong>Different step counts, nearly the same intrinsic-time curves.</strong> Paired learning-rate and batch-size implementations separate against optimizer step (left) and align against \(T=\sum_t\eta_t\) (right).</figcaption>
 </figure>
 
-We also ran a hybrid-Muon version. A short calibration selected a different clock and ratio for those runs: \\(\widetilde T=\sum_t\eta_t^2\\) and \\(\widetilde r=B/\eta^2\\). Using these quantities brought its paired curves together as well.
+### Fit one schedule and predict another
 
-### Test 3: fit one schedule, predict another
-
-Agreement between two implementations of the same path does not yet show that we can predict a different path. Can one fitted response do that? **The response fitted on 8-1-1 also predicts the WSD validation curve without refitting.**
-
-In the main 300M analysis, we fix \\(q_{\mathcal K}=1\\) and fit the other six parameters using only the original, unsmoothed validation-loss measurements from the fixed-batch 8-1-1 run. We then keep all parameters unchanged, insert the WSD schedule, and predict its validation loss. No WSD loss measurements are used to fit those six parameters.
-
-<figure>
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;align-items:end;">
-    <img src="{{ '/images/power-laws-have-a-clock/main-fig5-fit.png' | relative_url }}" alt="Forcing-memory surrogate fitted to the 8-1-1 validation trajectory.">
-    <img src="{{ '/images/power-laws-have-a-clock/main-fig5-transfer.png' | relative_url }}" alt="The frozen surrogate predicting the held-out WSD validation trajectory without refitting.">
-    <img src="{{ '/images/power-laws-have-a-clock/main-fig5-profile.png' | relative_url }}" alt="Held-out WSD prediction error as a function of the fixed memory exponent.">
-  </div>
-  <figcaption><strong>Fit on 8-1-1, then predict WSD without fitting again.</strong> Left: fix \(q_{\mathcal K}=1\) and fit the other six parameters to 8-1-1. Middle: keep them unchanged and predict WSD. Right: repeat the procedure for different fixed values of \(q_{\mathcal K}\), always fitting only on 8-1-1. The WSD prediction is most accurate near one.</figcaption>
-</figure>
-
-The result supports a response model that carries information beyond the curve used to fit it. We would like to see learning-curve models compared on this basis: after fitting one run, how much of a changed training run can they predict without adjustment?
-
-What is being transferred between these curves? Building on [Li et al.'s functional-scaling-law approach](https://arxiv.org/abs/2509.19189), we use a forcing–memory surrogate whose fitted parameters describe the response, while the known ratio path supplies the schedule.
-
-We approximate the effective response by \\(K(n,s)\approx J(T_s)k(T_n-T_s)\\): the source amplitude depends on when noise enters, while the propagation kernel depends on how long it has been present.
-
-This gives a seven-parameter **surrogate** for validation loss. The parameters are the floor \\(L_\infty\\), forcing amplitude \\(A_{\mathcal F}\\), source amplitudes \\(A_0,A_1\\), memory time-scale parameter \\(c_{\mathcal K}\\), and exponents \\(q_{\mathcal F},q_{\mathcal K}\\):
+Matching the same path is one test. Predicting a different path is stronger. Building on [Li et al.'s functional-scaling-law approach](https://arxiv.org/abs/2509.19189), we use the seven-parameter surrogate
 
 $$
 \widehat L(T)
@@ -581,11 +496,41 @@ $$
 \,\mathrm du.
 $$
 
-The first two terms describe baseline loss; the integral adds the noise effects that remain. Once the parameters are fitted, changing the known ratio \\(r(u)\\) predicts a new schedule.
+The first two terms describe baseline loss; the integral adds surviving noise effects. The fitted parameters describe the response, while the known ratio path supplies the schedule.
+
+We fix \\(q_{\mathcal K}=1\\) and fit the other six parameters to raw validation loss from the fixed-batch 8-1-1 run. Keeping all parameters unchanged, we insert WSD's ratio path. **The resulting prediction follows WSD's measured validation loss without refitting.**
+
+The curve changes because its input schedule changes, not because its response parameters are adjusted. Fitting each trajectory separately would not test this distinction. Here the fit must carry enough information from one training history to describe another, including the different timing of its loss decrease.
+
+<figure>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;align-items:end;">
+    <img src="{{ '/images/power-laws-have-a-clock/main-fig5-fit.png' | relative_url }}" alt="Forcing-memory surrogate fitted to the 8-1-1 validation trajectory.">
+    <img src="{{ '/images/power-laws-have-a-clock/main-fig5-transfer.png' | relative_url }}" alt="The frozen surrogate predicting the held-out WSD validation trajectory without refitting.">
+    <img src="{{ '/images/power-laws-have-a-clock/main-fig5-profile.png' | relative_url }}" alt="Held-out WSD prediction error as a function of the fixed memory exponent.">
+  </div>
+  <figcaption><strong>8-1-1 fit (left), zero-refit WSD prediction (middle).</strong> Right: repeat for different fixed \(q_{\mathcal K}\), fitting the other parameters only on 8-1-1. WSD prediction is most accurate near one.</figcaption>
+</figure>
+
+The response carries information beyond its fitting curve. That is the standard we advocate: judge a learning-curve model by what it predicts when training changes, not only by how well it fits one run.
+
+<details markdown="1">
+<summary><strong>Experiment and surrogate details</strong></summary>
+
+**Training and matching.** The preliminary 30M experiment continued one mature plain-SGD checkpoint under eleven ratio paths, all ending at the same intrinsic time. The main 300M nanoGPT experiment used 6.5B OpenWebText tokens: a shared 5.2B-token prefix followed by 1.3B-token tails. For each schedule, we compared fixed batch size with varying learning rate against fixed learning rate with varying batch size, matching data, intrinsic-time increments, and \\(B/\eta\\) over groups of updates.
+
+In their fixed-batch versions, WSD keeps learning rate constant for the first 80% of training and lowers it gradually over the last 20%. The 8-1-1 schedule shares the first 80%, then uses two lower-rate stages lasting 10% each.
+
+**Surrogate parameters.** The seven parameters are the floor \\(L_\infty\\), forcing amplitude \\(A_{\mathcal F}\\), source amplitudes \\(A_0,A_1\\), memory time-scale parameter \\(c_{\mathcal K}\\), and exponents \\(q_{\mathcal F},q_{\mathcal K}\\). The approximation separates the effective response as \\(K(n,s)\approx J(T_s)k(T_n-T_s)\\), where \\(J\\) is the source amplitude and \\(k\\) the propagation kernel.
+
+With \\(q_{\mathcal K}=1\\), the other six parameters are fitted only to original, unsmoothed 8-1-1 measurements; no WSD loss enters that fit. The profile plot repeats this procedure for each fixed exponent and evaluates the resulting WSD prediction error.
+
+**Hybrid Muon.** A short calibration selected a different clock and ratio for those runs: \\(\widetilde T=\sum_t\eta_t^2\\) and \\(\widetilde r=B/\eta^2\\). Those calibrated quantities brought its paired curves together as well.
+
+</details>
 
 ## Why does the memory exponent keep landing near one?
 
-The transfer test above fixed the memory exponent at one. Does that value also emerge when we let the data choose it? **The fitted memory exponent stays close to one even when we stop fixing it there.** In the experiments below, all seven parameters are fitted freely, across different datasets and two model sizes:
+Was near-one memory built into the fit? **The exponent stays close to one even when fitted freely.** Here all seven parameters are free, across different datasets and two model sizes:
 
 | Dataset and setting | \\(q_{\mathcal K}\\) | \\(q_{\mathcal F}\\) |
 |---|---:|---:|
@@ -594,29 +539,15 @@ The transfer test above fixed the memory exponent at one. Does that value also e
 | peS2o V2 s2orc full text, 124M, 2.5B tokens | 0.995 | 0.365 |
 | OpenWebText, 300M, 6.5B tokens | 0.989 | 0.291 |
 
-These fits have \\(q_{\mathcal K}\approx1\\) and \\(q_{\mathcal F}<1\\), placing the LLM responses near the LM/IM boundary—the red band in the phase diagram. One is a meaningful value in the theory: it separates a finite cumulative memory mass from one that keeps growing, with logarithmic growth at the boundary itself.
+These responses sit near the LM/IM boundary: cumulative memory is finite on one side and keeps growing on the other, logarithmically at one.
 
-Why should these different training tasks land near that boundary? Do they share an effective memory response, or can finite training windows and trade-offs between fitted terms pull the exponent toward one? The present curves do not decide between these explanations.
-
-Longer held-out continuations, fits over different time windows, and direct measurements of the loss response to controlled training perturbations would help distinguish them. **The open question is whether near-one memory survives changes in how we train and how we measure it.**
+Why do different tasks land here? A shared effective response, or an effect of finite fitting windows and parameter trade-offs? The curves do not yet decide. **Whether near-one memory survives changes in training and measurement is an open question worth pursuing.**
 
 ## The larger lesson
 
-We can now answer the opening puzzle. Individual directions can learn exponentially while their weighted sum follows a power law. The spectral criterion identifies when this happens; forcing and memory distinguish the initial error from the effects of past noise:
+Exponentially learning directions can combine into a power law. The spectrum tells us when; forcing and memory tell us what is decaying; schedules change how those contributions combine. The LLM results suggest that this response structure can remain useful far beyond the model where we can prove it.
 
-$$
-\text{weight in slow directions}
-\longrightarrow
-\text{forcing and memory}
-\longrightarrow
-\text{noise added and retained}
-\longrightarrow
-\text{loss curve}.
-$$
-
-The linear model makes this chain calculable and provable. The LLM results motivate a broader possibility: a few response quantities may predict loss even when the underlying parameter dynamics are far more complicated. Understanding which changes preserve that description—and which break it—is a research question worth pursuing.
-
-That is the shift we want to make: **explain where a learning curve comes from, then test that explanation by predicting how the curve changes.** Fitting a power law begins the investigation; it does not finish it.
+**Explain where a learning curve comes from, then test that explanation by predicting how it changes.** Fitting a power law begins the investigation; it does not finish it.
 
 ## Further reading
 
