@@ -332,7 +332,19 @@ Each direction decays exponentially, yet their sum can decay as a power law. As 
 
 **Individual eigenvalues need not follow a power law. Their weighted totals near zero are what matter.** In the random-feature model, this becomes an if-and-only-if relation in the large-width, long-time limit.
 
-Let \\(\nu_W^{\mathcal F}((0,x])\\) collect target-weighted spectral mass below \\(x\\), and \\(\nu_W^{\mathcal K}((0,x])\\) collect squared eigenvalues there. For a feature realization \\(W\\), write \\(F_{W,>0}\\) for forcing above its floor and \\(K_W\\) for the constant-schedule memory kernel. Schematically,
+For a fixed random-feature matrix \\(W\\), let \\(\widehat\lambda_j\\) and \\(\widehat u_j\\) be the eigenvalues and unit eigenvectors of \\(\Lambda^{1/2}WW^\top\Lambda^{1/2}\\), where \\(\Lambda\\) is the input covariance. With target parameter \\(\theta^\star\\), the two cumulative weights are
+
+$$
+\begin{aligned}
+\nu_W^{\mathcal F}((0,x])
+&=\sum_{0<\widehat\lambda_j\le x}
+\left|\left\langle\widehat u_j,\Lambda^{1/2}\theta^\star\right\rangle\right|^2,\\
+\nu_W^{\mathcal K}((0,x])
+&=\sum_{0<\widehat\lambda_j\le x}\widehat\lambda_j^2.
+\end{aligned}
+$$
+
+Write \\(F_{W,>0}\\) for forcing above its floor and \\(K_W\\) for the constant-schedule memory kernel. Schematically,
 
 $$
 \begin{aligned}
