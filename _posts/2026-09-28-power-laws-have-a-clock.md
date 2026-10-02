@@ -328,9 +328,22 @@ Here \\(F_t\\) is the contribution from initialization, \\(\sigma^2\\) is label-
 
 ## When do these learning speeds produce a power law?
 
-Each direction decays exponentially, yet their sum can decay as a power law. As training continues, the fast directions drop out and progressively slower ones take over. At time \\(T\\), the remaining contribution comes mainly from directions with \\(\lambda\lesssim1/T\\).
+With a whole range of learning speeds, it is tempting to read a power-law loss curve as the slow learning of remaining signal. But the spectrum tells us how fast each direction relaxes, not how much target signal lies in it.
 
-**Individual eigenvalues need not follow a power law. Their weighted totals near zero are what matter.** In the random-feature model, this becomes an if-and-only-if relation in the large-width, long-time limit.
+In the example below, the spectrum follows a power law but the target barely uses its slow directions. Forcing disappears faster than every inverse power, yet SGD loss retains a power-law tail. What remains is the memory of batch noise.
+
+<figure>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;align-items:end;">
+    <img src="{{ '/images/power-laws-have-a-clock/main-fig2-forcing.png' | relative_url }}" alt="Target-weighted forcing decaying faster than every inverse power.">
+    <img src="{{ '/images/power-laws-have-a-clock/main-fig2-memory.png' | relative_url }}" alt="One-injection memory following a three-quarter power-law tail.">
+    <img src="{{ '/images/power-laws-have-a-clock/main-fig2-loss.png' | relative_url }}" alt="Minibatch-SGD risk crossing into the memory-controlled power-law tail.">
+  </div>
+  <figcaption><strong>Fast forcing decay, slow memory tail.</strong> Left: forcing vanishes faster than every inverse power. Middle: one-injection memory decays as \(T^{-3/4}\). Right: SGD loss, averaged over 20 runs, eventually follows that memory tail.</figcaption>
+</figure>
+
+**Slow loss decay need not mean slow signal learning.** Forcing and memory use the same decay speeds, but assign different weights to them. A fitted loss exponent alone does not tell us which contribution controls the curve.
+
+As training continues, fast directions fade and slower ones take over. At time \\(T\\), the remaining contribution comes mainly from directions with \\(\lambda\lesssim1/T\\). We therefore need to add up their weights separately for forcing and memory.
 
 For a fixed random-feature matrix \\(W\\), let \\(\widehat\lambda_j\\) and \\(\widehat u_j\\) be the eigenvalues and unit eigenvectors of \\(\Lambda^{1/2}WW^\top\Lambda^{1/2}\\), where \\(\Lambda\\) is the input covariance. With target parameter \\(\theta^\star\\), the two cumulative weights are
 
@@ -344,7 +357,7 @@ $$
 \end{aligned}
 $$
 
-Write \\(F_{W,>0}\\) for forcing above its floor and \\(K_W\\) for the constant-schedule memory kernel. Schematically,
+Write \\(F_{W,>0}\\) for forcing above its floor and \\(K_W\\) for the constant-schedule memory kernel. In the random-feature model's large-width, long-time limit, these weights and component decay laws determine one another. Schematically,
 
 $$
 \begin{aligned}
@@ -357,34 +370,22 @@ F_{W,>0}(T)\propto T^{-q_{\mathcal F}},\\
 \end{aligned}
 $$
 
-The positive exponents \\(q_{\mathcal F}\\) and \\(q_{\mathcal K}\\) describe forcing and memory separately. The weighted spectrum predicts temporal decay, and a component's power-law decay constrains that spectrum in return. The exponent now has an origin in the learning problem.
-
-This distinction has a surprising consequence. In the example below, the spectrum follows a power law but the target barely uses its slow directions. Forcing disappears faster than every inverse power, while batch noise reaches those directions and leaves a power-law memory tail.
-
-<figure>
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;align-items:end;">
-    <img src="{{ '/images/power-laws-have-a-clock/main-fig2-forcing.png' | relative_url }}" alt="Target-weighted forcing decaying faster than every inverse power.">
-    <img src="{{ '/images/power-laws-have-a-clock/main-fig2-memory.png' | relative_url }}" alt="One-injection memory following a three-quarter power-law tail.">
-    <img src="{{ '/images/power-laws-have-a-clock/main-fig2-loss.png' | relative_url }}" alt="Minibatch-SGD risk crossing into the memory-controlled power-law tail.">
-  </div>
-  <figcaption><strong>Fast forcing decay, slow memory tail.</strong> Left: forcing vanishes faster than every inverse power. Middle: one-injection memory decays as \(T^{-3/4}\). Right: SGD loss, averaged over 20 runs, eventually follows that memory tail.</figcaption>
-</figure>
-
-By the time the loss settles into its power-law tail, forcing has already become negligible. **Slow loss decay is not, by itself, evidence of slow signal learning.** Here it is the persistence of training noise that controls the curve. A fitted exponent alone would not tell us that.
+The positive exponents \\(q_{\mathcal F}\\) and \\(q_{\mathcal K}\\) describe forcing and memory separately. **This is a criterion, not just a construction:** each component's power-law decay also constrains its weighted spectrum near zero. Individual eigenvalues need not follow a power law; their weighted totals are what matter.
 
 ## Three kinds of memory
 
-The memory curve in that example follows a single noise injection. During actual SGD, another batch arrives at every step. Even if each perturbation fades, their accumulated effect can keep growing.
+If every perturbation fades, can we eventually ignore the distant past? The memory curve above follows one injection, but SGD adds noise at every step. Those responses accumulate.
 
-Write \\(k(v)\\) for the memory response after a delay \\(v\\). Adding equally weighted injections amounts to accumulating this response over longer and longer delays. Whether that total settles down separates three behaviors:
+Write \\(k(v)\\) for the memory response after a delay \\(v\\). With equally weighted injections, the accumulated response can behave in two ways:
 
-- **Long memory (LM):** \\(0<q_{\mathcal K}<1\\). Cumulative memory keeps growing with the training horizon.
-- **Integrable memory (IM):** \\(q_{\mathcal K}>1\\). Cumulative memory approaches a finite total.
-- **Finite bulk (FB):** the response remains tied to model width, rather than a width-independent positive decay exponent.
+- The responses fade fast enough for their total to approach a finite value. This is **integrable memory (IM)**, with \\(q_{\mathcal K}>1\\).
+- Each response fades, but too slowly for the total to settle. This is **long memory (LM)**, with \\(0<q_{\mathcal K}<1\\). Cumulative memory keeps growing with the horizon.
 
-Comparing memory with the forcing decay gives three LM cases, three IM cases, and two FB cases: the \\(3+3(+2)\\) in the title. The left diagram organizes them by response exponents.
+At the boundary, \\(q_{\mathcal K}=1\\), cumulative memory grows logarithmically. No individual perturbation has to be permanent for the total to keep growing.
 
-The right diagram traces them back to a concrete spectrum and target:
+**Finite bulk (FB)** needs separate treatment: the response remains tied to model width, rather than a width-independent positive decay exponent. Comparing memory with forcing gives three LM cases, three IM cases, and two FB cases: the \\(3+3(+2)\\) in the title.
+
+The two diagrams connect these behaviors to the learning problem. The left uses response exponents; the right uses a concrete spectrum and target:
 
 $$
 \lambda_j=j^{-2\alpha},
@@ -410,11 +411,13 @@ $$
   <figcaption><strong>Memory regimes in two coordinate systems.</strong> Left: response exponents. Right: spectrum and target parameters, with FB shown separately. The red band marks LLM fits near the LM/IM boundary, \(q_{\mathcal K}=1\).</figcaption>
 </figure>
 
-So far, we have focused on how long errors persist. Training schedules control the other side of the story: when new noise enters and how much is added.
+So far, we have added equally weighted responses. A training schedule changes the weights: it can make later noise injections weaker than earlier ones. How much can that change the loss curve?
 
 ## How training schedules transform the response
 
-Lowering the learning rate both shortens the update and reduces its noise. Increasing batch size reduces noise without shortening the full-gradient update. To compare them, return to intrinsic time and introduce the batch-to-learning-rate ratio:
+A smaller learning rate or a larger batch reduces noise. Why does that not let us make loss decay arbitrarily fast? Reducing new noise does not undo the effects of earlier batches.
+
+To separate noise reduction from training speed, return to intrinsic time. Lowering the learning rate both shortens the full-gradient update and reduces its noise; increasing batch size reduces noise without shortening that update. The relevant clock and batch-to-learning-rate ratio are
 
 $$
 T_t=\sum_{s<t}\eta_s,
@@ -426,7 +429,7 @@ An update advances the clock by \\(\eta_t\\) and injects variance at scale \\(\e
 
 This connects [increasing batch size with decaying learning rate](https://arxiv.org/abs/1711.00489): both reduce noise per unit of intrinsic time. Since earlier noise can still affect loss, we must match the whole ratio path, not just its final value.
 
-In the power-law random-feature model's LM and IM regimes,
+The forcing–memory relation keeps track of what each injection leaves behind. In the power-law random-feature model's LM and IM regimes,
 
 $$
 R(T)\asymp
@@ -438,22 +441,24 @@ $$
 
 Here \\(R\\) is prediction risk, \\(F\\) is forcing including its finite-width floor, and \\(\sigma^2\\) is label-noise variance. Remaining prediction error generates batch noise even with clean labels; label noise adds to it. The ratio \\(r(u)\\) controls the strength of these injections, and \\(k(T-u)\\) describes how much of their effect survives until \\(T\\). The relation holds up to multiplicative constants.
 
-As the ratio grows, new noise weakens while old noise continues to fade. **A schedule can change the loss exponent, not just the speed of training.** For power-law memory and ratio growth, compare the extra loss caused by label noise with the clean-label loss:
+To see the limit of noise reduction, compare loss with label noise against the clean-label loss. Faster growth of \\(r(T)\\) suppresses recent injections. Once earlier injections dominate this extra loss, its decay is set by memory. **This is the memory ceiling:** beyond it, faster growth of \\(B/\eta\\) no longer improves the noise-decay exponent.
+
+For power-law memory and ratio growth, comparing this extra loss with the clean loss gives three outcomes:
 
 - **Destroy:** the extra loss does not decay as a positive power.
 - **Change:** it decays more slowly than the clean loss and sets a new exponent.
 - **Preserve:** it decays at least as fast, leaving the clean exponent unchanged.
-
-There is a limit to what suppressing new noise can achieve. Once old noise controls the curve, it cannot be erased faster than memory decays. This is the **memory ceiling**: beyond it, faster growth of \\(B/\eta\\) no longer improves the noise-decay exponent.
 
 <figure>
   <img src="{{ '/images/power-laws-have-a-clock/main-fig4-schedule-map.png' | relative_url }}" alt="Phase diagram showing when a schedule preserves, changes, or destroys a clean power law." style="display:block;width:min(100%,570px);height:auto;margin-inline:auto;">
   <figcaption><strong>Preserve, change, or destroy.</strong> The ratio-growth exponent \(\vartheta\), defined by \(r(T)\sim T^\vartheta\), controls the outcome. The flat boundary marks the memory ceiling; \(q_{\mathcal K}=1\) introduces logarithmic corrections.</figcaption>
 </figure>
 
+**A schedule can change the loss exponent, not just the speed of training.** But suppressing noise more aggressively eventually stops improving that exponent: the past still has to fade.
+
 ## From schedule laws to schedule design
 
-With a fixed data budget and ending intrinsic time \\(T\\), where should we spend extra samples? Reducing noise now matters most when that noise would otherwise persist until the end.
+A ceiling on the exponent still leaves a practical choice: with a fixed data budget and ending intrinsic time \\(T\\), where should we spend extra samples? They help most where the noise they suppress would otherwise persist until the end.
 
 In the LM/IM response model, balancing source strength against this future effect gives the optimal ratio
 
