@@ -23,7 +23,7 @@ header:
 
 In a linear model, individual directions can lose error exponentially. Yet a broad collection of learning speeds can combine into a much slower power-law curve, like those familiar from [language-model scaling](https://arxiv.org/abs/2001.08361). Which collections produce this behavior—and which do not?
 
-**A power-law spectrum alone does not answer the question.** The target determines which slow directions matter for learning; batch noise determines which ones keep receiving new errors. In a random-feature model, we identify necessary and sufficient spectral conditions for two contributions to decay as power laws: the remaining initial error, **forcing**, and the lasting response to injected noise, **memory**. A power-law tail can persist even when forcing has already faded much faster.
+**A power law is a phenomenon to explain, not an explanation.** Its exponent alone does not tell us whether the curve comes from remaining initial error or the memory of earlier training noise. In a random-feature model, we identify necessary and sufficient spectral conditions for these two contributions—**forcing** and **memory**—to decay as power laws. A power-law tail can persist even when forcing has already faded much faster.
 
 This distinction also changes how we think about training schedules. Learning rate and batch size control the stream of new errors. Changing that stream can change the loss exponent, rather than merely speed up the same curve.
 
@@ -103,9 +103,9 @@ $$
 
 The coefficient \\(K(n,s)\\) includes both the spread in final parameters and shifts in their average caused by nonlinear updates.
 
-This is **forcing–memory as a coarse-grained response law of SGD**: instead of tracking every parameter, track a baseline loss and how much earlier fluctuations still matter.
+This motivates a working hypothesis: **forcing–memory may be an effective response law of SGD, not merely a convenient description of a linear model.** Such a coarse-grained law would predict how training history affects loss without first explaining every change inside the network. It is the loss response that needs to transfer—not the parameters, representations, or local curvature.
 
-We now have a reason for memory to appear. The next question is why its effect might follow a simple power law.
+The calculation gives a reason for memory to appear. Whether that response has a simple, transferable form is a further question. The linear model lets us calculate it explicitly; later, the LLM experiments test its predictive reach.
 
 <details markdown="1">
 <summary><strong>Derivation details: from SGD updates to the memory response</strong></summary>
@@ -285,7 +285,7 @@ $$
 R_t=F_t+\sum_{s<t}K_{t,s}\bigl(R_s+\sigma^2\bigr).
 $$
 
-The factor \\(R_s+\sigma^2\\) is the noise source: it combines remaining prediction error with label noise. The kernel describes how much of that injection survives. The equation closes on the risk history, without tracking individual parameters. Here \\(K_{t,s}\\) includes the schedule factors written separately as \\(\eta_s^2/B_s\\) above.
+The factor \\(R_s+\sigma^2\\) is the noise source: it combines remaining prediction error with label noise. The kernel describes how much of that injection survives. The equation closes on the risk history, without tracking individual parameters. Compared with the general response above, the state-dependent source is now explicit, and \\(K_{t,s}\\) includes the schedule factor \\(\eta_s^2/B_s\\). The terms are regrouped: \\(F_t\\) also absorbs part of the sampling noise into the propagation of initial error, so it is not the pure full-gradient baseline \\(F(n)\\).
 
 At constant learning rate \\(\eta\\) and batch size \\(B\\), use **intrinsic time** \\(T=\eta t\\). A slow mode's squared error decays approximately as \\(e^{-2\lambda_j T}\\). Forcing weights these decays by the initial error in each direction. Memory weights them by noise injection and their contribution to loss. The same spectrum can therefore produce different forcing and memory exponents.
 
@@ -399,7 +399,7 @@ $$
 
 The **if-and-only-if** result applies separately to forcing and memory: their temporal powers correspond to power laws in the relevant cumulative spectral weights.
 
-The example below makes the distinction visible: forcing disappears faster than every inverse power, yet memory leaves a power-law tail in the loss. A slow learning curve need not mean that the initial error itself is disappearing slowly.
+The example below makes the distinction visible: forcing disappears faster than every inverse power, yet memory leaves a power-law tail in the loss.
 
 <figure>
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;align-items:end;">
@@ -409,6 +409,8 @@ The example below makes the distinction visible: forcing disappears faster than 
   </div>
   <figcaption><strong>Forcing can disappear quickly while memory leaves a power law.</strong> Left: the target puts so little weight in slow directions that forcing falls faster than every inverse power. Middle: the effect of one noise injection falls as \(T^{-3/4}\). Right: the average SGD loss over 20 runs first drops quickly, then follows the slower \(T^{-3/4}\) memory curve.</figcaption>
 </figure>
+
+**Slow loss decay is not, by itself, evidence of slow signal learning.** A similar-looking curve can be controlled by error in the target directions or by noise that training has not yet erased. A fitted exponent is therefore a starting point, not a mechanism. How much about learning can we really infer from a scaling curve without separating these contributions?
 
 ## Three kinds of memory
 
@@ -446,7 +448,7 @@ $$
   <figcaption><strong>Different learning speeds lead to different kinds of memory.</strong> Left: the diagram is organized by how fast forcing and memory decay. Right: the same classification is shown using the spectrum and target parameters \((\alpha,\beta)\), with the width-dependent FB cases shown separately. The red band marks the LLM fits near \(q_{\mathcal K}=1\), between LM and IM.</figcaption>
 </figure>
 
-We will return to the LLM fits that place the red band there.
+The red band raises a question we will return to: why do the fitted LLM responses sit near the boundary between long and integrable memory?
 
 ## How training schedules transform the response
 
@@ -517,7 +519,9 @@ A complementary approach is [Bordelon and Mori's optimal-control analysis](https
 
 ## From theory to LLM pretraining
 
-Can a response structure derived from a linear model predict nonlinear LLM training? We test it by changing the ratio path, changing how that path is implemented, and finally predicting a schedule whose loss measurements were not used for fitting.
+**A learning-curve model should predict what happens when training changes.** A good fit shows that a formula can describe observations. Holding its parameters fixed and changing the training process asks whether the response it describes can be reused. We think this should be a central test of a learning-curve theory.
+
+For LLMs, this tests our broader hypothesis: the loss may have a transferable response structure even while the network's internal representations evolve. We change the ratio path, change how that path is implemented, and finally predict a schedule whose loss measurements were not used for fitting.
 
 ### Test 1: the ratio path affects loss
 
@@ -560,6 +564,8 @@ In the main 300M analysis, we fix \\(q_{\mathcal K}=1\\) and fit the other six p
   <figcaption><strong>Fit on 8-1-1, then predict WSD without fitting again.</strong> Left: fix \(q_{\mathcal K}=1\) and fit the other six parameters to 8-1-1. Middle: keep them unchanged and predict WSD. Right: repeat the procedure for different fixed values of \(q_{\mathcal K}\), always fitting only on 8-1-1. The WSD prediction is most accurate near one.</figcaption>
 </figure>
 
+The result supports a response model that carries information beyond the curve used to fit it. We would like to see learning-curve models compared on this basis: after fitting one run, how much of a changed training run can they predict without adjustment?
+
 What is being transferred between these curves? Building on [Li et al.'s functional-scaling-law approach](https://arxiv.org/abs/2509.19189), we use a forcing–memory surrogate whose fitted parameters describe the response, while the known ratio path supplies the schedule.
 
 We approximate the effective response by \\(K(n,s)\approx J(T_s)k(T_n-T_s)\\): the source amplitude depends on when noise enters, while the propagation kernel depends on how long it has been present.
@@ -577,7 +583,9 @@ $$
 
 The first two terms describe baseline loss; the integral adds the noise effects that remain. Once the parameters are fitted, changing the known ratio \\(r(u)\\) predicts a new schedule.
 
-There is a second pattern: when we fit all seven parameters freely, the memory exponent still lands close to one across several models and datasets:
+## Why does the memory exponent keep landing near one?
+
+**The fitted memory exponent stays close to one even when we stop fixing it there.** In the experiments below, all seven parameters are fitted freely, across different datasets and two model sizes:
 
 | Dataset and setting | \\(q_{\mathcal K}\\) | \\(q_{\mathcal F}\\) |
 |---|---:|---:|
@@ -586,14 +594,11 @@ There is a second pattern: when we fit all seven parameters freely, the memory e
 | peS2o V2 s2orc full text, 124M, 2.5B tokens | 0.995 | 0.365 |
 | OpenWebText, 300M, 6.5B tokens | 0.989 | 0.291 |
 
-These fits have \\(q_{\mathcal K}\approx1\\) and \\(q_{\mathcal F}<1\\), placing the LLM responses near the LM/IM boundary—the red band in the phase diagram.
+These fits have \\(q_{\mathcal K}\approx1\\) and \\(q_{\mathcal F}<1\\), placing the LLM responses near the LM/IM boundary—the red band in the phase diagram. One is a meaningful value in the theory: it separates a finite cumulative memory mass from one that keeps growing, with logarithmic growth at the boundary itself.
 
-## What the results change
+Why should these different training tasks land near that boundary? Do they share an effective memory response, or can finite training windows and trade-offs between fitted terms pull the exponent toward one? The present curves do not decide between these explanations.
 
-- **An exponent is not the whole explanation.** Ask which directions still matter, how slowly they learn, and whether the curve is set by initial error or accumulated noise.
-- **A learning curve needs a clock and a schedule.** State how time is measured and how learning rate and batch size change before comparing exponents.
-- **Predicting a new schedule is a stronger test than fitting one curve.** Keep the fitted parameters fixed and check whether they predict new measurements.
-- **A tractable model can reveal a reusable response structure.** The linear theory makes forcing and memory explicit; the LLM experiments test whether the same low-dimensional description predicts nonlinear training.
+Longer held-out continuations, fits over different time windows, and direct measurements of the loss response to controlled training perturbations would help distinguish them. **The open question is whether near-one memory survives changes in how we train and how we measure it.**
 
 ## The larger lesson
 
@@ -609,9 +614,9 @@ $$
 \text{loss curve}.
 $$
 
-Training removes old error and continually adds new fluctuations. The spectrum tells us how quickly different parts disappear. The schedule controls how much noise enters along the way. A learning curve records the balance of these processes.
+The linear model makes this chain calculable and provable. The LLM results motivate a broader possibility: a few response quantities may predict loss even when the underlying parameter dynamics are far more complicated. Understanding which changes preserve that description—and which break it—is a research question worth pursuing.
 
-The theory tells us when these parts follow power laws and how to allocate training resources. The LLM tests show the idea's predictive value: matching ratio paths aligns curves in intrinsic time, and fitting one schedule predicts another. **Forcing–memory connects a theory we can calculate to learning curves we can measure.**
+That is the shift we want to make: **explain where a learning curve comes from, then test that explanation by predicting how the curve changes.** Fitting a power law begins the investigation; it does not finish it.
 
 ## Further reading
 
