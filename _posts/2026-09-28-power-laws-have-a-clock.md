@@ -17,15 +17,17 @@ header:
   teaser: /images/power-laws-have-a-clock/main-fig2-loss.png
 ---
 
-*If individual errors decay exponentially, where does a power-law learning curve come from?*
+*When loss follows a power law, what is the model actually learning?*
 
 [Paper (arXiv)](https://arxiv.org/abs/2609.40148) · [Code (GitHub)](https://github.com/yichenblue/spectra-to-schedules-in-pretraining)
 
-In a linear model, individual directions can lose error exponentially, yet their combined loss can follow a power law, like those familiar from [language-model scaling](https://arxiv.org/abs/2001.08361). What makes that happen?
+A smooth learning curve seems to tell a simple story: more training, less error. But the same curve can hide two different processes—learning the remaining signal and shedding the effects of noise introduced by earlier updates. Fitting an exponent does not tell us which one controls the improvement.
 
-**A power law is a phenomenon to explain, not an explanation.** We separate remaining initial error—**forcing**—from the **memory** of training noise. In a random-feature model, we identify necessary and sufficient spectral conditions for each to produce a power law, and show how schedules reshape the resulting curve.
+**Slow loss decay need not mean slow signal learning.** We construct an example where the initial error disappears faster than every power law, yet SGD loss retains a power-law tail. What remains is the memory of training noise.
 
-The same idea also predicts LLM loss: fit a forcing–memory formula on an 8-1-1 schedule, freeze its parameters, and predict WSD. To understand why this might work, start with one batch: why does its influence outlast its update?
+This distinction leads to two answers. Our theory identifies the spectral conditions that make forcing and memory produce power laws, and explains how training schedules reshape them. Our LLM experiments test whether this response structure can predict a different training run: fit an 8-1-1 trajectory, freeze the parameters, and predict WSD.
+
+The aim is not just to describe the shape of a learning curve, but to explain its origin—and predict how it changes.
 
 ## Why SGD has memory
 
