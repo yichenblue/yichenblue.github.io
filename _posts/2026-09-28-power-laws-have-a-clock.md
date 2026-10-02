@@ -328,7 +328,7 @@ Here \\(F_t\\) is the contribution from initialization, \\(\sigma^2\\) is label-
 
 ## When do these learning speeds produce a power law?
 
-With a whole range of learning speeds, it is tempting to read a power-law loss curve as the slow learning of remaining signal. But the spectrum tells us how fast each direction relaxes, not how much target signal lies in it.
+Suppose the target has almost no component along a direction that is slow to learn. There is then little signal to learn in that direction. But batch sampling can still introduce errors there, and those errors take a long time to disappear.
 
 In the example below, the spectrum follows a power law but the target barely uses its slow directions. Forcing disappears faster than every inverse power, yet SGD loss retains a power-law tail. What remains is the memory of batch noise.
 
