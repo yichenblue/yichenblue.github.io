@@ -435,7 +435,7 @@ As the ratio grows, new noise weakens while old noise continues to fade. **A sch
 There is a limit to what suppressing new noise can achieve. Once old noise controls the curve, it cannot be erased faster than memory decays. This is the **memory ceiling**: beyond it, faster growth of \\(B/\eta\\) no longer improves the noise-decay exponent.
 
 <figure>
-  <img src="{{ '/images/power-laws-have-a-clock/main-fig4-schedule-map.png' | relative_url }}" alt="Phase diagram showing when a schedule preserves, changes, or destroys a clean power law." style="display:block;width:min(100%,760px);margin-inline:auto;">
+  <img src="{{ '/images/power-laws-have-a-clock/main-fig4-schedule-map.png' | relative_url }}" alt="Phase diagram showing when a schedule preserves, changes, or destroys a clean power law." style="display:block;width:min(100%,570px);height:auto;margin-inline:auto;">
   <figcaption><strong>Preserve, change, or destroy.</strong> The ratio-growth exponent \(\vartheta\), defined by \(r(T)\sim T^\vartheta\), controls the outcome. The flat boundary marks the memory ceiling; \(q_{\mathcal K}=1\) introduces logarithmic corrections.</figcaption>
 </figure>
 
@@ -467,10 +467,14 @@ First, keep the ratio path the same but implement it differently: lower learning
 
 We did this for a 300M plain-SGD LLM with two schedule shapes: gradual decay (WSD) and two successive drops (8-1-1). If intrinsic time and the ratio path capture the main schedule dependence, each pair should follow nearly the same loss curve.
 
-<figure>
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem;align-items:end;">
-    <img src="{{ '/images/power-laws-have-a-clock/main-fig1-step.png' | relative_url }}" alt="Validation risk for matched learning-rate and batch-size schedules plotted against optimizer step.">
-    <img src="{{ '/images/power-laws-have-a-clock/main-fig1-intrinsic-time.png' | relative_url }}" alt="The same validation trajectories plotted against intrinsic time, together with the transferred surrogate.">
+<figure style="display:block;">
+  <div style="display:flex;flex-wrap:wrap;gap:1rem;align-items:flex-end;width:100%;margin-bottom:1rem;">
+    <div style="flex:1 1 280px;min-width:0;">
+      <img src="{{ '/images/power-laws-have-a-clock/main-fig1-step.png' | relative_url }}" alt="Validation risk for matched learning-rate and batch-size schedules plotted against optimizer step." style="display:block;width:100%;height:auto;margin:0;">
+    </div>
+    <div style="flex:1.26 1 352.8px;min-width:0;">
+      <img src="{{ '/images/power-laws-have-a-clock/main-fig1-intrinsic-time.png' | relative_url }}" alt="The same validation trajectories plotted against intrinsic time, together with the transferred surrogate." style="display:block;width:100%;height:auto;margin:0;">
+    </div>
   </div>
   <figcaption><strong>Different step counts, nearly the same intrinsic-time curves.</strong> Paired learning-rate and batch-size implementations separate against optimizer step (left) and align against \(T=\sum_t\eta_t\) (right).</figcaption>
 </figure>
