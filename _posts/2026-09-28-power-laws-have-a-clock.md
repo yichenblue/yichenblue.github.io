@@ -420,7 +420,37 @@ The two exponents answer different questions: how quickly does the initial error
 
 In the power-law random-feature model, comparing the forcing and memory rates gives three LM cases, three IM cases, and two FB cases: the \\(3+3(+2)\\) in the title. These describe the two ingredients of the learning curve; the schedule still determines how they combine.
 
-The left panel uses the response exponents. The right uses the spectrum-decay parameter \\(\alpha\\) and target-decay parameter \\(\beta\\), connecting these response regimes to the underlying model.
+To read the right-hand diagram, consider the power-law model
+
+$$
+\lambda_j=j^{-2\alpha},
+\qquad
+|\theta_j^\star|=j^{-\beta}.
+$$
+
+Here \\(\lambda_j\\) are the data-covariance eigenvalues, ordered from largest to smallest, and \\(\theta_j^\star\\) is the target coefficient along the corresponding direction. Larger \\(\alpha\\) makes the eigenvalues fall faster. Larger \\(\beta\\) puts less target weight in the small-eigenvalue directions that take longer to learn.
+
+For \\(\alpha>1/4\\) and finite target energy, \\(2\alpha+2\beta>1\\), these model parameters give the response exponents
+
+$$
+q_{\mathcal F}=\frac{2\alpha+2\beta-1}{2\alpha},
+\qquad
+q_{\mathcal K}=2-\frac{1}{2\alpha}.
+$$
+
+The connection comes from the directions still unlearned at time \\(T\\): those with \\(\lambda_j T\lesssim1\\). Summing their forcing weights, \\(\lambda_j|\theta_j^\star|^2\\), gives the first exponent; summing their memory weights, \\(\lambda_j^2\\), gives the second. **Forcing depends on both the spectrum and the target; memory depends on the spectrum.**
+
+The main boundaries therefore translate directly between the two diagrams:
+
+$$
+\begin{aligned}
+q_{\mathcal K}=1&\quad\Longleftrightarrow\quad\alpha=\tfrac12,\\
+q_{\mathcal F}=1&\quad\Longleftrightarrow\quad\beta=\tfrac12,\\
+q_{\mathcal F}=q_{\mathcal K}&\quad\Longleftrightarrow\quad\beta=\alpha.
+\end{aligned}
+$$
+
+Thus \\(1/4<\alpha<1/2\\) gives LM, while \\(\alpha>1/2\\) gives IM. For \\(0<\alpha<1/4\\), the total squared spectral weight grows with model width: this is FB, not a positive, width-independent memory exponent. The gray region violates the finite-target-energy condition. The left panel describes the response; the right shows which spectrum and target produce it.
 
 <figure style="display:block;">
   <div style="display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:clamp(12px,2vw,24px);align-items:center;width:100%;max-width:680px;margin:0 auto 1rem;">
@@ -446,15 +476,19 @@ One update advances this clock by \\(\Delta T_t=T_{t+1}-T_t=\eta_t\\). Its noise
 
 The connection between learning rate and batch size also motivates [Smith et al.'s proposal to increase batch size instead of decaying the learning rate](https://arxiv.org/abs/1711.00489). Here we ask how the full ratio path shapes the accumulation of memory.
 
-Let \\(L(T)\\) be expected loss, \\(L_\infty\\) its floor, and \\(F(T)\\) the baseline excess loss. Approximating the response by a source amplitude \\(J(u)\\) and a lag-dependent kernel \\(k(T-u)\\) gives
+In the PLRF model’s LM and IM regimes, the forcing–memory scaling law takes the continuum form
 
 $$
-L(T)-L_\infty
-\approx
-F(T)+\int_0^T\frac{J(u)}{r(u)}k(T-u)\,\mathrm du.
+R(T)\asymp
+F(T)+
+\int_0^T
+\frac{F(u)+\sigma^2}{r(u)}
+\,k(T-u)\,\mathrm du.
 $$
 
-Each contribution is the noise injected at time \\(u\\), multiplied by how much of its effect survives to \\(T\\). The integral is the discrete memory sum expressed in intrinsic time.
+Here \\(R(T)\\) is the prediction risk, and \\(F(T)\\) is the forcing profile, including the finite-width error floor. The relation holds up to multiplicative constants.
+
+The integral combines three effects. The remaining prediction error generates minibatch noise even with clean labels, represented by \\(F(u)\\); label noise adds \\(\sigma^2\\). The ratio \\(r(u)\\) controls the strength of these injections, and \\(k(T-u)\\) describes how much of their effect survives until time \\(T\\).
 
 Suppose \\(k(v)\sim v^{-q_{\mathcal K}}\\) and \\(r(T)\sim T^\vartheta\\), where \\(v\\) is the time since injection and \\(\vartheta\\) is the ratio-growth exponent. Our schedule theorem compares label-noisy SGD with its clean-label counterpart. The label-noise contribution leads to three outcomes:
 
