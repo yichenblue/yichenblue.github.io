@@ -415,7 +415,9 @@ So far, we have added equally weighted responses. A training schedule changes th
 
 ## How training schedules transform the response
 
-A smaller learning rate or a larger batch reduces noise. Why does that not let us make loss decay arbitrarily fast? Reducing new noise does not undo the effects of earlier batches.
+Learning-rate decay often produces a striking change in the training curve: loss that was falling slowly begins to drop much more sharply. This is especially visible in [warmup–stable–decay (WSD) training](https://arxiv.org/abs/2410.05192). From the loss curve alone, it can look as though lowering the learning rate has made the model learn faster.
+
+But is it learning the target faster, or reducing the loss caused by stochastic updates? And if annealing helps, why can't a more aggressive schedule keep making loss fall faster?
 
 To separate noise reduction from training speed, return to intrinsic time. Lowering the learning rate both shortens the full-gradient update and reduces its noise; increasing batch size reduces noise without shortening that update. The relevant clock and batch-to-learning-rate ratio are
 
