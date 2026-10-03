@@ -417,6 +417,11 @@ So far, we have added equally weighted responses. A training schedule changes th
 
 Learning-rate decay often produces a striking change in the training curve: loss that was falling slowly begins to drop much more sharply. This is especially visible in [warmup–stable–decay (WSD) training](https://arxiv.org/abs/2410.05192). From the loss curve alone, it can look as though lowering the learning rate has made the model learn faster.
 
+<figure style="display:block;max-width:680px;margin:2em auto;">
+  <img src="{{ '/images/power-laws-have-a-clock/wen-2024-wsd-loss.svg' | relative_url }}" alt="Validation loss versus training step: the blue WSD curve falls slowly late in the stable phase, then drops sharply after learning-rate decay begins near step 45,000, finishing below the orange cosine curve." style="display:block;width:min(100%,560px);height:auto;margin:0 auto 1rem;">
+  <figcaption><strong>Loss falls faster when learning-rate decay begins.</strong> Follow the blue WSD curve across the dashed line: its slow decline becomes a sharp drop, ending below the orange cosine curve. Figure reproduced unchanged from <a href="https://arxiv.org/html/2410.05192v3#S1.F1">Wen et al. (2024), Figure 1</a>, under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>.</figcaption>
+</figure>
+
 But is it learning the target faster, or reducing the loss caused by stochastic updates? And if annealing helps, why can't a more aggressive schedule keep making loss fall faster?
 
 To separate noise reduction from training speed, return to intrinsic time. Lowering the learning rate both shortens the full-gradient update and reduces its noise; increasing batch size reduces noise without shortening that update. The relevant clock and batch-to-learning-rate ratio are
