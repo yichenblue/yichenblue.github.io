@@ -415,16 +415,16 @@ So far, we have added equally weighted responses. A training schedule changes th
 
 ## How training schedules transform the response
 
-Learning-rate decay often produces a striking change in the training curve: loss that was falling slowly begins to drop much more sharply. This is especially visible in [warmup–stable–decay (WSD) training](https://arxiv.org/abs/2410.05192). From the loss curve alone, it can look as though lowering the learning rate has made the model learn faster.
+Learning-rate decay often produces a striking change in the training curve: loss that was falling slowly begins to drop much more sharply. In [warmup–stable–decay (WSD) training](https://arxiv.org/abs/2404.06395), the learning rate stays constant after warmup until a final decay phase. Follow the gray-green curves in the MiniCPM experiment below: their gradual decline gives way to a sharp drop when decay begins. The same pattern appears at several different stages of training.
 
 <figure style="display:block;max-width:680px;margin:2em auto;">
-  <img src="{{ '/images/power-laws-have-a-clock/wen-2024-wsd-loss.svg' | relative_url }}" alt="Validation loss versus training step: the blue WSD curve falls slowly late in the stable phase, then drops sharply after learning-rate decay begins near step 45,000, finishing below the orange cosine curve." style="display:block;width:min(100%,560px);height:auto;margin:0 auto 1rem;">
-  <figcaption><strong>Loss falls faster when learning-rate decay begins.</strong> Follow the blue WSD curve across the dashed line: its slow decline becomes a sharp drop, ending below the orange cosine curve. Figure reproduced unchanged from <a href="https://arxiv.org/html/2410.05192v3#S1.F1">Wen et al. (2024), Figure 1</a>, under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>.</figcaption>
+  <img src="{{ '/images/power-laws-have-a-clock/hu-2024-minicpm-wsd-loss.svg' | relative_url }}" alt="Loss on C4 versus training tokens for a 0.036B model: gray-green WSD curves show sharp drops during decay at several training stages; the orange curve uses a cosine schedule." style="display:block;width:100%;height:auto;margin:0 auto 1rem;">
+  <figcaption><strong>A sharp loss drop at different stages of training.</strong> The gray-green curves use WSD with different decay timings and durations; orange shows cosine. Token counts are expressed as multiples of the model's parameter count, \(N\). Figure reproduced unchanged from <a href="https://arxiv.org/html/2404.06395v3#S4.F6.fig1">Hu et al. (2024), MiniCPM, Figure 5</a>, under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>.</figcaption>
 </figure>
 
-But is it learning the target faster, or reducing the loss caused by stochastic updates? And if annealing helps, why can't a more aggressive schedule keep making loss fall faster?
+These downward turns make it look as though lowering the learning rate has made the model learn faster. But a faster fall in loss need not mean faster learning of the target: reducing the error caused by stochastic updates also lowers loss. Which effect explains the drop? And if annealing helps, why can't a more aggressive schedule keep making loss fall faster?
 
-To separate noise reduction from training speed, return to intrinsic time. Lowering the learning rate both shortens the full-gradient update and reduces its noise; increasing batch size reduces noise without shortening that update. The relevant clock and batch-to-learning-rate ratio are
+To separate the two effects, start with plain SGD and return to intrinsic time. Lowering the learning rate both shortens the full-gradient update and reduces its noise; increasing batch size reduces noise without shortening that update. The relevant clock and batch-to-learning-rate ratio are
 
 $$
 T_t=\sum_{s<t}\eta_s,
