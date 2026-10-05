@@ -47,7 +47,7 @@ header:
 
 [Paper (arXiv)](https://arxiv.org/abs/2609.40148) · [Code (GitHub)](https://github.com/yichenblue/spectra-to-schedules-in-pretraining)
 
-A straight line on a log–log plot is an invitation to imagine a model we have not trained yet. The measured points describe runs we can afford. Extend their trend to the right, and suddenly the plot seems to tell us what ten times—or a hundred times—more compute could buy.
+How much better could a language model become with ten times more compute? A hundred times? Scaling laws make these questions quantitative: measurements from smaller experiments can be used to predict the loss of training runs that are still far beyond our budget.
 
 <figure id="scaling-law-overview" style="display:block;margin:1.8em 0;">
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:0;background:#fff;padding:8px;border-radius:4px;">
@@ -69,7 +69,7 @@ Look at how much variation these plots compress. Model size, data, and compute s
 
 That map changes how we spend compute. Should the next run use a larger model, or should a smaller model see more tokens? How far should either be trained? These are the kinds of choices behind [compute-optimal training](https://arxiv.org/abs/2203.15556). A fitted curve can inform a decision long before the full training budget is spent.
 
-A straight line makes a powerful promise: multiply the compute, and the improvement follows a predictable rule. But how far does that promise extend?
+But how far can we trust that extrapolation?
 
 Look at the frontier below. Each training configuration offers a different trade-off between cost and performance; the lower envelope traces the best results available at each compute budget. Across the middle of the plot, that envelope follows a remarkably straight path. At both ends, it bends.
 
