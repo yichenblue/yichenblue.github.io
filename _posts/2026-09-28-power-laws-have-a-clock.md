@@ -13,7 +13,7 @@ read_time: true
 reading_guide:
   # Approximate prose-reading times at the site's 160 words/minute.
   # Excludes mathematical source; optional details are counted separately.
-  main_minutes: 17
+  main_minutes: 20
   optional_minutes: 8
   sections:
     - title: Why SGD has memory
@@ -47,11 +47,57 @@ header:
 
 [Paper (arXiv)](https://arxiv.org/abs/2609.40148) · [Code (GitHub)](https://github.com/yichenblue/spectra-to-schedules-in-pretraining)
 
-Train a language model for longer, and its loss often follows a remarkably regular curve. Across model sizes, the best loss attainable for a given compute budget can also follow a power law. These [scaling patterns](https://arxiv.org/abs/2001.08361) help us predict what more training can achieve. But a fitted power law does not explain where the pattern comes from.
+A straight line on a log–log plot is an invitation to imagine a model we have not trained yet. The measured points describe runs we can afford. Extend their trend to the right, and suddenly the plot seems to tell us what ten times—or a hundred times—more compute could buy.
 
-**Why does loss decay as a power law? What determines its exponent? And why does changing the training schedule change the curve?**
+<figure id="scaling-law-overview" style="display:block;margin:1.8em 0;">
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:0;background:#fff;padding:8px;border-radius:4px;">
+    <!-- Preserve the original unequal panel boundaries and a shared scale when stacking. -->
+    <div style="overflow:hidden;min-width:0;">
+      <img src="{{ '/images/power-laws-have-a-clock/kaplan-2020-scaling-laws.svg' | relative_url }}" alt="Kaplan et al. compute scaling: pale training trajectories and their efficient frontier follow a power-law trend." style="display:block;width:283.201761%;max-width:none;height:auto;margin:0;clip-path:inset(0 64.689485% 0 0);">
+    </div>
+    <div style="overflow:hidden;min-width:0;">
+      <img src="{{ '/images/power-laws-have-a-clock/kaplan-2020-scaling-laws.svg' | relative_url }}" alt="Kaplan et al. dataset scaling: test loss decreases regularly as dataset size increases." style="display:block;width:283.201761%;max-width:none;height:auto;margin:0;clip-path:inset(0 31.599757% 0 35.310515%);transform:translateX(-34.200121%);">
+    </div>
+    <div style="overflow:hidden;min-width:0;">
+      <img src="{{ '/images/power-laws-have-a-clock/kaplan-2020-scaling-laws.svg' | relative_url }}" alt="Kaplan et al. parameter scaling: test loss follows an approximate power law in non-embedding parameter count." style="display:block;width:283.201761%;max-width:none;height:auto;margin:0;clip-path:inset(0 0 0 68.400243%);transform:translateX(-66.544864%);">
+    </div>
+  </div>
+  <figcaption><strong>Large changes in scale, remarkably regular changes in loss.</strong> Panels from <a href="https://arxiv.org/html/2001.08361v1#S1.F1">Kaplan et al. (2020), Figure 1</a>. The compute panel shows a frontier across models, with compute adjusted for sufficiently small batches—not one model's training trajectory.</figcaption>
+</figure>
 
-Start with a single SGD update. It moves the model along a gradient estimated from one batch, rather than the full data distribution. The difference changes the parameters from which every later update begins. A learning curve therefore reflects more than the progress made at the current step: it also carries the effects of earlier updates.
+Look at how much variation these plots compress. Model size, data, and compute span orders of magnitude, yet the losses arrange themselves along simple trends. The attraction of a scaling law is not just that it fits the points. It turns a collection of completed experiments into a map of experiments we have not run.
+
+That map changes how we spend compute. Should the next run use a larger model, or should a smaller model see more tokens? How far should either be trained? These are the kinds of choices behind [compute-optimal training](https://arxiv.org/abs/2203.15556). A fitted curve can inform a decision long before the full training budget is spent.
+
+But there are two different journeys on these maps. One follows a single model as training continues. The other follows the best result available at each compute budget, choosing among models and training configurations. Both can trace power laws. The second is a frontier built from the first; it is not simply one training curve drawn farther to the right. To understand where these laws come from, we will look inside a training run.
+
+But even for a fixed model, which slope should we expect? In [Mircea et al.'s experiments](https://arxiv.org/html/2506.05447v1#A3.SS3), models trained with a constant learning rate after warmup were trained again with cosine decay, keeping the other settings unchanged. The change affected not just the final loss, but the fitted power-law exponent.
+
+<figure id="learning-rate-scaling-exponents" style="display:block;max-width:660px;margin:1.8em auto;">
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px;background:#fff;padding:12px 8px;border-radius:4px;">
+    <div style="min-width:0;text-align:center;">
+      <p style="margin:0 0 12px;font-size:0.85em;font-weight:600;">Warmup + constant LR</p>
+      <a href="https://arxiv.org/html/2506.05447v1#S2.F2" aria-label="View Figure 2 in Mircea et al.">
+        <img src="{{ '/images/power-laws-have-a-clock/mircea-2025-constant-lr.svg' | relative_url }}" alt="Original Figure 2: log–log training-loss curves and broken-power-law fits, with constant learning rate after warmup for the 14M–472M models." style="display:block;width:100%;height:440px;object-fit:contain;object-position:50% 0;margin:0;">
+      </a>
+    </div>
+    <div style="min-width:0;text-align:center;">
+      <p style="margin:0 0 12px;font-size:0.85em;font-weight:600;">Warmup + cosine decay</p>
+      <a href="https://arxiv.org/html/2506.05447v1#A3.SS3" aria-label="View Figure 29 and the learning-rate comparison in Mircea et al.">
+        <img src="{{ '/images/power-laws-have-a-clock/mircea-2025-cosine-lr.svg' | relative_url }}" alt="Original Figure 29: log–log training-loss curves and broken-power-law fits with cosine learning-rate decay; the 14M–472M models have steeper fitted late-training slopes." style="display:block;width:100%;height:440px;object-fit:contain;object-position:50% 0;margin:0;">
+      </a>
+    </div>
+  </div>
+  <figcaption><strong>Changing the learning-rate schedule changes the fitted exponent.</strong> Original Figures 2 and 29 from <a href="https://arxiv.org/html/2506.05447v1#A3.SS3">Mircea et al. (2025)</a>. The 14M–472M models provide the schedule comparison; OLMo-1B/7B are external reference runs. These are finite-window fits to raw training loss with the loss offset fixed at zero, not exponents for loss above its limiting floor.</figcaption>
+</figure>
+
+Compare the late-training slopes for the same model across the two panels. For 144M, the fitted exponent rises from **0.023 to 0.036**; for 285M, from **0.025 to 0.040**; for 472M, from **0.035 to 0.045**. The curves do not merely move downward: their fitted slopes become steeper. The model and dataset have not changed, yet the apparent scaling law has. How much of an exponent belongs to the learning problem, and how much belongs to the way we train?
+
+This is where “universality” becomes an interesting question rather than a label. [A mechanism shared across models](https://arxiv.org/abs/2606.25008) might explain why similar slopes recur. Understanding that mechanism also means asking how it turns [structure in the data and the task](https://arxiv.org/abs/2210.16859) into a loss curve. Why should a power law appear in the first place? Must it already be written into the data, or can it emerge from how training learns—and how training makes errors?
+
+A training schedule gives us a direct way to investigate this question. Instead of only fitting the curve we already have, we can ask what happens when we change the learning rate or batch size. **What if the transferable object is not a fixed exponent, but a rule that predicts how the curve changes?**
+
+To look for that rule, zoom in from the whole curve to one stochastic gradient descent (SGD) update. Its gradient comes from a sampled batch, so it contains a sampling error. That error changes the parameters from which the next update begins, and the next, and the next. A loss measured much later still carries the effects of those earlier updates.
 
 ## Why SGD has memory
 
