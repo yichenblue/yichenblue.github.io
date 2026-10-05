@@ -91,7 +91,7 @@ The interesting question is therefore not simply whether scaling laws work. It i
 
 To explore that last question, we need to distinguish two different journeys on these plots. One follows a single model as training continues. The other follows the best result available at each compute budget, choosing among models and training configurations. Both can trace power laws. The second is a frontier built from the first; it is not simply one training curve drawn farther to the right.
 
-Even for a fixed model, the training procedure can change the slope. In [Mircea et al.'s experiments](https://arxiv.org/html/2506.05447v1#A3.SS3), models trained with a constant learning rate after warmup were trained again with cosine decay, keeping the other settings unchanged. The change affected not just the final loss, but the fitted power-law exponent.
+But even at a fixed model size, which slope should we expect? [Mircea et al.](https://arxiv.org/html/2506.05447v1#A3.SS3) compared separate training runs of the same architecture under two learning-rate schedules: warmup followed by a constant learning rate, and warmup followed by cosine decay. With the other settings held fixed, cosine decay changed not only the final loss but also the fitted power-law exponent of the later training phase.
 
 <figure id="learning-rate-scaling-exponents" style="display:block;max-width:660px;margin:1.8em auto;">
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px;background:#fff;padding:12px 8px;border-radius:4px;">
