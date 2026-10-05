@@ -8,8 +8,34 @@ tags:
   - scaling laws
   - stochastic optimization
   - language models
-author_profile: true
+author_profile: false
 read_time: true
+reading_guide:
+  # Approximate prose-reading times at the site's 160 words/minute.
+  # Excludes mathematical source; optional details are counted separately.
+  main_minutes: 17
+  optional_minutes: 8
+  sections:
+    - title: Why SGD has memory
+      id: why-sgd-has-memory
+    - title: Different learning speeds
+      id: different-directions-learn-at-different-speeds
+    - title: When power laws arise
+      id: when-do-these-learning-speeds-produce-a-power-law
+    - title: Three kinds of memory
+      id: three-kinds-of-memory
+    - title: How schedules change loss
+      id: how-training-schedules-transform-the-response
+    - title: Designing schedules
+      id: from-schedule-laws-to-schedule-design
+    - title: Testing the theory in LLMs
+      id: from-theory-to-llm-pretraining
+    - title: Why the exponent is near one
+      id: why-does-the-memory-exponent-keep-landing-near-one
+    - title: The larger lesson
+      id: the-larger-lesson
+    - title: Further reading
+      id: further-reading
 toc: true
 toc_sticky: true
 classes: wide

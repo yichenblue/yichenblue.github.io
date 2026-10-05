@@ -1,0 +1,97 @@
+/* Opt-in article navigation; other pages retain their existing layout. */
+.reading-layout .reading-guide-note {
+  clear: both;
+  margin: 0 0 1.4em;
+  padding-left: 0.85em;
+  border-left: 2px solid var(--global-border-color);
+  font-size: 0.8em;
+  line-height: 1.6;
+}
+
+.reading-layout .reading-guide {
+  clear: both;
+  margin-bottom: 1.5em;
+  padding: 0.7em 0.9em;
+  border: 1px solid var(--global-border-color);
+  border-radius: 4px;
+  background: var(--global-bg-color);
+  font-size: 0.8em;
+}
+
+.reading-guide summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.reading-guide ul {
+  margin: 0.65em 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.reading-guide li {
+  margin: 0;
+}
+
+.reading-guide a {
+  display: block;
+  padding: 0.5em 0.75em;
+  border-left: 2px solid transparent;
+  color: inherit;
+  line-height: 1.35;
+  text-decoration: none;
+}
+
+.reading-guide a:hover,
+.reading-guide a:focus-visible {
+  text-decoration: underline;
+}
+
+.reading-guide a[aria-current="location"] {
+  border-left-color: currentColor;
+  font-weight: 700;
+}
+
+.reading-layout #article-start,
+.reading-layout .page__content h2,
+.reading-layout .page__content h3 {
+  scroll-margin-top: 90px;
+}
+
+@media (max-width: 1023px) {
+  .reading-layout .page {
+    width: 100%;
+    padding: 0;
+    float: none;
+  }
+}
+
+@media (min-width: 1024px) {
+  .reading-layout .reading-guide {
+    position: fixed;
+    top: 100px;
+    left: max(1em, calc((100vw - 1280px) / 2 + 1em));
+    width: min(210px, 17vw);
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+    margin: 0;
+    padding: 0 0.5em 0 0;
+    border: 0;
+    border-radius: 0;
+    font-size: 0.7rem;
+  }
+
+  .reading-guide summary {
+    list-style: none;
+    cursor: default;
+    padding: 0 0.75em 0.65em;
+  }
+
+  .reading-guide summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .reading-guide ul {
+    margin-top: 0;
+  }
+}

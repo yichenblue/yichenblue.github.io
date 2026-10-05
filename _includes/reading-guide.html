@@ -1,0 +1,15 @@
+<p class="reading-guide-note">Follow the main article without opening the folded sections. Derivations and experiment details are optional; the estimates do not include working through the equations.</p>
+
+<aside class="reading-guide" aria-label="Article navigation">
+  <details class="reading-guide__disclosure" open>
+    <summary>On this page</summary>
+    <nav aria-label="Article sections">
+      <ul>
+        <li><a href="#article-start">Overview</a></li>
+        {% for section in page.reading_guide.sections %}
+        <li><a href="#{{ section.id | escape }}">{{ section.title | escape }}</a></li>
+        {% endfor %}
+      </ul>
+    </nav>
+  </details>
+</aside>

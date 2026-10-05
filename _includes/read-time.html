@@ -1,3 +1,7 @@
+{% if post.read_time %}{% assign read_document = post %}{% else %}{% assign read_document = page %}{% endif %}
+{% if read_document.reading_guide %}
+  About {{ read_document.reading_guide.main_minutes }} min for the main article · optional details: +{{ read_document.reading_guide.optional_minutes }} min
+{% else %}
 {% if post.read_time %}
   {% assign words = post.content | strip_html | number_of_words %}
 {% elsif page.read_time %}
@@ -13,5 +17,6 @@
 	  {{ words | divided_by:site.words_per_minute }} {{ site.data.ui-text[site.locale].minute_read | default: "minute read" }}
 	{% endif %}
 {% else %}
-  {{ site.data.ui-text[site.locale].undefined_wpm | "Undefined parameter words_per_minute at _config.yml" }}
+  {{ site.data.ui-text[site.locale].undefined_wpm | default: "Undefined parameter words_per_minute at _config.yml" }}
+{% endif %}
 {% endif %}
