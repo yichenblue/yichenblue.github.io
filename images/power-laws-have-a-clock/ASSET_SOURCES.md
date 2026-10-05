@@ -12,6 +12,20 @@
 - Attribution appears in the figure caption. Copyright remains with the original rights holders; this asset is not covered by the repository's software license. The paper lists the arXiv non-exclusive distribution license, not a Creative Commons license. No downstream reuse license is asserted here.
 - The compute panel includes the original paper's small-batch adjustment and represents a frontier across models, not a fixed-model training trajectory.
 
+## Vision-transformer compute frontier
+
+- Files: `zhai-2022-imagenet-finetune.svg` and `zhai-2022-scaling-frontier.svg`.
+- Work: Xiaohua Zhai, Alexander Kolesnikov, Neil Houlsby, and Lucas Beyer, *Scaling Vision Transformers* (CVPR 2022), Figure 2, arXiv version 2.
+- Figure: https://arxiv.org/html/2106.04560v2#S1.F2
+- Explanation of the double-saturating fit: https://arxiv.org/html/2106.04560v2#S2.SS2
+- Original left-panel asset: https://arxiv.org/html/2106.04560v2/imagenet_finetune.svg
+- Original center/right-panel asset: https://arxiv.org/html/2106.04560v2/scaling_laws_teaser_saturating2.svg
+- Downloaded: 2026-10-05. Both source SVGs are unmodified. The blog places them side by side on wide screens and stacks them on narrow screens; each opens at full size when clicked.
+- SHA-256, left panel: `887d659f443be05d637340508d01e04579266a219f42426d9eca201a8bfb8a8c`.
+- SHA-256, center/right panels: `3a692f391af55e5a686f95e889e28e29d1f67c53ad55ab1ad8e62df45d50523f`.
+- The two main panels measure ImageNet finetuning and linear 10-shot transfer error against training compute in TPUv3 core-days. They are not LLM pretraining-loss plots. Section 2.2 describes a middle power-law region and low/high-compute saturation using E = a(C + d)^(-b) + c; the high-compute error floor alone does not refute a floor-subtracted asymptotic power law.
+- Attribution appears in the caption. Copyright remains with the original rights holders; these assets are not covered by this repository's software license. The arXiv article lists a perpetual non-exclusive distribution license, not a Creative Commons license. No downstream reuse license is asserted here.
+
 ## Learning-rate schedule and fitted loss exponents
 
 - Files: `mircea-2025-constant-lr.svg` and `mircea-2025-cosine-lr.svg`.

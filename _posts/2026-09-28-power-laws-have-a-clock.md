@@ -13,7 +13,7 @@ read_time: true
 reading_guide:
   # Approximate prose-reading times at the site's 160 words/minute.
   # Excludes mathematical source; optional details are counted separately.
-  main_minutes: 20
+  main_minutes: 21
   optional_minutes: 8
   sections:
     - title: Why SGD has memory
@@ -69,9 +69,29 @@ Look at how much variation these plots compress. Model size, data, and compute s
 
 That map changes how we spend compute. Should the next run use a larger model, or should a smaller model see more tokens? How far should either be trained? These are the kinds of choices behind [compute-optimal training](https://arxiv.org/abs/2203.15556). A fitted curve can inform a decision long before the full training budget is spent.
 
-But there are two different journeys on these maps. One follows a single model as training continues. The other follows the best result available at each compute budget, choosing among models and training configurations. Both can trace power laws. The second is a frontier built from the first; it is not simply one training curve drawn farther to the right. To understand where these laws come from, we will look inside a training run.
+A straight line makes a powerful promise: multiply the compute, and the improvement follows a predictable rule. But how far does that promise extend?
 
-But even for a fixed model, which slope should we expect? In [Mircea et al.'s experiments](https://arxiv.org/html/2506.05447v1#A3.SS3), models trained with a constant learning rate after warmup were trained again with cosine decay, keeping the other settings unchanged. The change affected not just the final loss, but the fitted power-law exponent.
+Look at the frontier below. Each training configuration offers a different trade-off between cost and performance; the lower envelope traces the best results available at each compute budget. Across the middle of the plot, that envelope follows a remarkably straight path. At both ends, it bends.
+
+<figure id="vision-scaling-frontier" style="display:block;max-width:1000px;margin:1.8em auto;">
+  <div style="display:flex;flex-wrap:wrap;align-items:flex-end;gap:16px;background:#fff;padding:10px;border-radius:4px;">
+    <a href="{{ '/images/power-laws-have-a-clock/zhai-2022-imagenet-finetune.svg' | relative_url }}" aria-label="View the full-size ImageNet finetuning panel from Zhai Figure 2" style="display:block;flex:342.875 1 240px;min-width:0;">
+      <img src="{{ '/images/power-laws-have-a-clock/zhai-2022-imagenet-finetune.svg' | relative_url }}" alt="Zhai Figure 2, left: ImageNet finetuning error versus training compute. The dashed Pareto-frontier fit bends toward saturation outside its middle power-law region." style="display:block;width:100%;height:auto;margin:0;">
+    </a>
+    <a href="{{ '/images/power-laws-have-a-clock/zhai-2022-scaling-frontier.svg' | relative_url }}" aria-label="View the full-size 10-shot and model-data panels from Zhai Figure 2" style="display:block;flex:561.919 1 380px;min-width:0;">
+      <img src="{{ '/images/power-laws-have-a-clock/zhai-2022-scaling-frontier.svg' | relative_url }}" alt="Zhai Figure 2, center and right: ImageNet 10-shot transfer error versus training compute, alongside the separate effects of model size and dataset size." style="display:block;width:100%;height:auto;margin:0;">
+    </a>
+  </div>
+  <figcaption><strong>A power-law region, not an endless straight line.</strong> Figure 2 from <a href="https://arxiv.org/html/2106.04560v2#S1.F2">Zhai et al., <em>Scaling Vision Transformers</em> (CVPR 2022)</a>. The left and center panels show ImageNet transfer error versus training compute. Their empirical Pareto frontiers follow an approximate power law over an intermediate range, with saturation at both ends. The right panels show the separate effects of model size and dataset size.</figcaption>
+</figure>
+
+These [vision-model experiments](https://arxiv.org/html/2106.04560v2#S2.SS2) reveal something that a single fitted exponent can hide. Power-law behavior can describe a broad and useful range without describing the whole curve. At low compute, even a simple predictor performs better than extrapolating the line would suggest. At high compute, further improvements shrink as the error approaches a nonzero floor.
+
+The interesting question is therefore not simply whether scaling laws work. It is why a power-law region appears at all. What determines its slope? What sets its boundaries? And how much of the curve comes from the learning problem itself, rather than the way we train?
+
+To explore that last question, we need to distinguish two different journeys on these plots. One follows a single model as training continues. The other follows the best result available at each compute budget, choosing among models and training configurations. Both can trace power laws. The second is a frontier built from the first; it is not simply one training curve drawn farther to the right.
+
+Even for a fixed model, the training procedure can change the slope. In [Mircea et al.'s experiments](https://arxiv.org/html/2506.05447v1#A3.SS3), models trained with a constant learning rate after warmup were trained again with cosine decay, keeping the other settings unchanged. The change affected not just the final loss, but the fitted power-law exponent.
 
 <figure id="learning-rate-scaling-exponents" style="display:block;max-width:660px;margin:1.8em auto;">
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px;background:#fff;padding:12px 8px;border-radius:4px;">
@@ -93,7 +113,7 @@ But even for a fixed model, which slope should we expect? In [Mircea et al.'s ex
 
 Compare the late-training slopes for the same model across the two panels. For 144M, the fitted exponent rises from **0.023 to 0.036**; for 285M, from **0.025 to 0.040**; for 472M, from **0.035 to 0.045**. The curves do not merely move downward: their fitted slopes become steeper. The model and dataset have not changed, yet the apparent scaling law has. How much of an exponent belongs to the learning problem, and how much belongs to the way we train?
 
-This is where “universality” becomes an interesting question rather than a label. [A mechanism shared across models](https://arxiv.org/abs/2606.25008) might explain why similar slopes recur. Understanding that mechanism also means asking how it turns [structure in the data and the task](https://arxiv.org/abs/2210.16859) into a loss curve. Why should a power law appear in the first place? Must it already be written into the data, or can it emerge from how training learns—and how training makes errors?
+This is where “universality” becomes an interesting question rather than a label. [A mechanism shared across models](https://arxiv.org/abs/2606.25008) would need to explain both the regularity and the changes: how [structure in the data and the task](https://arxiv.org/abs/2210.16859) combines with the training procedure to produce the loss curve we see.
 
 A training schedule gives us a direct way to investigate this question. Instead of only fitting the curve we already have, we can ask what happens when we change the learning rate or batch size. **What if the transferable object is not a fixed exponent, but a rule that predicts how the curve changes?**
 
