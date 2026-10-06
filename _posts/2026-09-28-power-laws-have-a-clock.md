@@ -472,7 +472,11 @@ In intrinsic time, write \\(k(v)\\) for that normalized memory profile after a d
 
 At the boundary, \\(q_{\mathcal K}=1\\), cumulative memory grows logarithmically. No individual perturbation has to be permanent for the total to keep growing.
 
-**Finite bulk (FB)** needs separate treatment: the response remains tied to model width, rather than a width-independent positive decay exponent. Comparing memory with forcing gives three LM cases, three IM cases, and two FB cases: the \\(3+3(+2)\\) in the title.
+**Finite bulk (FB)** needs separate treatment: the response remains tied to model width, rather than a width-independent positive decay exponent.
+
+The subdivisions compare forcing with memory. When \\(q_{\mathcal F}<q_{\mathcal K}\\), the forcing's decaying power-law term fades more slowly than one old noise injection; when \\(q_{\mathcal F}>q_{\mathcal K}\\), the noise effect lasts longer. The boundary \\(q_{\mathcal F}=1\\) asks a different question: the idealized forcing power-law tail has an unbounded time integral below this boundary and a finite one above it. This unweighted integral is not accumulated SGD noise.
+
+As \\(q_{\mathcal F}\\) increases, LM crosses \\(q_{\mathcal K}\\) then \\(1\\); IM crosses them in the opposite order. Each has three intervals. FB retains the forcing split at \\(q_{\mathcal F}=1\\), giving \\(3+3(+2)\\).
 
 The two diagrams connect these behaviors to the learning problem. The left uses response exponents; the right uses a concrete spectrum and target:
 
@@ -500,7 +504,7 @@ $$
   <figcaption><strong>Memory regimes in two coordinate systems.</strong> Left: response exponents. Right: spectrum and target parameters, with FB shown separately. The red band marks LLM fits near the LM/IM boundary, \(q_{\mathcal K}=1\).</figcaption>
 </figure>
 
-So far, we have added equally weighted responses. A training schedule changes the weights: it can make later noise injections weaker than earlier ones. How much can that change the loss curve?
+These regions distinguish how forcing and memory propagate, not eight fixed loss exponents. A training schedule changes the strength of successive noise injections. How does their accumulation reshape the observed curve?
 
 ## How training schedules transform the response
 
