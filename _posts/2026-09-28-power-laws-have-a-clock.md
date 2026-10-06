@@ -13,8 +13,8 @@ read_time: true
 reading_guide:
   # Approximate prose-reading times at the site's 160 words/minute.
   # Excludes mathematical source; optional details are counted separately.
-  main_minutes: 21
-  optional_minutes: 8
+  main_minutes: 22
+  optional_minutes: 7
   sections:
     - title: Why SGD has memory
       id: why-sgd-has-memory
@@ -146,7 +146,7 @@ $$
 \underbrace{K(n,s)}_{\text{effect on the final loss}}.
 $$
 
-The first term describes learning without batch noise; the sum collects its lasting effects. This is the starting point of the **forcing–memory** description.
+The first term follows full-gradient updates from the same initialization and with the same learning-rate schedule; the sum collects the effects of batch noise. Here \\(K(n,s)\\) still includes the state-dependent strength of that noise, not just its propagation. This is the starting point of the **forcing–memory** description.
 
 Nothing in this expression yet makes the response a power law. To understand its shape, we need to know how quickly training removes an error.
 
@@ -324,7 +324,13 @@ The clock \\(T_t\\) is **intrinsic time**. Large positive eigenvalues mean fast 
 
 Loss adds up weighted squared errors across these directions. A slow direction contributes little if there was almost no error there to begin with. Learning speed and importance to the loss are different things.
 
-In this model, forcing follows error inherited from initialization; memory follows error introduced by batch sampling. They involve the same decay speeds but different weights, because the initial error and batch noise need not lie in the same directions.
+For SGD in our Gaussian random-feature model, the expected squared prediction error \\(R_t\\), measured against the noiseless target, satisfies the exact recursion
+
+$$
+R_t=F_t+\sum_{s<t}K_{t,s}\bigl(R_s+\sigma^2\bigr).
+$$
+
+Here \\(\sigma^2\\) is label-noise variance. **The grouping has changed:** \\(F_t\\) propagates initial error with a finite-batch sampling correction, so it is not the noise-free baseline \\(F(n)\\). The kernel \\(K_{t,s}\\) includes \\(\eta_s^2/B_s\\), while \\(R_s+\sigma^2\\) explicitly supplies the error generating new noise. Earlier, \\(K(n,s)\\) included state-dependent noise strength but left \\(\eta_s^2/B_s\\) outside. The two formulas share a forcing–memory interpretation, not identical definitions of \\(F\\) and \\(K\\).
 
 <details markdown="1">
 <summary><strong>Derivation details: from squared loss to learning time</strong></summary>
@@ -407,14 +413,6 @@ $$
 
 The eigenvalues set the decay speeds, while the initial error in each direction sets its weight in the loss. This is why knowing the eigenvalues alone is not enough: we also need to know which directions matter for the target. Batch sampling adds new errors during SGD; the full-gradient calculation above isolates how existing errors decay.
 
-**5. Connecting the linear and general responses.** In our random-feature model, summing the mode contributions gives an exact equation for expected prediction risk \\(R_t\\):
-
-$$
-R_t=F_t+\sum_{s<t}K_{t,s}\bigl(R_s+\sigma^2\bigr).
-$$
-
-Here \\(F_t\\) is the contribution from initialization, \\(\sigma^2\\) is label-noise variance, and \\(K_{t,s}\\) is the memory kernel. The source \\(R_s+\sigma^2\\) combines remaining prediction error with label noise; the kernel describes how much survives. Compared with the general response, the source is explicit and \\(K_{t,s}\\) includes \\(\eta_s^2/B_s\\). The terms are regrouped: \\(F_t\\) also absorbs part of the sampling noise into the propagation of initial error, so it is not the pure full-gradient baseline \\(F(n)\\).
-
 </details>
 
 ## When do these learning speeds produce a power law?
@@ -448,7 +446,7 @@ $$
 \end{aligned}
 $$
 
-Write \\(F_{W,>0}\\) for forcing above its floor and \\(K_W\\) for the constant-schedule memory kernel. In the random-feature model's large-width, long-time limit, these weights and component decay laws determine one another. Schematically,
+For a constant schedule, write this random-feature forcing as \\(F_W\\), its part above the floor as \\(F_{W,>0}\\), and the delay-dependent kernel as \\(K_W\\). We express these functions in intrinsic time below. Multiplying \\(K_W\\) by \\(B/\eta^2\\) removes its injection scale. In the large-width, long-time limit, the weighted spectrum and component decay laws determine one another. Schematically,
 
 $$
 \begin{aligned}
@@ -467,7 +465,7 @@ The positive exponents \\(q_{\mathcal F}\\) and \\(q_{\mathcal K}\\) describe fo
 
 If every perturbation fades, can we eventually ignore the distant past? The memory curve above follows one injection, but SGD adds noise at every step. Those responses accumulate.
 
-Write \\(k(v)\\) for the memory response after a delay \\(v\\). With equally weighted injections, the accumulated response can behave in two ways:
+In intrinsic time, write \\(k(v)\\) for that normalized memory profile after a delay \\(v\\): for the constant reference schedule, \\(k(T)=(B/\eta^2)K_W(T)\\). The injection strength is supplied separately. With equally weighted injections, the accumulated response can behave in two ways:
 
 - The responses fade fast enough for their total to approach a finite value. This is **integrable memory (IM)**, with \\(q_{\mathcal K}>1\\).
 - Each response fades, but too slowly for the total to settle. This is **long memory (LM)**, with \\(0<q_{\mathcal K}<1\\). Cumulative memory keeps growing with the horizon.
@@ -527,7 +525,7 @@ An update advances the clock by \\(\eta_t\\) and injects variance at scale \\(\e
 
 This connects [increasing batch size with decaying learning rate](https://arxiv.org/abs/1711.00489): both reduce noise per unit of intrinsic time. Since earlier noise can still affect loss, we must match the whole ratio path, not just its final value.
 
-The forcing–memory relation keeps track of what each injection leaves behind. In the power-law random-feature model's LM and IM regimes,
+Returning to the power-law random-feature model, the LM and IM scaling law takes the continuum form
 
 $$
 R(T)\asymp
@@ -537,7 +535,9 @@ F(T)+
 \,k(T-u)\,\mathrm du.
 $$
 
-Here \\(R\\) is prediction risk, \\(F\\) is forcing including its finite-width floor, and \\(\sigma^2\\) is label-noise variance. Remaining prediction error generates batch noise even with clean labels; label noise adds to it. The ratio \\(r(u)\\) controls the strength of these injections, and \\(k(T-u)\\) describes how much of their effect survives until \\(T\\). The relation holds up to multiplicative constants.
+Here \\(R\\) is prediction risk and \\(F\\) is the random-feature forcing, including its finite-width floor. The exact recursion feeds back \\(R_s+\sigma^2\\). Under the LM/IM schedule and stability assumptions, accounting for repeated feedback gives the displayed comparison with \\(F(u)+\sigma^2\\), up to multiplicative constants. It does not set \\(R=F\\).
+
+Remaining prediction error generates batch noise even with clean labels; label noise adds to it. The ratio \\(r(u)\\) controls the injection strength per unit of intrinsic time, now outside the normalized kernel \\(k(T-u)\\), which describes how much of each injection survives until \\(T\\).
 
 To see the limit of noise reduction, compare loss with label noise against the clean-label loss. Faster growth of \\(r(T)\\) suppresses recent injections. Once earlier injections dominate this extra loss, its decay is set by memory. **This is the memory ceiling:** beyond it, faster growth of \\(B/\eta\\) no longer improves the noise-decay exponent.
 
@@ -600,7 +600,7 @@ That is what we see. The paired curves separate against optimizer step, but near
 
 The paired runs share a ratio path. A harder test is to change it: can a response learned from the abrupt drops of 8-1-1 predict the gradual decline of WSD?
 
-For that test we need a concrete version of the forcing–memory response. Building on [Li et al.'s functional-scaling-law approach](https://arxiv.org/abs/2509.19189), we use the seven-parameter surrogate
+For LLM validation loss, we keep the forcing–memory structure but fit its component functions rather than use the random-feature model's exact quantities. Building on [Li et al.'s functional-scaling-law approach](https://arxiv.org/abs/2509.19189), we use the seven-parameter surrogate
 
 $$
 \widehat L(T)
@@ -611,7 +611,7 @@ $$
 \,\mathrm du.
 $$
 
-The first two terms describe baseline loss; the integral adds earlier noise weighted by what survives. The parameters describe the response, while \\(r(u)\\) supplies the schedule.
+The first two terms form a fitted baseline, not a separately measured noise-free trajectory. The integral models earlier noise weighted by what survives; its source amplitudes \\(A_0,A_1\\) are free parameters, not fixed by \\(L_\infty\\) and \\(A_{\mathcal F}\\). The parameters describe the effective response, while \\(r(u)\\) supplies the schedule.
 
 We fix \\(q_{\mathcal K}=1\\) and fit the other six parameters to raw validation loss from the fixed-batch 8-1-1 run. Then we freeze every parameter and replace only the ratio path with WSD's. No WSD loss is used in this fit.
 
