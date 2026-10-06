@@ -35,7 +35,7 @@
 - Fitting method: https://arxiv.org/html/2506.05447v1#A1.SS2
 - Original Figure 2 asset: https://arxiv.org/html/2506.05447v1/02-bnsl_fit.svg
 - Original Figure 29 asset: https://arxiv.org/html/2506.05447v1/bnsl_fit_cosine.svg
-- Downloaded: 2026-10-05. Both source SVGs are unmodified; the blog adds panel labels outside the images and stacks the panels on narrow screens.
+- Downloaded: 2026-10-05. Both source SVGs are unmodified. The blog uses a shared 300 × 456 display canvas and aligns each plotting area to (60, 24, 216, 360). Figure 2 is translated; Figure 29 is scaled by 4/3 horizontally and 5/4 vertically and then translated, correcting its different original plotting-area aspect ratio. These display-only transforms retain all labels, curves, and legends without cropping; the underlying data and source files are unchanged. Panel labels sit outside the images, and the panels stack on narrow screens.
 - SHA-256, Figure 2: `087716b8006ed6b1d1229be4f88f98d82dc85658b44aecfd47d88b573ead40b0`.
 - SHA-256, Figure 29: `aee9ed44947753fae6a13a4abc743afcc132617bca10b95568dcfe30c0767ed6`.
 - Exact reported late-training exponent pairs (constant LR to cosine decay), from Tables 1 and 7: 144M, 0.023 to 0.036; 285M, 0.025 to 0.040; 472M, 0.035 to 0.045.

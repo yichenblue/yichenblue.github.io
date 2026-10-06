@@ -93,13 +93,17 @@ But even at a fixed model size, which slope should we expect? [Mircea et al.](ht
     <div style="min-width:0;text-align:center;">
       <p style="margin:0 0 8px;font-size:0.85em;font-weight:600;">Warmup + constant LR</p>
       <a href="https://arxiv.org/html/2506.05447v1#S2.F2" aria-label="View Figure 2 in Mircea et al.">
-        <img src="{{ '/images/power-laws-have-a-clock/mircea-2025-constant-lr.svg' | relative_url }}" alt="Original Figure 2: log–log training-loss curves and broken-power-law fits, with constant learning rate after warmup for the 14M–472M models." style="display:block;width:100%;height:330px;object-fit:contain;object-position:50% 0;margin:0;">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 456" role="img" aria-label="Figure 2: log–log training-loss curves and broken-power-law fits, with constant learning rate after warmup for the 14M–472M models." style="display:block;width:100%;height:330px;margin:0;">
+          <image href="{{ '/images/power-laws-have-a-clock/mircea-2025-constant-lr.svg' | relative_url }}" width="278.56315" height="411.96699" transform="translate(13.973956 16.79999)" />
+        </svg>
       </a>
     </div>
     <div style="min-width:0;text-align:center;">
       <p style="margin:0 0 8px;font-size:0.85em;font-weight:600;">Warmup + cosine decay</p>
       <a href="https://arxiv.org/html/2506.05447v1#A3.SS3" aria-label="View Figure 29 and the learning-rate comparison in Mircea et al.">
-        <img src="{{ '/images/power-laws-have-a-clock/mircea-2025-cosine-lr.svg' | relative_url }}" alt="Original Figure 29: log–log training-loss curves and broken-power-law fits with cosine learning-rate decay; the 14M–472M models have steeper fitted late-training slopes." style="display:block;width:100%;height:330px;object-fit:contain;object-position:50% 0;margin:0;">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 456" role="img" aria-label="Figure 29: log–log training-loss curves and broken-power-law fits with cosine learning-rate decay; the 14M–472M models have steeper fitted late-training slopes." style="display:block;width:100%;height:330px;margin:0;">
+          <image href="{{ '/images/power-laws-have-a-clock/mircea-2025-cosine-lr.svg' | relative_url }}" width="216" height="360" transform="matrix(1.3333333333333333 0 0 1.25 2.4 1.5)" />
+        </svg>
       </a>
     </div>
   </div>
