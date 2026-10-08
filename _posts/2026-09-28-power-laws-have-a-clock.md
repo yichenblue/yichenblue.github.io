@@ -13,7 +13,7 @@ read_time: true
 reading_guide:
   # Approximate prose-reading times at the site's 160 words/minute.
   # Excludes mathematical source; optional details are counted separately.
-  main_minutes: 22
+  main_minutes: 23
   optional_minutes: 7
   sections:
     - title: Why SGD has memory
@@ -67,7 +67,15 @@ How much better could a language model become with ten times more compute? A hun
 
 Look at how much variation these plots compress. Model size, data, and compute span orders of magnitude, yet the losses arrange themselves along simple trends. The attraction of a scaling law is not just that it fits the points. It turns a collection of completed experiments into a map of experiments we have not run.
 
-That map changes how we spend compute. Should the next run use a larger model, or should a smaller model see more tokens? How far should either be trained? These are the kinds of choices behind [compute-optimal training](https://arxiv.org/abs/2203.15556). A fitted curve can inform a decision long before the full training budget is spent.
+That map changes how we spend compute. Should the next run use a larger model, or should a smaller model see more tokens? [Chinchilla](https://arxiv.org/html/2203.15556v1#S3.SS3) makes this trade-off explicit by fitting the final loss after training a model with \\(N\\) parameters on \\(D\\) tokens:
+
+$$
+L(N,D)\approx L_\infty+\frac{A_N}{N^{p_N}}+\frac{A_D}{D^{p_D}}.
+$$
+
+Here \\(L_\infty\\) is the fitted loss floor. The next two terms describe the extra loss from finite model size and finite training, with amplitudes \\(A_N,A_D\\) and exponents \\(p_N,p_D\\) fitted from training runs.
+
+For dense Transformers, training compute is approximately \\(C\approx6ND\\). At a fixed budget, a larger model leaves room for fewer training tokens. The fit lets us compare those choices before running the experiment; choosing the best allocation at each budget traces a compute-optimal frontier.
 
 But how far can we trust that extrapolation?
 
@@ -86,7 +94,15 @@ The interesting question is therefore not simply whether scaling laws work. It i
 
 To explore that last question, we need to distinguish two different journeys on these plots. One follows a single model as training continues. The other follows the best result available at each compute budget, choosing among models and training configurations. Both can trace power laws. The second is a frontier built from the first; it is not simply one training curve drawn farther to the right.
 
-But even at a fixed model size, which slope should we expect? [Mircea et al.](https://arxiv.org/html/2506.05447v1#A3.SS3) compared separate training runs of the same architecture under two learning-rate schedules: warmup followed by a constant learning rate, and warmup followed by cosine decay. With the other settings held fixed, cosine decay changed not only the final loss but also the fitted power-law exponent of the later training phase.
+For a fixed model, the raw training loss over a particular training phase can be fitted as
+
+$$
+L_{\mathrm{train}}(t)\approx a\,t^{-p},
+$$
+
+where \\(t\\) counts training steps, \\(a\\) is the fitted amplitude, and \\(p\\) is the decay exponent for that phase. If the model and dataset stay fixed, does changing only the learning-rate schedule change \\(p\\)?
+
+[Mircea et al.](https://arxiv.org/html/2506.05447v1#A3.SS3) compared separate training runs of the same architecture under two learning-rate schedules: warmup followed by a constant learning rate, and warmup followed by cosine decay. With the other settings held fixed, cosine decay changed not only the final loss but also the fitted power-law exponent of the later training phase.
 
 <figure id="learning-rate-scaling-exponents" style="display:block;max-width:620px;margin:1.4em auto;">
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;background:#fff;padding:8px;border-radius:4px;">
