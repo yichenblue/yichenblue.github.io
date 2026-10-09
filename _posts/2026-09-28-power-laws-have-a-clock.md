@@ -1,19 +1,20 @@
 ---
 layout: single
-title: "From Spectra to Joint Schedules in LLM Pre-training: 3+3(+2) Scaling-Law Regimes"
+title: "When Do Learning Curves Follow Power Laws?"
 date: 2026-09-28
 permalink: /posts/power-laws-have-a-clock/
-excerpt: "A power law tells us how fast loss falls. What does it tell us about learning, and why does changing the training schedule change the curve?"
+excerpt: "The origins of power-law learning curves, how training schedules reshape them, and a response model that predicts LLM loss across schedules."
 tags:
   - scaling laws
   - stochastic optimization
   - language models
 author_profile: false
+research_article: true
 read_time: true
 reading_guide:
   # Approximate prose-reading times at the site's 160 words/minute.
   # Excludes mathematical source; optional details are counted separately.
-  main_minutes: 23
+  main_minutes: 22
   optional_minutes: 7
   sections:
     - title: Why SGD has memory
@@ -43,11 +44,10 @@ header:
   teaser: /images/power-laws-have-a-clock/main-fig2-loss.png
 ---
 
-*When loss follows a power law, what is the model actually learning?*
-
 [Paper (arXiv)](https://arxiv.org/abs/2609.40148) · [Code (GitHub)](https://github.com/yichenblue/spectra-to-schedules-in-pretraining)
+{: .research-links}
 
-How much better could a language model become with ten times more compute? A hundred times? Scaling laws make these questions quantitative: measurements from smaller experiments can be used to predict the loss of training runs that are still far beyond our budget.
+Scaling laws offer a way to look beyond the training runs we can afford. Measurements from smaller language models let us estimate what ten times—or a hundred times—more compute could buy.
 
 <figure id="scaling-law-overview" style="display:block;max-width:680px;margin:1.4em auto;">
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0;background:#fff;padding:6px;border-radius:4px;">
@@ -65,44 +65,47 @@ How much better could a language model become with ten times more compute? A hun
   <figcaption><strong>Regular scaling across compute, data, and model size.</strong> <a href="https://arxiv.org/html/2001.08361v1#S1.F1">Kaplan et al. (2020), Figure 1</a>. Left: the small-batch-adjusted compute frontier across models, not one training trajectory.</figcaption>
 </figure>
 
-Look at how much variation these plots compress. Model size, data, and compute span orders of magnitude, yet the losses arrange themselves along simple trends. The attraction of a scaling law is not just that it fits the points. It turns a collection of completed experiments into a map of experiments we have not run.
-
-That map changes how we spend compute. Should the next run use a larger model, or should a smaller model see more tokens? [Chinchilla](https://arxiv.org/html/2203.15556v1#S3.SS3) makes this trade-off explicit by fitting the final loss after training a model with \\(N\\) parameters on \\(D\\) tokens:
+At a fixed compute budget, a larger model leaves fewer tokens for training. [Chinchilla](https://arxiv.org/html/2203.15556v1#S3.SS3) captures this trade-off by fitting the final loss of a model with \\(N\\) parameters trained on \\(D\\) tokens:
 
 $$
-L(N,D)\approx L_\infty+\frac{A_N}{N^{p_N}}+\frac{A_D}{D^{p_D}}.
+L(N,D)\approx L_\infty+\frac{A_N}{N^\alpha}+\frac{A_D}{D^\beta}.
 $$
 
-Here \\(L_\infty\\) is the fitted loss floor. The next two terms describe the extra loss from finite model size and finite training, with amplitudes \\(A_N,A_D\\) and exponents \\(p_N,p_D\\) fitted from training runs.
+Here \\(L_\infty\\) is the fitted loss floor; the other terms describe extra loss from finite model size and training tokens, with fitted amplitudes \\(A_N,A_D\\) and exponents \\(\alpha,\beta\\).
 
-For dense Transformers, training compute is approximately \\(C\approx6ND\\). At a fixed budget, a larger model leaves room for fewer training tokens. The fit lets us compare those choices before running the experiment; choosing the best allocation at each budget traces a compute-optimal frontier.
+For dense Transformers, training compute is approximately \\(C\approx6ND\\). Choosing the model size and token count that minimize the fitted loss at each budget traces a compute-optimal frontier.
 
-But how far can we trust that extrapolation?
+These regularities make power laws useful for planning larger training runs. But the power-law form is not guaranteed across tasks and training recipes.
 
-Look at the frontier below. Each training configuration offers a different trade-off between cost and performance; the lower envelope traces the best results available at each compute budget. Across the middle of the plot, that envelope follows a remarkably straight path. At both ends, it bends.
+In [Qiu et al.'s synthetic regression experiment](https://www.opt-ml.org/papers/2024/paper78.pdf#page=6), MLPs learning a target with an exponential frequency distribution produce a compute–loss frontier that is not well described by a power law.
 
-<figure id="vision-scaling-frontier" style="display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:20px;max-width:620px;margin:1.4em auto;">
-  <a href="{{ '/images/power-laws-have-a-clock/zhai-2022-imagenet-finetune.svg' | relative_url }}" aria-label="View the full-size ImageNet finetuning panel from Zhai Figure 2" style="display:block;flex:0 1 260px;min-width:0;background:#fff;padding:6px;border-radius:4px;">
-    <img src="{{ '/images/power-laws-have-a-clock/zhai-2022-imagenet-finetune.svg' | relative_url }}" alt="Zhai Figure 2, left: ImageNet finetuning error versus training compute. The dashed Pareto-frontier fit bends toward saturation outside its middle power-law region." style="display:block;width:100%;height:auto;margin:0;">
+<figure id="task-dependent-scaling-frontier" style="display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:20px;max-width:620px;margin:1.4em auto;">
+  <a href="{{ '/images/power-laws-have-a-clock/qiu-2024-no-power-law.png' | relative_url }}" aria-label="View the full-size non-power-law frontier from Qiu Figure 3(c)" style="display:block;flex:0 1 300px;min-width:0;background:#fff;padding:6px;border-radius:4px;">
+    <img src="{{ '/images/power-laws-have-a-clock/qiu-2024-no-power-law.png' | relative_url }}" alt="Qiu Figure 3(c): the lower envelope of MLP loss curves on a synthetic regression task departs from the dashed best power-law fit." width="636" height="615" style="display:block;width:100%;height:auto;margin:0;">
   </a>
-  <figcaption style="flex:1 1 220px;min-width:0;margin:0;"><strong>A power-law region, not an endless straight line.</strong> ImageNet finetuning error versus training compute; the fitted frontier bends toward saturation at both ends. Left panel from <a href="https://arxiv.org/html/2106.04560v2#S1.F2">Zhai et al. (2022), Figure 2 — view full figure</a>.</figcaption>
+  <figcaption style="flex:1 1 260px;min-width:0;margin:0;"><strong>A frontier without a good power-law fit.</strong> Synthetic MLP regression; dashed line: best power-law fit. Cropped from <a href="https://www.opt-ml.org/papers/2024/paper78.pdf#page=6">Qiu et al., OPT 2024, Figure 3(c)</a>.</figcaption>
 </figure>
 
-These [vision-model experiments](https://arxiv.org/html/2106.04560v2#S2.SS2) reveal something that a single fitted exponent can hide. Power-law behavior can describe a broad and useful range without describing the whole curve. At low compute, even a simple predictor performs better than extrapolating the line would suggest. At high compute, further improvements shrink as the error approaches a nonzero floor.
+The training recipe matters too. In [Porian et al.'s language-model experiments](https://arxiv.org/html/2406.19146v4#A9), a power law with a fitted loss floor extrapolates well under a tuned recipe, but poorly under other recipes.
 
-The interesting question is therefore not simply whether scaling laws work. It is why a power-law region appears at all. What determines its slope? What sets its boundaries? And how much of the curve comes from the learning problem itself, rather than the way we train?
+<figure id="training-dependent-scaling-frontier" style="display:block;max-width:680px;margin:1.4em auto;">
+  <a href="{{ '/images/power-laws-have-a-clock/porian-2024-training-recipes.png' | relative_url }}" aria-label="View the full-size tuned-optimizer and cosine-decay panels from Porian Figure 19" style="display:block;background:#fff;padding:6px;border-radius:4px;">
+    <img src="{{ '/images/power-laws-have-a-clock/porian-2024-training-recipes.png' | relative_url }}" alt="Porian Figure 19, selected panels: higher-compute optimal losses track the fitted power-law extrapolation under the tuned recipe on the left, but depart from it under the cosine-decay recipe on the right." width="1160" height="598" style="display:block;width:100%;height:auto;margin:0;">
+  </a>
+  <figcaption><strong>Power-law extrapolation depends on the training recipe.</strong> Estimated optimal loss versus compute; open markers: measured loss; dashed lines: extrapolation. Both fits include a loss floor. The recipes differ in hyperparameter tuning as well as learning-rate decay. Cropped from <a href="https://arxiv.org/pdf/2406.19146v4#page=28">Porian et al. (2024), Figure 19</a> (<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>).</figcaption>
+</figure>
 
-To explore that last question, we need to distinguish two different journeys on these plots. One follows a single model as training continues. The other follows the best result available at each compute budget, choosing among models and training configurations. Both can trace power laws. The second is a frontier built from the first; it is not simply one training curve drawn farther to the right.
+The influence of training is also visible within a single model, not just in the frontier across models. Even with the model and data held fixed, changing the learning-rate schedule can change the fitted power-law exponent of loss versus training steps.
 
-For a fixed model, the raw training loss over a particular training phase can be fitted as
+Over a particular training phase, its raw training loss can be fitted as
 
 $$
 L_{\mathrm{train}}(t)\approx a\,t^{-p},
 $$
 
-where \\(t\\) counts training steps, \\(a\\) is the fitted amplitude, and \\(p\\) is the decay exponent for that phase. If the model and dataset stay fixed, does changing only the learning-rate schedule change \\(p\\)?
+where \\(t\\) counts training steps, \\(a\\) is the fitted amplitude, and \\(p\\) is the phase's decay exponent. To see how training affects \\(p\\), compare runs with different learning-rate schedules.
 
-[Mircea et al.](https://arxiv.org/html/2506.05447v1#A3.SS3) compared separate training runs of the same architecture under two learning-rate schedules: warmup followed by a constant learning rate, and warmup followed by cosine decay. With the other settings held fixed, cosine decay changed not only the final loss but also the fitted power-law exponent of the later training phase.
+[Mircea et al.](https://arxiv.org/html/2506.05447v1#A3.SS3) compared separate runs with the same architecture, data, and other settings: one used warmup followed by a constant learning rate; the other used warmup followed by cosine decay.
 
 <figure id="learning-rate-scaling-exponents" style="display:block;max-width:620px;margin:1.4em auto;">
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;background:#fff;padding:8px;border-radius:4px;">
@@ -126,13 +129,9 @@ where \\(t\\) counts training steps, \\(a\\) is the fitted amplitude, and \\(p\\
   <figcaption><strong>Changing the schedule changes the fitted exponent.</strong> <a href="https://arxiv.org/html/2506.05447v1#A3.SS3">Mircea et al. (2025), Figures 2 and 29</a>. Compare 14M–472M; OLMo-1B/7B are external references. Fits use raw training loss over a finite window with zero offset, not floor-subtracted loss.</figcaption>
 </figure>
 
-Compare the late-training slopes for the same model across the two panels. For 144M, the fitted exponent rises from **0.023 to 0.036**; for 285M, from **0.025 to 0.040**; for 472M, from **0.035 to 0.045**. The curves do not merely move downward: their fitted slopes become steeper. The model and dataset have not changed, yet the apparent scaling law has. How much of an exponent belongs to the learning problem, and how much belongs to the way we train?
+Compare the 144M model across the two panels: cosine decay raises its fitted late-training exponent from **0.023 to 0.036**. The fitted slope depends on the training schedule, not just the model and dataset.
 
-This is where “universality” becomes an interesting question rather than a label. [A mechanism shared across models](https://arxiv.org/abs/2606.25008) would need to explain both the regularity and the changes: how [structure in the data and the task](https://arxiv.org/abs/2210.16859) combines with the training procedure to produce the loss curve we see.
-
-A training schedule gives us a direct way to investigate this question. Instead of only fitting the curve we already have, we can ask what happens when we change the learning rate or batch size. **What if the transferable object is not a fixed exponent, but a rule that predicts how the curve changes?**
-
-To look for that rule, zoom in from the whole curve to one stochastic gradient descent (SGD) update. Its gradient comes from a sampled batch, so it contains a sampling error. That error changes the parameters from which the next update begins, and the next, and the next. A loss measured much later still carries the effects of those earlier updates.
+[A shared mechanism](https://arxiv.org/abs/2606.25008) must explain both why power laws arise and how [data and task structure](https://arxiv.org/abs/2210.16859) interact with training. A useful test is to fit a response under one schedule and predict another without refitting. For stochastic gradient descent (SGD), we can start with individual updates: each changes the parameters, and its effects can persist through later updates, leaving a history in the loss.
 
 ## Why SGD has memory
 
@@ -450,7 +449,7 @@ In the example below, the spectrum follows a power law but the target barely use
 
 As training continues, fast directions fade and slower ones take over. At time \\(T\\), the remaining contribution comes mainly from directions with \\(\lambda\lesssim1/T\\). We therefore need to add up their weights separately for forcing and memory.
 
-For a fixed random-feature matrix \\(W\\), let \\(\widehat\lambda_j\\) and \\(\widehat u_j\\) be the eigenvalues and unit eigenvectors of \\(\Lambda^{1/2}WW^\top\Lambda^{1/2}\\), where \\(\Lambda\\) is the input covariance. With target parameter \\(\theta^\star\\), the two cumulative weights are
+In this model, the fixed features are \\(\phi(x)=W^\top x\\) and the noiseless target is \\(x^\top\theta^\star\\), with fixed random-feature matrix \\(W\\) and target parameter \\(\theta^\star\\). Let \\(\widehat\lambda_j\\) and \\(\widehat u_j\\) be the eigenvalues and unit eigenvectors of \\(\Lambda^{1/2}WW^\top\Lambda^{1/2}\\), where \\(\Lambda\\) is the input covariance. Starting from zero output weights, the two cumulative weights are
 
 $$
 \begin{aligned}
@@ -462,7 +461,9 @@ $$
 \end{aligned}
 $$
 
-For a constant schedule, write this random-feature forcing as \\(F_W\\), its part above the floor as \\(F_{W,>0}\\), and the delay-dependent kernel as \\(K_W\\). We express these functions in intrinsic time below. Multiplying \\(K_W\\) by \\(B/\eta^2\\) removes its injection scale. In the large-width, long-time limit, the weighted spectrum and component decay laws determine one another. Schematically,
+If the cumulative weight below \\(x\\) scales as \\(x^q\\), then the contribution left at time \\(T\\) is of order \\((1/T)^q=T^{-q}\\): training has moved the cutoff down to \\(x\sim1/T\\). This is how exponential decay along individual directions can add up to a power law.
+
+For a constant schedule, write this random-feature forcing as \\(F_W\\), its part above the floor as \\(F_{W,>0}\\), and the delay-dependent kernel as \\(K_W\\). We express these functions in intrinsic time below. Multiplying \\(K_W\\) by \\(B/\eta^2\\) removes its injection scale. **The theory also gives the reverse implication:** in the large-width, long-time limit, a component's power-law decay requires the corresponding cumulative spectral weight to have the matching exponent. Schematically,
 
 $$
 \begin{aligned}
@@ -475,7 +476,7 @@ F_{W,>0}(T)\propto T^{-q_{\mathcal F}},\\
 \end{aligned}
 $$
 
-The positive exponents \\(q_{\mathcal F}\\) and \\(q_{\mathcal K}\\) describe forcing and memory separately. **This is a criterion, not just a construction:** each component's power-law decay also constrains its weighted spectrum near zero. Individual eigenvalues need not follow a power law; their weighted totals are what matter.
+The positive exponents \\(q_{\mathcal F}\\) and \\(q_{\mathcal K}\\) describe forcing and memory separately. Individual eigenvalues need not follow a power law; their weighted totals are what matter.
 
 ## Three kinds of memory
 
@@ -512,7 +513,7 @@ q_{\mathcal F}=\frac{2\alpha+2\beta-1}{2\alpha},
 q_{\mathcal K}=2-\frac{1}{2\alpha}.
 $$
 
-<figure style="display:block;">
+<figure class="research-figure--phases" style="display:block;">
   <div style="display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:clamp(12px,2vw,24px);align-items:center;width:100%;max-width:680px;margin:0 auto 1rem;">
     <img src="{{ '/images/power-laws-have-a-clock/main-fig1-response-map.png' | relative_url }}" alt="Long-memory, integrable-memory, and finite-bulk regimes in forcing-memory response coordinates." style="display:block;width:100%;height:auto;margin:0;">
     <img src="{{ '/images/power-laws-have-a-clock/main-fig3-plrf-map.png' | relative_url }}" alt="The corresponding propagation regimes in power-law random-feature source-capacity coordinates." style="display:block;width:100%;height:auto;margin:0;">
@@ -567,12 +568,14 @@ For power-law memory and ratio growth, comparing this extra loss with the clean 
 - **Change:** it decays more slowly than the clean loss and sets a new exponent.
 - **Preserve:** it decays at least as fast, leaving the clean exponent unchanged.
 
+The diagram compares the clean excess-loss exponent \\(q_0\\), describing decay above its floor as \\(T^{-q_0}\\), with the ratio-growth exponent \\(\vartheta\\), defined by \\(r(T)\sim T^\vartheta\\).
+
 <figure>
   <img src="{{ '/images/power-laws-have-a-clock/main-fig4-schedule-map.png' | relative_url }}" alt="Phase diagram showing when a schedule preserves, changes, or destroys a clean power law." style="display:block;width:min(100%,570px);height:auto;margin-inline:auto;">
-  <figcaption><strong>Preserve, change, or destroy.</strong> The ratio-growth exponent \(\vartheta\), defined by \(r(T)\sim T^\vartheta\), controls the outcome. The flat boundary marks the memory ceiling; \(q_{\mathcal K}=1\) introduces logarithmic corrections.</figcaption>
+  <figcaption><strong>Preserve, change, or destroy.</strong> Horizontal axis: ratio growth. Vertical axis: clean excess-loss decay. The flat boundary marks the memory ceiling; \(q_{\mathcal K}=1\) introduces logarithmic corrections.</figcaption>
 </figure>
 
-**A schedule can change the loss exponent, not just the speed of training.** But suppressing noise more aggressively eventually stops improving that exponent: the past still has to fade.
+Fix \\(q_0\\) and move horizontally to the right, increasing \\(\vartheta\\). If \\(q_0<q_{\mathcal K}\\), we eventually cross from **changed** into **preserved**: the extra loss now decays at least as fast as the clean excess loss. If \\(q_0>q_{\mathcal K}\\), our horizontal line stays above the memory ceiling, no matter how far right we go. The extra loss has a decay exponent capped at \\(q_{\mathcal K}\\), so more aggressive suppression cannot recover the clean exponent.
 
 ## From schedule laws to schedule design
 
@@ -600,7 +603,7 @@ This leaves room for a broader possibility: **forcing–memory may be a coarse-g
 
 First, keep the ratio path the same but implement it differently: lower learning rate at fixed batch size in one run, and increase batch size at fixed learning rate in another. Match their clocks and ratio paths.
 
-We did this for a 300M plain-SGD LLM with two schedule shapes: gradual decay (WSD) and two successive drops (8-1-1). If intrinsic time and the ratio path capture the main schedule dependence, each pair should follow nearly the same loss curve.
+We did this for a 300M plain-SGD LLM on 6.5B OpenWebText tokens. All runs share the first 80% of the token budget, then branch from the same checkpoint for the remaining 20%. In the fixed-batch runs, WSD lowers the learning rate gradually over that tail, while 8-1-1 uses two lower-rate stages of 10% each. If intrinsic time and the ratio path capture the main schedule dependence, each learning-rate/batch-size pair should follow nearly the same loss curve.
 
 <figure style="display:block;">
   <div style="display:flex;flex-wrap:wrap;gap:1rem;align-items:flex-end;width:100%;margin-bottom:1rem;">
@@ -643,7 +646,7 @@ The predicted curve follows WSD's measured validation loss, including its differ
     <img src="{{ '/images/power-laws-have-a-clock/main-fig5-transfer.png' | relative_url }}" alt="The frozen surrogate predicting the held-out WSD validation trajectory without refitting.">
     <img src="{{ '/images/power-laws-have-a-clock/main-fig5-profile.png' | relative_url }}" alt="Held-out WSD prediction error as a function of the fixed memory exponent.">
   </div>
-  <figcaption><strong>8-1-1 fit (left), zero-refit WSD prediction (middle).</strong> Right: repeat for different fixed \(q_{\mathcal K}\), fitting the other parameters only on 8-1-1. WSD prediction is most accurate near one.</figcaption>
+  <figcaption><strong>8-1-1 fit (left), zero-refit WSD prediction (middle).</strong> In these two panels, the vertical dotted lines mark the shared checkpoint. Right: repeat for different fixed \(q_{\mathcal K}\), fitting the other parameters only on 8-1-1. Each error curve is divided by its own minimum across the tested exponents, so its best value is 1. WSD prediction is most accurate near one.</figcaption>
 </figure>
 
 This is a more revealing test than fitting the two curves separately. **A learning-curve model should earn our confidence by predicting what happens when training changes.** Here the same response describes two different histories of noise injection.
@@ -651,9 +654,7 @@ This is a more revealing test than fitting the two curves separately. **A learni
 <details markdown="1">
 <summary><strong>Experiment and surrogate details</strong></summary>
 
-**Training and matching.** The preliminary 30M experiment continued one mature plain-SGD checkpoint under eleven ratio paths, all ending at the same intrinsic time. The main 300M nanoGPT experiment used 6.5B OpenWebText tokens: a shared 5.2B-token prefix followed by 1.3B-token tails. For each schedule, we compared fixed batch size with varying learning rate against fixed learning rate with varying batch size, matching data, intrinsic-time increments, and \\(B/\eta\\) over groups of updates.
-
-In their fixed-batch versions, WSD keeps learning rate constant for the first 80% of training and lowers it gradually over the last 20%. The 8-1-1 schedule shares the first 80%, then uses two lower-rate stages lasting 10% each.
+**Training and matching.** The preliminary 30M experiment continued one mature plain-SGD checkpoint under eleven ratio paths, all ending at the same intrinsic time. In the 300M comparison, each learning-rate/batch-size pair matches data, intrinsic-time increments, and \\(B/\eta\\) over groups of updates.
 
 **Surrogate parameters.** The seven parameters are the floor \\(L_\infty\\), forcing amplitude \\(A_{\mathcal F}\\), source amplitudes \\(A_0,A_1\\), memory time-scale parameter \\(c_{\mathcal K}\\), and exponents \\(q_{\mathcal F},q_{\mathcal K}\\). The approximation separates the effective response as \\(K(n,s)\approx J(T_s)k(T_n-T_s)\\), where \\(J\\) is the source amplitude and \\(k\\) the propagation kernel.
 
@@ -696,4 +697,4 @@ That makes a schedule change more than a training choice. It is a way to ask wha
 
 ---
 
-*This post describes joint work by Yichen Wang, Fanghui Liu, and Yudong Chen.*
+*This post is based on [From Spectra to Joint Schedules in LLM Pre-training: 3+3(+2) Scaling-Law Regimes](https://arxiv.org/abs/2609.40148), joint work by Yichen Wang, Fanghui Liu, and Yudong Chen.*
