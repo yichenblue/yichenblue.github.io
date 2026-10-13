@@ -1,7 +1,11 @@
 <li style="margin-bottom: 1.5em; list-style-position: outside;">
   <div style="margin-left: 0.8em;">
     <div>
-      <em>{{ post.title }}</em>
+      {% if post.collection == 'posts' %}
+        <a href="{{ post.url | relative_url }}"><em>{{ post.title }}</em></a>
+      {% else %}
+        <em>{{ post.title }}</em>
+      {% endif %}
       {% if post.paperurl %}
         <a href="{{ post.paperurl }}" style="color: #1a0dab;">[arXiv]</a>
       {% endif %}

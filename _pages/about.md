@@ -7,11 +7,11 @@ redirect_from:
   - /about.html
 ---
 
-Welcome to my homepage! I am a first year PhD student in the [Computer Science Department](https://www.cs.wisc.edu/) at the [University of Wisconsin–Madison](https://www.wisc.edu/), working with [Prof. Yudong Chen](https://pages.cs.wisc.edu/~yudongchen/). I obtained my Bachelor's degree at Shanghai Jiao Tong University in 2025. During my undergraduate education, I was fortunate to be advised by [Prof. Xiaolin Huang](http://www.pami.sjtu.edu.cn/en/xiaolin) and [Prof. Fanghui Liu](https://www.lfhsgre.org/index.html).
+Welcome to my homepage! I am a second-year PhD student in the [Computer Science Department](https://www.cs.wisc.edu/) at the [University of Wisconsin–Madison](https://www.wisc.edu/), working with [Prof. Yudong Chen](https://pages.cs.wisc.edu/~yudongchen/). I obtained my Bachelor's degree at Shanghai Jiao Tong University in 2025. During my undergraduate education, I was fortunate to be advised by [Prof. Xiaolin Huang](http://www.pami.sjtu.edu.cn/en/xiaolin) and [Prof. Fanghui Liu](https://www.lfhsgre.org/index.html).
 
 Research
 ======
-My research interest currently lies in statistical learning theory, focuses on developing a theoretical understanding of modern machine learning systems, using tools from high-dimensional statistics.
+My research interests lie in statistical learning theory and high-dimensional statistics. I develop theoretical foundations for modern machine learning, with a particular interest in generalization, optimization, and neural scaling laws.
 
 Education Experience
 ======
@@ -31,5 +31,11 @@ Honors and Awards
 
 Teaching
 ======
+- CS 540: Introduction to AI — *Teaching Assistant*, UW–Madison
+  Fall 2026
+
+- CS 639: Foundation Model — *Teaching Assistant*, UW–Madison
+  Spring 2026
+
 - CS 200: Programming I — *Teaching Assistant*, UW–Madison
   Fall 2025
