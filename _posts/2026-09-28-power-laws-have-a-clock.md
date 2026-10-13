@@ -14,7 +14,7 @@ read_time: true
 reading_guide:
   # Approximate prose-reading times at the site's 160 words/minute.
   # Excludes mathematical source; optional details are counted separately.
-  main_minutes: 22
+  main_minutes: 23
   optional_minutes: 7
   sections:
     - title: Why SGD has memory
@@ -47,7 +47,9 @@ header:
 [Paper (arXiv)](https://arxiv.org/abs/2609.40148) · [Code (GitHub)](https://github.com/yichenblue/spectra-to-schedules-in-pretraining)
 {: .research-links}
 
-Scaling laws offer a way to look beyond the training runs we can afford. Measurements from smaller language models let us estimate what ten times—or a hundred times—more compute could buy.
+During language-model training, loss can follow a power law over a long stretch of a run. A fit to the curve so far gives us a way to estimate how much further the loss might fall if we keep training. This makes learning curves useful well before training is finished.
+
+Extending the fitted curve is straightforward. Knowing when to trust it is harder. The power-law pattern may not last, and even with the same model and data, changing the learning rate or batch size can change the exponent. A curve that looked like a property of the learning task turns out to depend on how we train as well. To predict what happens next, we need to understand where that dependence comes from.
 
 <figure id="scaling-law-overview" style="display:block;max-width:680px;margin:1.4em auto;">
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0;background:#fff;padding:6px;border-radius:4px;">
@@ -79,20 +81,33 @@ These regularities make power laws useful for planning larger training runs. But
 
 In [Qiu et al.'s synthetic regression experiment](https://www.opt-ml.org/papers/2024/paper78.pdf#page=6), MLPs learning a target with an exponential frequency distribution produce a compute–loss frontier that is not well described by a power law.
 
-<figure id="task-dependent-scaling-frontier" style="display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:20px;max-width:620px;margin:1.4em auto;">
-  <a href="{{ '/images/power-laws-have-a-clock/qiu-2024-no-power-law.png' | relative_url }}" aria-label="View the full-size non-power-law frontier from Qiu Figure 3(c)" style="display:block;flex:0 1 300px;min-width:0;background:#fff;padding:6px;border-radius:4px;">
-    <img src="{{ '/images/power-laws-have-a-clock/qiu-2024-no-power-law.png' | relative_url }}" alt="Qiu Figure 3(c): the lower envelope of MLP loss curves on a synthetic regression task departs from the dashed best power-law fit." width="636" height="615" style="display:block;width:100%;height:auto;margin:0;">
-  </a>
-  <figcaption style="flex:1 1 260px;min-width:0;margin:0;"><strong>A frontier without a good power-law fit.</strong> Synthetic MLP regression; dashed line: best power-law fit. Cropped from <a href="https://www.opt-ml.org/papers/2024/paper78.pdf#page=6">Qiu et al., OPT 2024, Figure 3(c)</a>.</figcaption>
-</figure>
-
 The training recipe matters too. In [Porian et al.'s language-model experiments](https://arxiv.org/html/2406.19146v4#A9), a power law with a fitted loss floor extrapolates well under a tuned recipe, but poorly under other recipes.
 
-<figure id="training-dependent-scaling-frontier" style="display:block;max-width:680px;margin:1.4em auto;">
-  <a href="{{ '/images/power-laws-have-a-clock/porian-2024-training-recipes.png' | relative_url }}" aria-label="View the full-size tuned-optimizer and cosine-decay panels from Porian Figure 19" style="display:block;background:#fff;padding:6px;border-radius:4px;">
-    <img src="{{ '/images/power-laws-have-a-clock/porian-2024-training-recipes.png' | relative_url }}" alt="Porian Figure 19, selected panels: higher-compute optimal losses track the fitted power-law extrapolation under the tuned recipe on the left, but depart from it under the cosine-decay recipe on the right." width="1160" height="598" style="display:block;width:100%;height:auto;margin:0;">
-  </a>
-  <figcaption><strong>Power-law extrapolation depends on the training recipe.</strong> Estimated optimal loss versus compute; open markers: measured loss; dashed lines: extrapolation. Both fits include a loss floor. The recipes differ in hyperparameter tuning as well as learning-rate decay. Cropped from <a href="https://arxiv.org/pdf/2406.19146v4#page=28">Porian et al. (2024), Figure 19</a> (<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>).</figcaption>
+<figure id="scaling-frontier-triptych" class="research-frontier-triptych">
+  <div class="research-frontier-triptych__scroll" role="region" aria-label="Three compute-frontier panels; scroll horizontally on narrow screens" tabindex="0">
+    <div class="research-frontier-triptych__panels">
+      <a id="task-dependent-scaling-frontier" class="research-frontier-triptych__panel" href="{{ '/images/power-laws-have-a-clock/qiu-2024-no-power-law.png' | relative_url }}" aria-label="View the full-size Qiu Figure 3(c) crop">
+        <span class="research-frontier-triptych__title">(a) Synthetic regression</span>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 26 636 479" role="img" aria-label="Qiu Figure 3(c): the synthetic MLP compute–loss frontier departs from the dashed best power-law fit.">
+          <image href="{{ '/images/power-laws-have-a-clock/qiu-2024-no-power-law.png' | relative_url }}" width="636" height="615" />
+        </svg>
+      </a>
+      <a id="training-dependent-scaling-frontier" class="research-frontier-triptych__panel" href="{{ '/images/power-laws-have-a-clock/porian-2024-training-recipes.png' | relative_url }}" aria-label="View the full-size Porian Figure 19 crop">
+        <span class="research-frontier-triptych__title">(b) Optimizer tuning (no decay)</span>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 44 580 544" role="img" aria-label="Porian Figure 19, tuned optimizer without decay: higher-compute optimal losses track the power-law extrapolation.">
+          <image href="{{ '/images/power-laws-have-a-clock/porian-2024-training-recipes.png' | relative_url }}" width="1160" height="598" />
+        </svg>
+      </a>
+      <a class="research-frontier-triptych__panel" href="{{ '/images/power-laws-have-a-clock/porian-2024-training-recipes.png' | relative_url }}" aria-label="View the full-size Porian Figure 19 crop">
+        <span class="research-frontier-triptych__title">(c) Cosine decay</span>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="580 44 580 544" role="img" aria-label="Porian Figure 19, cosine decay: higher-compute optimal losses depart from the power-law extrapolation.">
+          <image href="{{ '/images/power-laws-have-a-clock/porian-2024-training-recipes.png' | relative_url }}" width="1160" height="598" />
+        </svg>
+      </a>
+    </div>
+  </div>
+  <div class="research-frontier-triptych__hint">Scroll sideways to view all three panels; select a panel to enlarge.</div>
+  <figcaption><strong>Power-law fits across tasks and training recipes.</strong> (a) Synthetic MLP regression; dashed line: best power-law fit. Cropped from <a href="https://www.opt-ml.org/papers/2024/paper78.pdf#page=6">Qiu et al., OPT 2024, Figure 3(c)</a>. (b–c) Estimated optimal language-model loss versus compute; open markers: optimal-loss estimates; dashed lines: extrapolation. Both fits include a loss floor. The recipes differ in hyperparameter tuning as well as learning-rate decay. Cropped from <a href="https://arxiv.org/pdf/2406.19146v4#page=28">Porian et al. (2024), Figure 19</a> (<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>). Panel headings re-typeset.</figcaption>
 </figure>
 
 The influence of training is also visible within a single model, not just in the frontier across models. Even with the model and data held fixed, changing the learning-rate schedule can change the fitted power-law exponent of loss versus training steps.

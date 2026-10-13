@@ -39,6 +39,13 @@
 - Scope: empirical optimal loss over model-size/token allocations within each training recipe, fitted by a power law plus a loss floor. The recipes differ in hyperparameter tuning as well as learning-rate decay; this is not a controlled test of cosine decay alone, nor a demonstration that a globally optimized frontier cannot be a power law.
 - The source article is licensed under Creative Commons Attribution 4.0, as linked from https://arxiv.org/abs/2406.19146v4: https://creativecommons.org/licenses/by/4.0/. The caption credits the source, links the license, and identifies the crop. Copyright remains with the original rights holders; the repository's software license does not replace the source license.
 
+## Combined compute-frontier triptych
+
+- Arranged on 2026-10-13 using the unchanged Qiu and Porian PNGs above. No data, curves, axes, or fit formulas were redrawn.
+- Left: Qiu viewport `0 26 636 479`, removing surrounding whitespace and the original `(c) No power law` footer. Middle and right: Porian viewports `0 44 580 544` and `580 44 580 544`, separating the two panels and replacing their colored headings with matching HTML headings.
+- New `(a)`, `(b)`, and `(c)` labels refer only to the blog triptych; original source figure numbers are retained in the shared caption. Axes, tick labels, fit legends, and aspect ratios are preserved. The slightly wider left column aligns the different original plotting-area shapes without stretching either source.
+- Each panel links to its unchanged, full-size source crop. Narrow screens retain a single row with horizontal scrolling rather than shrinking all three plots to unreadable sizes. Source credits and the Porian CC BY 4.0 link remain in the shared caption.
+
 ## Vision-transformer compute frontier (archived)
 
 - Files: `zhai-2022-imagenet-finetune.svg` and `zhai-2022-scaling-frontier.svg`.
