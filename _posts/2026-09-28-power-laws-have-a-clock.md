@@ -2,7 +2,9 @@
 layout: single
 title: "When Do Learning Curves Follow Power Laws?"
 date: 2026-09-28
-permalink: /posts/power-laws-have-a-clock/
+permalink: /posts/when-do-learning-curves-follow-power-laws/
+redirect_from:
+  - /posts/power-laws-have-a-clock/
 excerpt: "The origins of power-law learning curves, how training schedules reshape them, and a response model that predicts LLM loss across schedules."
 tags:
   - scaling laws
