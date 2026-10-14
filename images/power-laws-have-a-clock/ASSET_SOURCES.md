@@ -83,3 +83,13 @@
 - Source: the authors' iclr2027/figures/llm_maintext_wsd_zero_refit_preview.pdf, generated from the original 300M validation observations and frozen 8-1-1 fit.
 - On 2026-10-08, the legend label changed from "Fitted surrogate" to "Frozen prediction". No data, fitted parameters, curves, axes, or image dimensions changed.
 - Reproduction: scripts/render_blog_wsd_prediction.py uses the original plotting function and verifies pixel-identical rendering outside the legend. The paper's figure and plotting source remain unchanged.
+
+# Training-clock animation
+
+- Files: `main-fig1-clock-animation.gif` and `main-fig1-clock-animation-still.png`. Added on 2026-10-14 to replace the displayed step/intrinsic-time pair; the original `main-fig1-step.png` and `main-fig1-intrinsic-time.png` remain archived in this directory.
+- Source: the authors' 300M plain-SGD OpenWebText Figure 1 data, loaded with `iclr2027/experiments/experiments/nanogpt_local/plot_e2e_sgd_b16_free_q_figure1_panels_300m_v001.py`. The animation uses the original paper's blue/orange schedule palette and gray shared prefix.
+- Sequence: optimizer step; horizontal remapping to intrinsic time; 8-1-1 surrogate fit; frozen WSD prediction; unfolding into surrogate, learning-rate-schedule, and batch-size-schedule layers. No bottom explanatory footer is included.
+- The four observed trajectories and their original smoothing are preserved (9-point Hann for observations, 21-point Hann for predictions, with the shared prefix and branch tails treated separately). Display-point simplification does not add smoothing or force paired trajectories to coincide. The full step-panel time range is retained, including the WSD tail beyond the original static intrinsic-time panel's cutoff.
+- Fit: `eight-one-one-free-q-matched124m-raw-fit.json`, SHA-256 `41d6f3d891ede015e796182f0c40f093b681779e0aea3637ccc0ecb96294a871`. Parameters, including the memory exponent, are fitted to the 8-1-1 fixed-batch/learning-rate arm and reused without refitting for WSD. This is distinct from the fixed-memory-exponent fit in the following blog section.
+- GIF: 1100 × 740, 271 frames, 20.05-second loop; SHA-256 `cac14ee19d4f0eb37db40418469f6c83ae3195b6ac3351dc8eda9de41b7087bc`.
+- Static fallback: the final three-layer frame, 1100 × 740; SHA-256 `872e167bcff13a31983dfabedeebef149cd13d5b23a573f49d414a24cce1c743`. A `picture` source displays this frame when the reader requests reduced motion.

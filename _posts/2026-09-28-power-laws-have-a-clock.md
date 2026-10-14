@@ -632,16 +632,12 @@ First, keep the ratio path the same but implement it differently: lower learning
 
 We did this for a 300M plain-SGD LLM on 6.5B OpenWebText tokens. All runs share the first 80% of the token budget, then branch from the same checkpoint for the remaining 20%. In the fixed-batch runs, WSD lowers the learning rate gradually over that tail, while 8-1-1 uses two lower-rate stages of 10% each. If intrinsic time and the ratio path capture the main schedule dependence, each learning-rate/batch-size pair should follow nearly the same loss curve.
 
-<figure style="display:block;">
-  <div style="display:flex;flex-wrap:wrap;gap:1rem;align-items:flex-end;width:100%;margin-bottom:1rem;">
-    <div style="flex:1 1 280px;min-width:0;">
-      <img src="{{ '/images/power-laws-have-a-clock/main-fig1-step.png' | relative_url }}" alt="Validation risk for matched learning-rate and batch-size schedules plotted against optimizer step." style="display:block;width:100%;height:auto;margin:0;">
-    </div>
-    <div style="flex:1.26 1 352.8px;min-width:0;">
-      <img src="{{ '/images/power-laws-have-a-clock/main-fig1-intrinsic-time.png' | relative_url }}" alt="The same validation trajectories plotted against intrinsic time, together with the transferred surrogate." style="display:block;width:100%;height:auto;margin:0;">
-    </div>
-  </div>
-  <figcaption><strong>Different step counts, nearly the same intrinsic-time curves.</strong> Paired learning-rate and batch-size implementations separate against optimizer step (left) and align against \(T=\sum_t\eta_t\) (right).</figcaption>
+<figure id="training-clock-animation" style="display:block;">
+  <picture>
+    <source media="(prefers-reduced-motion: reduce)" srcset="{{ '/images/power-laws-have-a-clock/main-fig1-clock-animation-still.png' | relative_url }}">
+    <img src="{{ '/images/power-laws-have-a-clock/main-fig1-clock-animation.gif' | relative_url }}" alt="Matched learning-rate and batch-size validation trajectories change from optimizer step to intrinsic time, followed by the 8-1-1 fit, frozen WSD prediction, and separation into three layers." width="1100" height="740" loading="lazy" decoding="async" style="display:block;width:100%;height:auto;margin:0;">
+  </picture>
+  <figcaption><strong>Different step counts, nearly the same intrinsic-time curves.</strong> The animation switches from optimizer step to \(T=\sum_t\eta_t\), draws the 8-1-1 fit and frozen WSD prediction, then unfolds the curves into three layers. Here \(q_{\mathcal K}\) is fitted freely; the next section fixes it to 1.</figcaption>
 </figure>
 
 That is what we see. The paired curves separate against optimizer step, but nearly coincide against intrinsic time. Changing learning rate or batch size produces much the same loss response when the clock and ratio path are matched.
