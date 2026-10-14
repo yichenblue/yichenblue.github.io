@@ -66,7 +66,7 @@ Extending the fitted curve is straightforward. Knowing when to trust it is harde
       <img src="{{ '/images/power-laws-have-a-clock/kaplan-2020-scaling-laws.svg' | relative_url }}" alt="Kaplan et al. parameter scaling: test loss follows an approximate power law in non-embedding parameter count." style="display:block;width:283.201761%;max-width:none;height:auto;margin:0;clip-path:inset(0 0 0 68.400243%);transform:translateX(-66.544864%);">
     </div>
   </div>
-  <figcaption><strong>Regular scaling across compute, data, and model size.</strong> <a href="https://arxiv.org/html/2001.08361v1#S1.F1">Kaplan et al. (2020), Figure 1</a>. Left: the small-batch-adjusted compute frontier across models, not one training trajectory.</figcaption>
+  <figcaption><strong>Regular scaling across compute, data, and model size.</strong> <a href="https://arxiv.org/html/2001.08361v1#S1.F1">Kaplan et al. (2020), Figure 1</a>.</figcaption>
 </figure>
 
 At a fixed compute budget, a larger model leaves fewer tokens for training. [Chinchilla](https://arxiv.org/html/2203.15556v1#S3.SS3) captures this trade-off by fitting the final loss of a model with \\(N\\) parameters trained on \\(D\\) tokens:
@@ -109,7 +109,7 @@ The training recipe matters too. In [Porian et al.'s language-model experiments]
     </div>
   </div>
   <div class="research-frontier-triptych__hint">Scroll sideways to view all three panels; select a panel to enlarge.</div>
-  <figcaption><strong>Power-law fits across tasks and training recipes.</strong> (a) Synthetic MLP regression; dashed line: best power-law fit. Cropped from <a href="https://www.opt-ml.org/papers/2024/paper78.pdf#page=6">Qiu et al., OPT 2024, Figure 3(c)</a>. (b–c) Estimated optimal language-model loss versus compute; open markers: optimal-loss estimates; dashed lines: extrapolation. Both fits include a loss floor. The recipes differ in hyperparameter tuning as well as learning-rate decay. Cropped from <a href="https://arxiv.org/pdf/2406.19146v4#page=28">Porian et al. (2024), Figure 19</a> (<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>). Panel headings re-typeset.</figcaption>
+  <figcaption><strong>Power-law fits across tasks and training recipes.</strong> (a) Synthetic MLP regression; dashed line: best power-law fit. Cropped from <a href="https://www.opt-ml.org/papers/2024/paper78.pdf#page=6">Qiu et al., OPT 2024, Figure 3(c)</a>. (b–c) Estimated optimal language-model loss versus compute; open markers: optimal-loss estimates; dashed lines: extrapolation. Cropped from <a href="https://arxiv.org/pdf/2406.19146v4#page=28">Porian et al. (2024), Figure 19</a> (<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>).</figcaption>
 </figure>
 
 The influence of training is also visible within a single model, not just in the frontier across models. Even with the model and data held fixed, changing the learning-rate schedule can change the fitted power-law exponent of loss versus training steps.
@@ -143,7 +143,7 @@ where \\(t\\) counts training steps, \\(a\\) is the fitted amplitude, and \\(p\\
       </a>
     </div>
   </div>
-  <figcaption><strong>Changing the schedule changes the fitted exponent.</strong> <a href="https://arxiv.org/html/2506.05447v1#A3.SS3">Mircea et al. (2025), Figures 2 and 29</a>. Compare 14M–472M; OLMo-1B/7B are external references. Fits use raw training loss over a finite window with zero offset, not floor-subtracted loss.</figcaption>
+  <figcaption><strong>Changing the schedule changes the fitted exponent.</strong> <a href="https://arxiv.org/html/2506.05447v1#A3.SS3">Mircea et al. (2025), Figures 2 and 29</a>.</figcaption>
 </figure>
 
 Compare the 144M model across the two panels: cosine decay raises its fitted late-training exponent from **0.023 to 0.036**. The fitted slope depends on the training schedule, not just the model and dataset.
