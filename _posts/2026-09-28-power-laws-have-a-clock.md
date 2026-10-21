@@ -51,6 +51,23 @@ header:
 [Paper (arXiv)](https://arxiv.org/abs/2609.40148) · [Code (GitHub)](https://github.com/yichenblue/spectra-to-schedules-in-pretraining)
 {: .research-links}
 
+We provide a partial characterization of scaling laws through necessary and sufficient conditions, show how intrinsic time and the batch-size-to-learning-rate ratio can control their behavior, and demonstrate successful loss prediction for a 300M nanoGPT model. This illustrates how a simple model can inform LLM pretraining configurations.
+{: .research-lead}
+
+<figure id="fit-and-predict-preview" class="research-result-pair">
+  <div class="research-result-pair__panels">
+    <a class="research-result-pair__panel" href="{{ '/images/power-laws-have-a-clock/llm-global-811-fit.png' | relative_url }}" aria-label="Enlarge the 8-1-1 fit">
+      <span class="research-result-pair__title">Fit on 8-1-1</span>
+      <img src="{{ '/images/power-laws-have-a-clock/llm-global-811-fit.png' | relative_url }}" alt="300M nanoGPT validation loss under the 8-1-1 schedule, with a fitted response model and an inset enlarging the late-training loss drops." width="1584" height="1072" decoding="async">
+    </a>
+    <a class="research-result-pair__panel" href="{{ '/images/power-laws-have-a-clock/llm-global-wsd-prediction.png' | relative_url }}" aria-label="Enlarge the WSD prediction">
+      <span class="research-result-pair__title">Predict WSD without refitting</span>
+      <img src="{{ '/images/power-laws-have-a-clock/llm-global-wsd-prediction.png' | relative_url }}" alt="300M nanoGPT validation loss under WSD, with a prediction using parameters frozen from the 8-1-1 fit; the inset enlarges the continuation after the shared checkpoint." width="1609" height="1072" decoding="async">
+    </a>
+  </div>
+  <figcaption><strong>Fit one schedule, predict another.</strong> Validation loss for a 300M nanoGPT model. Fit on 8-1-1 (left), then freeze the parameters and predict WSD's continuation without refitting (right). The runs share a training prefix and branch at the dotted line; the insets enlarge the late-training response. Intrinsic time is \(T=\sum_t\eta_t\), with learning rate \(\eta_t\). Select either panel to enlarge.</figcaption>
+</figure>
+
 During language-model training, loss can follow a power law over a long stretch of a run. A fit to the curve so far gives us a way to estimate how much further the loss might fall if we keep training. This makes learning curves useful well before training is finished.
 
 Extending the fitted curve is straightforward. Knowing when to trust it is harder. The power-law pattern may not last, and even with the same model and data, changing the learning rate or batch size can change the exponent. A curve that looked like a property of the learning task turns out to depend on how we train as well. To predict what happens next, we need to understand where that dependence comes from.
@@ -506,7 +523,8 @@ In the example below, the spectrum follows a power law but the target barely use
   <figcaption><strong>Fast forcing decay, slow memory tail.</strong> Left: forcing vanishes faster than every inverse power. Middle: one-injection memory decays as \(T^{-3/4}\). Right: SGD loss, averaged over 20 runs, eventually follows that memory tail.</figcaption>
 </figure>
 
-**Slow loss decay need not mean slow signal learning.** Forcing and memory use the same decay speeds, but assign different weights to them. A fitted loss exponent alone does not tell us which contribution controls the curve.
+Slow loss decay need not mean slow signal learning. Forcing and memory use the same decay speeds, but assign different weights to them. A fitted loss exponent alone does not tell us which contribution controls the curve.
+{: .research-takeaway #loss-slope-takeaway}
 
 As training continues, fast directions fade and slower ones take over. At time \\(T\\), the remaining contribution comes mainly from directions with \\(\lambda\lesssim1/T\\). We therefore need to add up their weights separately for forcing and memory.
 
@@ -716,7 +734,12 @@ The predicted curve follows WSD's measured validation loss, including its differ
   <figcaption><strong>8-1-1 fit (left), zero-refit WSD prediction (middle).</strong> In these two panels, the vertical dotted lines mark the shared checkpoint. Right: repeat for different fixed \(q_{\mathcal K}\), fitting the other parameters only on 8-1-1. Each error curve is divided by its own minimum across the tested exponents, so its best value is 1. WSD prediction is most accurate near one.</figcaption>
 </figure>
 
-This is a more revealing test than fitting the two curves separately. **A learning-curve model should earn our confidence by predicting what happens when training changes.** Here the same response describes two different histories of noise injection.
+This is a more revealing test than fitting the two curves separately.
+
+A learning-curve model should earn our confidence by predicting what happens when training changes.
+{: .research-takeaway #prediction-takeaway}
+
+Here the same response describes two different histories of noise injection.
 
 <details markdown="1">
 <summary><strong>Experiment and surrogate details</strong></summary>

@@ -84,6 +84,15 @@
 - On 2026-10-08, the legend label changed from "Fitted surrogate" to "Frozen prediction". No data, fitted parameters, curves, axes, or image dimensions changed.
 - Reproduction: scripts/render_blog_wsd_prediction.py uses the original plotting function and verifies pixel-identical rendering outside the legend. The paper's figure and plotting source remain unchanged.
 
+# Opening fit/prediction pair
+
+- Files: `llm-global-811-fit.png` and `llm-global-wsd-prediction.png`. Added on 2026-10-21 from the author's supplied `llm_global_811_surrogate_transfer_preview.png` and `llm_global_wsd_zero_refit_preview.png`; copied without pixel edits, cropping, or resampling. The supplied PDFs are alternate source exports and are not required by the webpage.
+- Both PNGs are byte-identical to the corresponding files in `iclr2027/figures`. Renderer: `iclr2027/experiments/experiments/nanogpt_local/plot_llm_global_surrogate_preview_v001.py`. It extends the observed validation cross-entropy curves to intrinsic time zero without performing new training or fitting.
+- This pair uses the fixed-memory-exponent fit, q_K = 1, from the 8-1-1 learning-rate arm. WSD uses the same frozen parameters with a different schedule. The runs share the prefix before the dotted branch line; that shared prefix is not an independent held-out WSD prediction. Surrogate curves start at their fitted support, T = 664.64, not initialization.
+- The insets enlarge late training, including a short interval before the branch. Original colors, legends, axes, and insets are retained. HTML headings identify fitting versus zero-refit prediction. Desktop shows two columns within the text width; narrow screens stack them, and each panel links to its full-resolution PNG.
+- 8-1-1 image: 1584 × 1072; SHA-256 `4c454adcd5b7c03cfd8d659e82c2107eb1dd4f6c98de967882f82bd83b78f19f`.
+- WSD image: 1609 × 1072; SHA-256 `9fcd374b161b2fcbb412ae9e98708f7d5a8edec71e30237c598a1cfd3f1da6e4`.
+
 # Training-clock animation
 
 - Files: `main-fig1-clock-animation.gif` and `main-fig1-clock-animation-still.png`. Added on 2026-10-14 to replace the displayed step/intrinsic-time pair; the original `main-fig1-step.png` and `main-fig1-intrinsic-time.png` remain archived in this directory.
