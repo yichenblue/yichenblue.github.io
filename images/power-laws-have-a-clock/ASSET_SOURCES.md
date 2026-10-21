@@ -93,3 +93,15 @@
 - Fit: `eight-one-one-free-q-matched124m-raw-fit.json`, SHA-256 `41d6f3d891ede015e796182f0c40f093b681779e0aea3637ccc0ecb96294a871`. Parameters, including the memory exponent, are fitted to the 8-1-1 fixed-batch/learning-rate arm and reused without refitting for WSD. This is distinct from the fixed-memory-exponent fit in the following blog section.
 - GIF: 1100 × 740, 271 frames, 20.05-second loop; SHA-256 `cac14ee19d4f0eb37db40418469f6c83ae3195b6ac3351dc8eda9de41b7087bc`.
 - Static fallback: the final three-layer frame, 1100 × 740; SHA-256 `872e167bcff13a31983dfabedeebef149cd13d5b23a573f49d414a24cce1c743`. A `picture` source displays this frame when the reader requests reduced motion.
+
+# Source bias–variance and forcing–memory comparison
+
+- File: `exponential-teacher-two-decompositions-T10000.png`. Added on 2026-10-21, copied unchanged from the authors' reviewed experiment figure.
+- Local source: `output/linear-sgd-decomposition-comparison-review/exponential-teacher-two-decompositions-T10000.png`; renderer: `render_comparison.py` in the same review directory. Data: `output/linear-sgd-teacher-comparison-T1000000/exponential_curves.npz`, restricted to intrinsic time at most 10,000.
+- Gaussian linear model with covariance eigenvalues j^(-0.8), squared teacher coordinates proportional to exp(-j), dimension 524,288, zero initialization, and initial prediction risk normalized to 1. Constant learning rate 0.05, batch size 16, and independent mean-zero label-noise variance 0 or 0.01.
+- The observable is expected last-iterate squared prediction error against the noiseless target, excluding irreducible test-label noise and without a factor of one half. Intrinsic time is 0.05 times the update count.
+- Expectations use full-spectrum calculations through intrinsic time 1,000 and a checked positive grouped-moment approximation thereafter. These are expected-risk calculations, not newly sampled SGD trajectories to time 10,000.
+- Left column: forcing plus accumulated memory. Right column: source bias (the clean-label risk, including random minibatch effects) plus label-noise variance. Top row is clean; bottom row is noisy. Total-risk arrays are identical within each row. This figure does not plot the effective bound terms from Zou, Wu et al. (2021).
+- The forcing term retains its finite-batch second-moment correction. Memory here is the accumulated contribution, not the one-injection response kernel in the following triptych. Values below the plot limits are not replaced with artificial floors.
+- Image: 2560 × 1760; SHA-256 `5f961da4625899fced7669c4ad19212b737de3ac7781a41d37117ca43acba225`.
+- Source data SHA-256: `260f58c83b1a70095f8ef3740716f10ef499144acd74cdaf7bdd7889225c743d`. The review validation reports a maximum component-identity residual of 8.67e-19 and confirms that the source data were unchanged.
