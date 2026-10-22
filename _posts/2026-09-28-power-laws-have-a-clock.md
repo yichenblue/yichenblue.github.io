@@ -16,15 +16,13 @@ read_time: true
 reading_guide:
   # Approximate prose-reading times at the site's 160 words/minute.
   # Excludes mathematical source; optional details are counted separately.
-  main_minutes: 25
+  main_minutes: 23
   optional_minutes: 7
   sections:
     - title: Why SGD has memory
       id: why-sgd-has-memory
     - title: Different learning speeds
       id: different-directions-learn-at-different-speeds
-    - title: Two ways to read one loss curve
-      id: one-loss-curve-two-ways-to-read-it
     - title: When power laws arise
       id: when-do-these-learning-speeds-produce-a-power-law
     - title: Three kinds of memory
@@ -51,7 +49,7 @@ header:
 [Paper (arXiv)](https://arxiv.org/abs/2609.40148) · [Code (GitHub)](https://github.com/yichenblue/spectra-to-schedules-in-pretraining)
 {: .research-links}
 
-We provide a partial characterization of scaling laws through necessary and sufficient conditions, show how intrinsic time and the batch-size-to-learning-rate ratio can control their behavior, and demonstrate successful loss prediction for a 300M nanoGPT model. This illustrates how a simple model can inform LLM pretraining configurations.
+We show a sufficient and necessary condition of scaling laws (partially), point out that the scaling laws can be controlled by the intrinsic time and the ratio between the batch size and learning rate, and validate a successful prediction on 300M nano-GPT training. It can be a good example of how a simple model sparks LLM pre-training.
 {: .research-lead}
 
 <figure id="fit-and-predict-preview" class="research-result-pair">
@@ -466,48 +464,6 @@ The eigenvalues set the decay speeds, while the initial error in each direction 
 
 </details>
 
-## One loss curve, two ways to read it
-
-What would remain if we removed label noise but kept the same SGD training? In the well-specified Gaussian linear example below, the source-based split writes
-
-$$
-R_t=\operatorname{Bias}_t+\operatorname{Variance}_t.
-$$
-
-Bias is the expected risk with clean labels, with minibatch sampling still present. Variance is the additional contribution from independent, zero-mean label noise.
-
-For the figure, we use Gaussian inputs \\(x\sim\mathcal N(0,H)\\) and labels \\(y=x^\top w^\star+\varepsilon\\), with
-
-$$
-\lambda_j=j^{-0.8},
-\qquad
-(w_j^\star)^2\propto e^{-j},
-$$
-
-where \\(w_j^\star\\) are the teacher coordinates in the eigenbasis of \\(H\\). The data contain slowly learned directions, but the teacher puts little weight on them. Independent, zero-mean label noise has variance \\(\sigma^2=0\\) in the clean case and \\(0.01\\) in the noisy case; all other settings are identical.
-
-<figure id="bias-variance-forcing-memory">
-  <a href="{{ '/images/power-laws-have-a-clock/exponential-teacher-two-decompositions-T10000.png' | relative_url }}" aria-label="View the full-size comparison of forcing–memory and source bias–variance">
-    <img src="{{ '/images/power-laws-have-a-clock/exponential-teacher-two-decompositions-T10000.png' | relative_url }}" alt="Four panels compare the same expected risk under forcing–memory on the left and source bias–variance on the right. Clean labels are above and noisy labels below. With clean labels, forcing decays rapidly while memory dominates the tail; source bias equals the total risk." loading="lazy">
-  </a>
-  <figcaption><strong>Forcing–memory and source bias–variance for the same Gaussian linear model.</strong> Top: clean labels. Bottom: noisy labels. Each row shows the same expected total risk in both columns; memory is the accumulated contribution, not the one-injection kernel.</figcaption>
-</figure>
-
-Look at the clean row. The entire curve is bias, but forcing falls rapidly while accumulated memory accounts for the long tail. The clean recursion makes the connection explicit:
-
-$$
-\sigma^2=0
-\quad\Longrightarrow\quad
-R_t=\operatorname{Bias}_t
-=F_t+\sum_{s<t}K_{t,s}\operatorname{Bias}_s.
-$$
-
-Calling the tail “bias” identifies its source, not its mechanism. It remains without label noise, yet much of it comes from random minibatch sampling. In the noisy row, bias follows the same clean curve while label noise adds variance; memory now includes those additional effects too.
-
-This distinction also appears in the **effective bias–variance** grouping of [Zou, Wu et al. (2021)](https://arxiv.org/html/2103.12692#S4.SS4). In their risk bounds, the clean-sampling contribution moves from source bias into effective variance, alongside label-noise effects. Effective bias captures the remaining GD-like decay. Forcing–memory follows a closely related division.
-
-Source bias includes the effects of random minibatch sampling even with clean labels. Effective bias–variance places the corresponding clean-sampling contribution in effective variance, alongside label-noise effects. Forcing–memory makes the part accumulated through past injections explicit in the history sum.
-
 ## When do these learning speeds produce a power law?
 
 Suppose the target has almost no component along a direction that is slow to learn. There is then little signal to learn in that direction. But batch sampling can still introduce errors there, and those errors take a long time to disappear.
@@ -724,6 +680,8 @@ The first two terms form a fitted baseline, not a separately measured noise-free
 We fix \\(q_{\mathcal K}=1\\) and fit the other six parameters to raw validation loss from the fixed-batch 8-1-1 run. Then we freeze every parameter and replace only the ratio path with WSD's. No WSD loss is used in this fit.
 
 The predicted curve follows WSD's measured validation loss, including its differently timed decline. It changes because the input schedule changes, not because we adjusted the response to fit another run.
+
+The RMSE is \\(1.31\times10^{-3}\\) nats/token for the 8-1-1 fit and \\(1.58\times10^{-3}\\) for the frozen WSD prediction.
 
 <figure>
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;align-items:end;">
