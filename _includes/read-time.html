@@ -1,6 +1,10 @@
 {% if post.read_time %}{% assign read_document = post %}{% else %}{% assign read_document = page %}{% endif %}
 {% if read_document.reading_guide %}
+{% if read_document.lang == "zh-CN" %}
+  正文约 {{ read_document.reading_guide.main_minutes }} 分钟 · 可选推导另需约 {{ read_document.reading_guide.optional_minutes }} 分钟
+{% else %}
   About {{ read_document.reading_guide.main_minutes }} min for the main article · optional details: +{{ read_document.reading_guide.optional_minutes }} min
+{% endif %}
 {% else %}
 {% if post.read_time %}
   {% assign words = post.content | strip_html | number_of_words %}

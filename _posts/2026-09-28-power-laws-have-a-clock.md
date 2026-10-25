@@ -16,7 +16,7 @@ read_time: true
 reading_guide:
   # Approximate prose-reading times at the site's 160 words/minute.
   # Excludes mathematical source; optional details are counted separately.
-  main_minutes: 23
+  main_minutes: 24
   optional_minutes: 7
   sections:
     - title: Why SGD has memory
@@ -46,7 +46,7 @@ header:
   teaser: /images/power-laws-have-a-clock/main-fig2-loss.png
 ---
 
-[Paper (arXiv)](https://arxiv.org/abs/2609.40148) · [Code (GitHub)](https://github.com/yichenblue/spectra-to-schedules-in-pretraining)
+[Paper (arXiv)](https://arxiv.org/abs/2609.40148) · [Code (GitHub)](https://github.com/yichenblue/spectra-to-schedules-in-pretraining) · [中文版]({{ '/posts/when-do-learning-curves-follow-power-laws/zh/' | relative_url }})
 {: .research-links}
 
 We show a sufficient and necessary condition of scaling laws (partially), point out that the scaling laws can be controlled by the intrinsic time and the ratio between the batch size and learning rate, and validate a successful prediction on 300M nano-GPT training. It can be a good example of how a simple model sparks LLM pre-training.
@@ -380,6 +380,20 @@ R_t=F_t+\sum_{s<t}K_{t,s}\bigl(R_s+\sigma^2\bigr).
 $$
 
 Here \\(\sigma^2\\) is label-noise variance. **The grouping has changed:** \\(F_t\\) propagates initial error with a finite-batch sampling correction, so it is not the noise-free baseline \\(F(n)\\). The kernel \\(K_{t,s}\\) includes \\(\eta_s^2/B_s\\), while \\(R_s+\sigma^2\\) explicitly supplies the error generating new noise. Earlier, \\(K(n,s)\\) included state-dependent noise strength but left \\(\eta_s^2/B_s\\) outside. The two formulas share a forcing–memory interpretation, not identical definitions of \\(F\\) and \\(K\\).
+
+**Bias–variance provides another way to group the same dynamics.** Consider the well-specified case, where the model can represent the noiseless target, with independent, zero-mean label noise. Following the source split used by [Zou, Wu et al.](https://arxiv.org/html/2103.12692v3#S4.SS2), let \\(B_t\\) denote the error under clean-label SGD and \\(V_t\\) the error driven by label noise from zero initial error. In this comparison only, \\(B_t\\) denotes bias, not batch size. At each step,
+
+$$
+\begin{aligned}
+R_t
+&=\underbrace{F_t+\sum_{s<t}K_{t,s}B_s}_{\text{source bias }B_t}
++\underbrace{\sum_{s<t}K_{t,s}(V_s+\sigma^2)}_{\text{source variance }V_t}\\[6pt]
+&=\underbrace{F_t}_{\text{forcing}}
++\underbrace{\sum_{s<t}K_{t,s}(B_s+V_s+\sigma^2)}_{\text{memory}}.
+\end{aligned}
+$$
+
+The first line asks where the error comes from: the initial error and its sampling effects, or label noise and its later effects. The second separates forcing from accumulated history. In particular, \\(\sum_{s<t}K_{t,s}B_s\\) belongs to bias in the first line and memory in the second. Clean labels set \\(V_t=0\\), but do not remove this memory. The two decompositions regroup the same effects; memory is not synonymous with label-noise variance.
 
 <details markdown="1">
 <summary><strong>Derivation details: from squared loss to learning time</strong></summary>

@@ -1,9 +1,9 @@
-<aside class="reading-guide" aria-label="Article navigation">
+<aside class="reading-guide" aria-label="{{ page.reading_guide.navigation_label | default: 'Article navigation' | escape }}">
   <details class="reading-guide__disclosure" open>
-    <summary>On this page</summary>
-    <nav aria-label="Article sections">
+    <summary>{{ page.reading_guide.title | default: 'On this page' | escape }}</summary>
+    <nav aria-label="{{ page.reading_guide.sections_label | default: 'Article sections' | escape }}">
       <ul>
-        <li><a href="#article-start">Overview</a></li>
+        <li><a href="#article-start">{{ page.reading_guide.overview_label | default: 'Overview' | escape }}</a></li>
         {% for section in page.reading_guide.sections %}
         <li><a href="#{{ section.id | escape }}">{{ section.title | escape }}</a></li>
         {% endfor %}
