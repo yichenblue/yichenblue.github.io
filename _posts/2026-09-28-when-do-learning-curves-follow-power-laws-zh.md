@@ -17,7 +17,7 @@ read_time: true
 reading_guide:
   # Approximate prose-reading time: 300 Chinese characters/minute plus
   # 160 non-Chinese words/minute, excluding math; optional details counted separately.
-  main_minutes: 24
+  main_minutes: 25
   optional_minutes: 6
   navigation_label: 文章导航
   sections_label: 文章章节
@@ -173,7 +173,7 @@ $$
 ## 为什么 SGD 会留下记忆
 {: #why-sgd-has-memory}
 
-训练历史保存在参数中，但单个 loss 值掩盖了其中的大部分信息。两次训练即使当前 loss 相同，对下一次更新的响应也可能不同。因此，仅用 loss 来描述训练，就必须考虑它的历史。
+SGD 使用 minibatch 梯度，其更新会受到采样噪声的影响。某一步的噪声改变了参数，后续训练便从这个被扰动的位置继续。因此，这一步的噪声不仅影响当时的 loss，也可能影响许多步之后的 loss。我们把过去注入的噪声对后续 loss 的持续影响称为 memory。
 
 对于模型 \\(f_\theta\\)，设其训练目标为 \\(\mathcal L\\)，记 \\(\eta_t\\) 为 learning rate，\\(B_t\\) 为 batch size，\\(\xi_t\\) 为 minibatch 梯度误差。每次使用新采样的独立同分布样本时，SGD 可写为
 
@@ -186,9 +186,9 @@ $$
 \operatorname{Cov}_t(\xi_t)=\frac{\Sigma(\theta_t)}{B_t}.
 $$
 
-这里的期望以训练历史为条件，\\(\Sigma\\) 是单样本梯度协方差。因此，参数扰动 \\(-\eta_t\xi_t\\) 的方差尺度为 \\(\eta_t^2/B_t\\)：减小 learning rate 或增大 batch size，都能减小扰动。对于后续 loss 而言，关键是之后的更新如何传播这一扰动。
+这里的期望以训练历史为条件，\\(\Sigma\\) 是单样本梯度协方差。因此，参数扰动 \\(-\eta_t\xi_t\\) 的方差尺度为 \\(\eta_t^2/B_t\\)：在相同参数处，减小 learning rate 或增大 batch size，都能减小扰动的方差。这个方差尺度描述了噪声注入时的大小。接下来需要计算：第 \\(s\\) 步注入的噪声，会对第 \\(n\\) 步的 loss 产生多大影响。
 
-小噪声展开让我们可以把这些影响加起来。记 \\(F(n)\\) 为无噪声的 validation loss，\\(K(n,s)\\) 为在第 \\(n\\) 次更新时对第 \\(s\\) 次更新注入噪声的响应，其中已除去方差尺度：
+在小噪声近似下，我们可以将各步噪声对最终 loss 的贡献汇总起来。记 \\(F(n)\\) 为从相同初始化出发、采用相同 learning-rate schedule 的全梯度训练在第 \\(n\\) 步的 validation loss，\\(K(n,s)\\) 为第 \\(s\\) 步注入的噪声对第 \\(n\\) 步期望 loss 的响应系数，其中已除去显式方差尺度 \\(\eta_s^2/B_s\\)：
 
 $$
 \mathbb E L_{\mathrm{val}}(\theta_n)
@@ -199,9 +199,9 @@ $$
 \underbrace{K(n,s)}_{\text{effect on the final loss}}.
 $$
 
-第一项对应从相同初始化出发、采用相同 learning-rate schedule 的全梯度更新；求和项汇总了 minibatch noise 的影响。这里的 \\(K(n,s)\\) 仍包含噪声随状态变化的强度，而不只是噪声的传播过程。这是 **forcing–memory 分解**的起点。
+在这一近似下，历史求和项就是过去采样噪声对当前 loss 的累积影响，也就是前面定义的 memory。它与全梯度 baseline \\(F(n)\\) 一起构成上面的 **forcing–memory 分解**。这里的 \\(K(n,s)\\) 仍包含噪声随状态变化的强度，而不只是噪声的传播过程。
 
-这个表达式本身还不能保证响应呈幂律。要理解它的形状，我们需要知道训练消除误差的速度。
+这个分解还没有说明 baseline 和噪声的累积影响何时会呈幂律变化。接下来，我们从不同方向上的误差如何消退入手，寻找幂律的来源。
 
 <details markdown="1">
 <summary><strong>推导细节：从 SGD 更新到 memory response</strong></summary>
