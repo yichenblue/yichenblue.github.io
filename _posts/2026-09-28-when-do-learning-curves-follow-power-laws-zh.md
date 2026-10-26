@@ -18,7 +18,7 @@ reading_guide:
   # Approximate prose-reading time: 300 Chinese characters/minute plus
   # 160 non-Chinese words/minute, excluding math; optional details counted separately.
   main_minutes: 24
-  optional_minutes: 6
+  optional_minutes: 7
   navigation_label: 文章导航
   sections_label: 文章章节
   title: 本文目录
@@ -399,6 +399,38 @@ R_t
 $$
 
 第一行区分误差的来源：是初始误差及其采样效应，还是 label noise 及其后续效应。第二行则将 forcing 项与累积的历史影响分开。尤其是，\\(\sum_{s<t}K_{t,s}B_s\\) 在第一行中属于 bias，在第二行中却属于 memory 项。使用干净标签会令 \\(V_t=0\\)，但不会消除这部分 memory 项。这两种分解只是对同一组效应作了不同的归类；memory 项并不等同于 label-noise variance。
+
+<details markdown="1">
+<summary><strong>推导细节：从 Volterra 方程得到 bias–variance 分解</strong></summary>
+
+沿用正文中的 Gaussian random feature model、可实现目标和 label noise 假设，固定特征、输入分布以及预先给定的 learning-rate 和 batch-size schedule。这里的 \\(K_{t,s}\\) 不依赖初始误差或 label noise 方差，因此下面两个过程使用相同的 kernel。
+
+**1. 去掉 label noise，保留 minibatch 采样。**保持原来的初始化，令 \\(\sigma^2=0\\)，Volterra 方程给出 clean-label SGD 的误差：
+
+$$
+B_t=F_t+\sum_{s<t}K_{t,s}B_s.
+$$
+
+所以 source bias 不只是 \\(F_t\\)，还包含 clean-label 训练中的采样效应。
+
+**2. 去掉初始误差，保留 label noise。**从零初始预测误差出发，forcing 项为零，因此：
+
+$$
+V_t=\sum_{s<t}K_{t,s}(V_s+\sigma^2).
+$$
+
+这里的零初始误差，是指模型在训练开始时已经给出正确的无噪声预测，并不是将参数初始化为零。这个过程单独追踪 label noise 及其后续影响。
+
+**3. 将两个递推相加。**得到
+
+$$
+B_t+V_t
+=F_t+\sum_{s<t}K_{t,s}(B_s+V_s+\sigma^2).
+$$
+
+这与 \\(R_t\\) 满足相同的递推。又因为 \\(B_0=R_0\\)、\\(V_0=0\\)，且每一步只依赖之前的时刻，逐步归纳便有 \\(R_t=B_t+V_t\\)。将 \\(B_t\\) 的表达式代回，就得到正文中的两种分组。
+
+</details>
 
 <details markdown="1">
 <summary><strong>推导细节：从 squared loss 到学习时间</strong></summary>
