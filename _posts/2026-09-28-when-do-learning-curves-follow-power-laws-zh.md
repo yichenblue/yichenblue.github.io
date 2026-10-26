@@ -54,7 +54,7 @@ header:
 [论文（arXiv）](https://arxiv.org/abs/2609.40148) · [代码（GitHub）](https://github.com/yichenblue/spectra-to-schedules-in-pretraining) · [English]({{ '/posts/when-do-learning-curves-follow-power-laws/' | relative_url }})
 {: .research-links}
 
-我们在部分情形下给出了幂律 scaling law 成立的充要条件，指出 intrinsic time 以及 batch size 与 learning rate 的比值可以调控这些规律，并在 300M nano-GPT 的训练中成功预测了 loss 曲线。这也展示了一个简单模型如何为 LLM 预训练提供思路。
+我们（部分地）给出了幂律 scaling law 成立的充要条件，指出 intrinsic time 以及 batch size 与 learning rate 的比值可以调控这些规律，并在 300M nano-GPT 的训练中成功预测了 loss 曲线。这也展示了一个简单模型如何为 LLM 预训练提供思路。
 {: .research-lead}
 
 <figure id="fit-and-predict-preview" class="research-result-pair">
@@ -71,9 +71,9 @@ header:
   <figcaption><strong>拟合一种 schedule，预测另一种 schedule。</strong>图中是 300M nanoGPT 的 validation loss。先拟合 8-1-1（左），再固定所有参数，不重新拟合，直接预测 WSD 后续的 loss（右）。两次训练共用前期轨迹，并在虚线处开始分叉；插图放大了训练后期的响应。intrinsic time 为 \(T=\sum_t\eta_t\)，其中 \(\eta_t\) 是 learning rate。点击任一面板可放大查看。</figcaption>
 </figure>
 
-语言模型训练尚未结束，loss 曲线就可能已经显露出规律：在一段相当长的训练过程中，它可能按幂律下降。拟合已经走过的这段曲线，就能估计继续训练后，loss 还有多少下降空间。因此，不必等到训练结束，学习曲线就已经能帮助我们做判断。
+语言模型训练尚未结束，loss 曲线就可能已经显露出规律：在一段相当长的训练过程中，它可能按幂律下降。通过拟合已经走过的这段曲线，就能估计继续训练后，loss 还有多少下降空间。因此，不必等到训练结束，学习曲线就已经能帮助我们做判断。
 
-把拟合曲线向后延伸很容易，难的是判断什么时候可以相信它。幂律趋势未必会一直持续；即使模型和数据不变，调整 learning rate 或 batch size，也可能改变下降指数。看似属于学习任务本身的曲线，其实也取决于训练方式。要预测接下来会发生什么，就需要理解这种依赖从何而来。
+把拟合曲线向后延伸很容易，难的是判断什么时候可以相信它。幂律趋势未必会一直持续；模型和数据会改变幂律规律，即使模型和数据不变，调整 learning rate 或 batch size，也可能改变下降指数。看似属于学习任务本身的曲线，其实也取决于训练方式。要预测接下来会发生什么，就需要理解这种依赖从何而来。
 
 <figure id="scaling-law-overview" style="display:block;max-width:680px;margin:1.4em auto;">
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0;background:#fff;padding:6px;border-radius:4px;">
@@ -103,9 +103,7 @@ $$
 
 这些规律使幂律成为规划大规模训练的有用工具。但换一个任务或训练方案，幂律形式未必仍然成立。
 
-在 [Qiu 等人的合成回归实验](https://www.opt-ml.org/papers/2024/paper78.pdf#page=6)中，MLP 学习一个频率分布呈指数衰减的目标时，得到的 compute–loss frontier 无法用幂律很好地描述。
-
-训练方案同样重要。在 [Porian 等人的语言模型实验](https://arxiv.org/html/2406.19146v4#A9)中，带有拟合 loss floor 的幂律，在调优后的训练方案下能够较好地外推，但在其他方案下，外推效果明显变差。
+在 [Qiu 等人的合成回归实验](https://www.opt-ml.org/papers/2024/paper78.pdf#page=6)中，MLP 学习一个频率分布呈指数衰减的目标时，得到的 compute–loss frontier 无法用幂律很好地描述。训练方案同样重要。在 [Porian 等人的语言模型实验](https://arxiv.org/html/2406.19146v4#A9)中，幂律在调优后的训练方案下能够较好地外推，但在其他方案下，外推效果明显变差。
 
 <figure id="scaling-frontier-triptych" class="research-frontier-triptych">
   <div class="research-frontier-triptych__scroll" role="region" aria-label="三幅 compute-optimal frontier 图；窄屏下可横向滚动" tabindex="0">
