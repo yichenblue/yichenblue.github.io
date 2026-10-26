@@ -17,7 +17,7 @@ read_time: true
 reading_guide:
   # Approximate prose-reading time: 300 Chinese characters/minute plus
   # 160 non-Chinese words/minute, excluding math; optional details counted separately.
-  main_minutes: 25
+  main_minutes: 24
   optional_minutes: 6
   navigation_label: 文章导航
   sections_label: 文章章节
@@ -168,12 +168,12 @@ $$
 
 比较两个面板中的 144M 模型：cosine decay 将训练后期的拟合指数从 **0.023 提高到 0.036**。拟合斜率不仅取决于模型和数据，也取决于训练 schedule。
 
-前面的例子把几个问题连在了一起：loss 何时呈幂律下降，loss 为什么会呈幂律下降，以及训练 schedule 会怎样改变它的指数。要回答这些问题，我们得从 SGD 的更新过程看起。
+一个[共同的机制](https://arxiv.org/abs/2606.25008)，需要同时解释幂律为何出现，以及[数据与任务结构](https://arxiv.org/abs/2210.16859)如何与训练方式相互作用。一个有用的检验是：在一种 schedule 下拟合响应，再不经重新拟合地预测另一种 schedule。对于随机梯度下降（SGD），我们可以从单次更新看起：每次更新都会改变参数，它的影响可能延续到后续更新，在 loss 中留下历史。
 
 ## 为什么 SGD 会留下记忆
 {: #why-sgd-has-memory}
 
-SGD 使用 minibatch 梯度，其更新会受到采样噪声的影响。某一步的噪声改变了参数，后续训练便从这个被扰动的位置继续。因此，这一步的噪声不仅影响当时的 loss，也可能影响许多步之后的 loss。我们把过去注入的噪声对后续 loss 的持续影响称为 memory。
+训练历史保存在参数中，但单个 loss 值掩盖了其中的大部分信息。两次训练即使当前 loss 相同，对下一次更新的响应也可能不同。因此，仅用 loss 来描述训练，就必须考虑它的历史。
 
 对于模型 \\(f_\theta\\)，设其训练目标为 \\(\mathcal L\\)，记 \\(\eta_t\\) 为 learning rate，\\(B_t\\) 为 batch size，\\(\xi_t\\) 为 minibatch 梯度误差。每次使用新采样的独立同分布样本时，SGD 可写为
 
@@ -186,9 +186,9 @@ $$
 \operatorname{Cov}_t(\xi_t)=\frac{\Sigma(\theta_t)}{B_t}.
 $$
 
-这里的期望以训练历史为条件，\\(\Sigma\\) 是单样本梯度协方差。因此，参数扰动 \\(-\eta_t\xi_t\\) 的方差尺度为 \\(\eta_t^2/B_t\\)：在相同参数处，减小 learning rate 或增大 batch size，都能减小扰动的方差。这个方差尺度描述了噪声注入时的大小。接下来需要计算：第 \\(s\\) 步注入的噪声，会对第 \\(n\\) 步的 loss 产生多大影响。
+这里的期望以训练历史为条件，\\(\Sigma\\) 是单样本梯度协方差。因此，参数扰动 \\(-\eta_t\xi_t\\) 的方差尺度为 \\(\eta_t^2/B_t\\)：减小 learning rate 或增大 batch size，都能减小扰动。对于后续 loss 而言，关键是之后的更新如何传播这一扰动。
 
-在小噪声近似下，我们可以将各步噪声对最终 loss 的贡献汇总起来。记 \\(F(n)\\) 为从相同初始化出发、采用相同 learning-rate schedule 的全梯度训练在第 \\(n\\) 步的 validation loss，\\(K(n,s)\\) 为第 \\(s\\) 步注入的噪声对第 \\(n\\) 步期望 loss 的响应系数，其中已除去显式方差尺度 \\(\eta_s^2/B_s\\)：
+小噪声展开让我们可以把这些影响加起来。记 \\(F(n)\\) 为无噪声的 validation loss，\\(K(n,s)\\) 为在第 \\(n\\) 次更新时对第 \\(s\\) 次更新注入噪声的响应，其中已除去方差尺度：
 
 $$
 \mathbb E L_{\mathrm{val}}(\theta_n)
@@ -199,9 +199,9 @@ $$
 \underbrace{K(n,s)}_{\text{effect on the final loss}}.
 $$
 
-在这一近似下，历史求和项就是过去采样噪声对当前 loss 的累积影响，也就是前面定义的 memory。它与全梯度 baseline \\(F(n)\\) 一起构成上面的 **forcing–memory 分解**。这里的 \\(K(n,s)\\) 仍包含噪声随状态变化的强度，而不只是噪声的传播过程。
+第一项对应从相同初始化出发、采用相同 learning-rate schedule 的全梯度更新；求和项汇总了 minibatch noise 的影响。这里的 \\(K(n,s)\\) 仍包含噪声随状态变化的强度，而不只是噪声的传播过程。这是 **forcing–memory 分解**的起点。
 
-这个分解还没有说明 baseline 和噪声的累积影响何时会呈幂律变化。接下来，我们从不同方向上的误差如何消退入手，寻找幂律的来源。
+这个表达式本身还不能保证响应呈幂律。要理解它的形状，我们需要知道训练消除误差的速度。
 
 <details markdown="1">
 <summary><strong>推导细节：从 SGD 更新到 memory response</strong></summary>
@@ -364,7 +364,7 @@ $$
 ## 不同方向的学习速度不同
 {: #different-directions-learn-at-different-speeds}
 
-训练消除某些方向上误差的速度，比另一些方向更快。对于特征固定、输出权重可训练的模型，我们可以显式算出这些速度，[Paquette 等人对计算最优缩放的分析](https://proceedings.neurips.cc/paper_files/paper/2024/hash/1dccfc3ee01871d05e33457c61037d59-Abstract-Conference.html)就采用了这一思路。
+某些方向上误差消除的速度比另一些方向更快。对于特征固定、输出权重可训练的模型，我们可以显式算出这些速度，[Paquette 等人对计算最优缩放的分析](https://proceedings.neurips.cc/paper_files/paper/2024/hash/1dccfc3ee01871d05e33457c61037d59-Abstract-Conference.html)就采用了这一思路。
 
 考虑模型 \\(f_a(x)=a^\top\phi(x)\\)，其特征 \\(\phi\\) 固定，权重 \\(a\\) 可训练，并使用 squared loss。用 \\(\rho_{j,t}\\) 表示沿 Hessian 矩阵某个特征向量方向的参数误差，对应的特征值为 \\(\lambda_j\\)。当全梯度更新的步长较小时，
 
@@ -384,7 +384,7 @@ $$
 R_t=F_t+\sum_{s<t}K_{t,s}\bigl(R_s+\sigma^2\bigr).
 $$
 
-这里 \\(\sigma^2\\) 是 label noise 的方差。**分组方式发生了变化：**\\(F_t\\) 描述初始误差的传播，其中包含 batch size 有限时的采样修正，因此它并不是无噪声 baseline \\(F(n)\\)。kernel \\(K_{t,s}\\) 包含 \\(\eta_s^2/B_s\\)，而产生新噪声的误差则由 \\(R_s+\sigma^2\\) 显式给出。前面的 \\(K(n,s)\\) 包含依赖于状态的噪声强度，却将 \\(\eta_s^2/B_s\\) 留在 kernel 外。这两个公式都可以作 forcing–memory 分解，但其中 \\(F\\) 和 \\(K\\) 的定义并不相同。
+在这个模型中，前面的 forcing–memory 结构可以写成精确递推。\\(F_t\\) 描述初始误差的传播，历史求和项描述训练噪声的累积影响。第 \\(s\\) 步的剩余预测误差 \\(R_s\\) 和 label noise 方差 \\(\sigma^2\\) 共同提供噪声来源，而 \\(K_{t,s}\\) 描述这些噪声对第 \\(t\\) 步 loss 的影响，其中已包含注入尺度 \\(\eta_s^2/B_s\\)。
 
 **bias–variance 提供了对同一动力学的另一种分组方式。**考虑模型能够表示无噪声目标的情形，并假设 label noise 独立于输入且均值为零。沿用 [Zou、Wu 等人](https://arxiv.org/html/2103.12692v3#S4.SS2)按误差来源作出的分解，用 \\(B_t\\) 表示 clean-label SGD 所产生的误差，用 \\(V_t\\) 表示从零初始误差出发、由 label noise 驱动的误差。仅在这段比较中，\\(B_t\\) 表示 bias，而非 batch size。在每一步，
 
