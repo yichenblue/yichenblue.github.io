@@ -17,7 +17,7 @@ read_time: true
 reading_guide:
   # Approximate prose-reading time: 300 Chinese characters/minute plus
   # 160 non-Chinese words/minute, excluding math; optional details counted separately.
-  main_minutes: 26
+  main_minutes: 28
   optional_minutes: 7
   navigation_label: 文章导航
   sections_label: 文章章节
@@ -534,9 +534,56 @@ $$
 ## 这些学习速度何时会产生幂律？
 {: #when-do-these-learning-speeds-produce-a-power-law}
 
-假设目标在某个方向上几乎没有分量。从零初始化出发，这个方向上原本就没有多少误差需要消除。但 minibatch 采样仍可能在训练中沿这个方向引入新的误差。如果它对应的特征值很小，后续更新消除这些误差的速度就会很慢。
+每个方向上的误差都按指数衰减，为什么加起来之后，反而可能下降得更慢，形成幂律？关键在于：随着已经学得较快的方向逐渐不再贡献误差，是否还有越来越慢的方向接替它们，以及这些方向还剩下多少贡献。
 
-在下面的例子中，谱服从幂律，但目标几乎不使用其中的慢方向。forcing 项的消失速度快于任意负幂，SGD loss 却仍然保留着幂律尾部。剩下的是对 minibatch noise 的记忆。
+先考虑恒定且稳定的 schedule。forcing 中高于 loss floor 的部分，以及一次噪声注入的 memory response，都可以在相应的时间尺度上近似写成
+
+$$
+S(T)\approx\sum_{\lambda_j>0}w_j e^{-2\lambda_jT}.
+$$
+
+这里暂用 \\(S(T)\\) 表示其中任一分量，\\(w_j\geq0\\) 是第 \\(j\\) 个方向的贡献权重。对于 forcing，权重取决于目标在各方向上的分量；对于 memory，权重描述一次噪声注入在各方向上的影响。后一种情形中的 \\(T\\)，指注入后经过的 intrinsic time。
+
+在时刻 \\(T\\)，满足 \\(\lambda_jT\gg1\\) 的方向已经大幅衰减，而满足 \\(\lambda_jT\lesssim1\\) 的方向仍保留明显贡献。因此，要估计还剩下多少，重点是累计特征值在 \\(1/T\\) 附近及以下的权重。这里没有一道突然切断的边界，只是指数因子让更大的特征值受到更强的抑制。
+
+**\\(q\\) 就来自这些权重在小特征值附近的分布。**如果特征值不超过 \\(x\\) 的累计权重满足
+
+$$
+\sum_{0<\lambda_j\leq x}w_j\propto x^q,
+$$
+
+那么，将训练时间对应的阈值 \\(x\sim1/T\\) 代入，就得到
+
+$$
+S(T)\asymp
+\sum_{0<\lambda_j\lesssim1/T}w_j
+\propto T^{-q}.
+$$
+
+时间翻倍，仍然保留明显贡献的特征值范围大约缩小一半；如果这个范围内的累计权重随之变为原来的 \\(2^{-q}\\)，总响应便按 \\(T^{-q}\\) 下降。单个方向仍在指数衰减，但主导剩余响应的方向不断向更小的特征值移动。
+
+这也说明，\\(q\\) 不是由“指数衰减”自动产生的。它取决于特征值如何分布，以及各方向有多大的权重。
+
+以三联图采用的谱构造为例，
+
+$$
+\lambda_j=j^{-0.8}.
+$$
+
+单次 memory response 的权重为 \\(\lambda_j^2=j^{-1.6}\\)。特征值不超过 \\(x\\)，对应的下标就是 \\(j\geq x^{-1.25}\\)。在有限维截断尚未起作用的区间内，累计权重因此满足
+
+$$
+\sum_{\lambda_j\leq x}\lambda_j^2
+=
+\sum_{j\geq x^{-1.25}}j^{-1.6}
+\asymp
+\int_{x^{-1.25}}^\infty u^{-1.6}\,\mathrm du
+\propto x^{3/4}.
+$$
+
+于是，\\(q_{\mathcal K}=3/4\\)，单次 memory response 按 \\(T^{-3/4}\\) 衰减。这个指数可以从谱上的累计权重算出来，而不只是从时间曲线上拟合出来。
+
+图中同时选取了快速衰减的目标系数 \\(\lvert\theta_j^\star\rvert^2=e^{-j}\\)。因此，特征值越小的方向，目标在其中的分量也越小。它们虽然消除误差很慢，却几乎没有初始信号需要学习；minibatch 采样仍然可能在这些方向上引入误差。
 
 <figure>
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;align-items:end;">
@@ -547,12 +594,9 @@ $$
   <figcaption><strong>forcing 项快速衰减，memory 项尾部缓慢消退。</strong>左：forcing 项的消失速度快于任意负幂。中：单次噪声注入的 memory 项按 \(T^{-3/4}\) 衰减。右：对 20 次运行取平均的 SGD loss 最终沿着这一 memory 尾部衰减。</figcaption>
 </figure>
 
-幂律指数告诉我们 loss 下降得多快，却不能单独说明剩余误差从哪里来。初始误差的缓慢消退和训练噪声的长期影响，都可能形成幂律尾部。解释一条学习曲线，需要区分这两部分，而不只是拟合它们相加后的指数。
-{: .research-takeaway #loss-slope-takeaway}
+左图中的 forcing 因而快速下降；中图中的单次 memory response 则保留了 \\(T^{-3/4}\\) 的尾部。右图展示了两者如何影响实际 SGD loss：前期下降主要跟随 forcing，后期则进入由采样噪声的历史影响控制的幂律区间。**同一组特征值，并不意味着 forcing 和 memory 必须具有相同的下降规律。**
 
-随着训练继续，快方向逐渐消退，慢方向开始占主导。在时刻 \\(T\\)，剩余贡献主要来自满足 \\(\lambda\lesssim1/T\\) 的方向。因此，我们需要分别累加这些方向在 forcing 项和 memory 项中的权重。
-
-在这个模型中，固定特征为 \\(\phi(x)=W^\top x\\)，无噪声目标为 \\(x^\top\theta^\star\\)，其中随机特征矩阵 \\(W\\) 和目标参数 \\(\theta^\star\\) 均固定。用 \\(\widehat\lambda_j\\) 和 \\(\widehat u_j\\) 表示 \\(\Lambda^{1/2}WW^\top\Lambda^{1/2}\\) 的特征值及单位特征向量，其中 \\(\Lambda\\) 是输入协方差。从零输出权重出发，两种累积权重分别为
+在我们的 random feature model 中，这两种权重可以明确写出来。固定特征为 \\(\phi(x)=W^\top x\\)，无噪声目标为 \\(x^\top\theta^\star\\)，输入协方差为 \\(\Lambda\\)。记 \\(\widehat\lambda_j,\widehat u_j\\) 为 \\(\Lambda^{1/2}WW^\top\Lambda^{1/2}\\) 的特征值及单位特征向量。从零输出权重出发，两种累计权重分别为
 
 $$
 \begin{aligned}
@@ -564,9 +608,9 @@ $$
 \end{aligned}
 $$
 
-如果特征值不超过 \\(x\\) 的累积权重按 \\(x^q\\) 缩放，那么时刻 \\(T\\) 剩下的贡献就具有 \\((1/T)^q=T^{-q}\\) 的量级：训练已将截断位置降到了 \\(x\sim1/T\\)。这就解释了为什么各个方向上的指数衰减，加在一起可以形成幂律。
+第一行累计目标在这些方向上的能量；第二行累计单次 memory response 的权重。因此，二者在小特征值附近可以有不同的指数，分别记为 \\(q_{\mathcal F}\\) 和 \\(q_{\mathcal K}\\)。
 
-对于恒定 schedule，用 \\(F_W\\) 表示这一 random feature model 的 forcing 项，用 \\(F_{W,>0}\\) 表示其中高于 loss floor 的部分，用 \\(K_W\\) 表示依赖于延迟的 kernel。下面用 intrinsic time 表示这些函数。将 \\(K_W\\) 乘以 \\(B/\eta^2\\)，就去掉了其噪声注入尺度。**理论还给出了反向推论：**在大宽度、长时间极限下，一个分量若呈幂律衰减，其对应的累积谱权重就必须具有匹配的指数。示意地写成：
+前面的解释从谱上的累计权重推到了时间上的幂律。**我们的理论还给出了反方向：在论文的大宽度、长时间极限及谱窗口条件下，某个分量呈幂律衰减，也要求它的累计谱权重具有对应的指数。**示意地写成
 
 $$
 \begin{aligned}
@@ -579,7 +623,12 @@ F_{W,>0}(T)\propto T^{-q_{\mathcal F}},\\
 \end{aligned}
 $$
 
-正指数 \\(q_{\mathcal F}\\) 和 \\(q_{\mathcal K}\\) 分别描述 forcing 项与 memory 项。单个特征值不必服从幂律；真正重要的是它们的加权总量。
+这里，\\(F_{W,>0}\\) 是 forcing 高于 loss floor 的部分，\\(K_W\\) 是恒定 schedule 下的单次 memory kernel；乘以 \\(B/\eta^2\\) 是为了除去噪声注入尺度。对有限模型，这种幂律可以出现在一个很长的中间时间区间，而不是无限持续。
+
+这个结论分别适用于 forcing 和单次 memory response，并不直接给出总 loss 的指数。要得到整条 SGD loss 曲线，还需要把历次噪声注入的影响累积起来。
+
+幂律指数告诉我们 loss 下降得多快，却不能单独说明剩余误差从哪里来。初始误差的缓慢消退和训练噪声的长期影响，都可能形成幂律尾部。解释一条学习曲线，需要区分这两部分，而不只是拟合它们相加后的指数。
+{: .research-takeaway #loss-slope-takeaway}
 
 ## 三类记忆
 {: #three-kinds-of-memory}
