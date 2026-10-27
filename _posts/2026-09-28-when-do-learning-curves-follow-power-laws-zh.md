@@ -17,7 +17,7 @@ read_time: true
 reading_guide:
   # Approximate prose-reading time: 300 Chinese characters/minute plus
   # 160 non-Chinese words/minute, excluding math; optional details counted separately.
-  main_minutes: 28
+  main_minutes: 29
   optional_minutes: 7
   navigation_label: 文章导航
   sections_label: 文章章节
@@ -633,20 +633,28 @@ $$
 ## 三类记忆
 {: #three-kinds-of-memory}
 
-如果每次扰动都会消退，我们最终能否忽略遥远的过去？上面的记忆曲线只追踪一次噪声注入，但 SGD 每一步都会加入噪声。这些响应会累积起来。
+上一节中，一次噪声注入留下的影响按 \\(T^{-3/4}\\) 消退。但训练并不会在这次注入后停止产生噪声。每次留下的影响都在下降，它们不断叠加后的总量，又会怎样变化？
 
-以 intrinsic time 计，用 \\(k(v)\\) 表示经过延迟 \\(v\\) 后的归一化 memory response：对于作为参照的恒定 schedule，\\(k(T)=(B/\eta^2)K_W(T)\\)。噪声注入强度单独给出。当各次注入具有相同权重时，累积响应可能有两种表现：
+以 intrinsic time 计，用 \\(k(v)\\) 表示经过延迟 \\(v\\) 后的归一化 memory response：对于作为参照的恒定 schedule，\\(k(T)=(B/\eta^2)K_W(T)\\)。噪声注入强度单独给出。为了只看响应本身，先考虑每单位 intrinsic time 都注入相同强度噪声的参考情形。若 \\(k(v)\asymp(1+v)^{-q_{\mathcal K}}\\)，到 \\(T\\) 时刻各次注入留下的影响相加，量级为
 
-- 响应消退得足够快，使其总量趋于一个有限值。这是 **integrable memory（IM）**，对应 \\(q_{\mathcal K}>1\\)。
-- 每次响应都会消退，但速度太慢，无法使总量稳定下来。这是 **long memory（LM）**，对应 \\(0<q_{\mathcal K}<1\\)。累积记忆随时间跨度持续增长。
+$$
+\int_0^T k(v)\,\mathrm dv
+\asymp
+\begin{cases}
+T^{1-q_{\mathcal K}}, & 0<q_{\mathcal K}<1 \quad(\mathrm{LM}),\\
+\log T, & q_{\mathcal K}=1,\\
+1, & q_{\mathcal K}>1 \quad(\mathrm{IM}).
+\end{cases}
+$$
 
-在边界 \\(q_{\mathcal K}=1\\) 处，累积记忆按对数增长。即使没有任何一次扰动永久保留，总量也仍然可以持续增长。
+- **Long memory（LM）：**单次影响虽然在消退，但消退得不够快，持续注入会让累积响应继续增长。上一节的 \\(q_{\mathcal K}=3/4\\) 就属于这一类，等强度注入的累积响应按 \\(T^{1/4}\\) 增长。
+- **Integrable memory（IM）：**单次影响消退得足够快，即使持续注入，累积响应也可以趋于有限值。
 
-**Finite bulk（FB）**需要单独处理：其响应仍然依赖模型宽度，无法用一个与宽度无关的正衰减指数来描述。
+在边界 \\(q_{\mathcal K}=1\\) 处，累积响应按对数增长。这些增长规律描述的是大宽度下的幂律时间区间；对固定的有限模型，尾部最终会被截断。
 
-更细的区域划分比较了 forcing 项与 memory 项的衰减速度，以及 forcing 项尾部的时间积分是否有限。
+这是固定注入强度的比较，并不意味着 LM 中的实际 loss 必须增长。训练中的噪声强度还会随剩余误差和 schedule 改变。
 
-下面两张图将这些行为与学习问题联系起来。左图使用响应指数；右图使用一个具体的谱和目标：
+为了比较不同数据与目标对应的响应，接下来让目标系数也按幂律衰减：
 
 $$
 \lambda_j=j^{-2\alpha},
@@ -656,13 +664,17 @@ $$
 
 这里 \\(\lambda_j\\) 是按顺序排列的数据协方差特征值，\\(\theta_j^\star\\) 是对应的目标系数。\\(\alpha\\) 越大，谱越陡；\\(\beta\\) 越大，目标在慢方向上的权重越小。
 
-在目标能量有限的 LM/IM 区域内，指数为
+在目标能量有限的 LM/IM 区域内，沿用上一节的尾和计算，目标相关的 forcing 项与单次 memory response 对应的指数为
 
 $$
 q_{\mathcal F}=\frac{2\alpha+2\beta-1}{2\alpha},
 \qquad
 q_{\mathcal K}=2-\frac{1}{2\alpha}.
 $$
+
+当谱衰减得更慢，即 \\(0<\alpha<1/4\\) 时，单次 memory response 的权重 \\(\lambda_j^2\\) 在大量小特征值方向上累加后，仍然会随模型宽度增长。此时，宽度不只是决定幂律在什么时候结束，还直接影响 memory response 本身。这就是 **finite bulk（FB）**：它不能只用一个与宽度无关的正衰减指数来概括。
+
+下面两张相图分别使用响应指数和谱、目标参数来表示这些区域。
 
 <figure class="research-figure--phases" style="display:block;">
   <div style="display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:clamp(12px,2vw,24px);align-items:center;width:100%;max-width:680px;margin:0 auto 1rem;">
@@ -672,7 +684,11 @@ $$
   <figcaption><strong>两种坐标系下的记忆区域。</strong>左：响应指数。右：谱与目标参数，其中 FB 单独展示。红色带状区域标出 LLM 拟合结果，它们靠近 LM/IM 边界 \(q_{\mathcal K}=1\)。</figcaption>
 </figure>
 
-这些区域区分的是 forcing 项与 memory 项如何传播，并不代表八个固定的 loss 指数。训练 schedule 会改变历次噪声注入的强度。这些响应的累积又会怎样重塑观测到的曲线？
+先看左图的水平实线：它在 \\(q_{\mathcal K}=1\\) 处把 LM 与 IM 分开，对应上面积分的两种行为。右图把这一分界对应到谱的衰减速度 \\(\alpha=1/2\\)；FB 则单独占据 \\(\alpha<1/4\\) 的区域。
+
+更细的区域比较目标相关的 forcing 衰减项与 memory 的衰减速度，以及前者的时间积分是否有限。左图中的斜虚线对应 \\(q_{\mathcal F}=q_{\mathcal K}\\)，竖虚线对应 \\(q_{\mathcal F}=1\\)。这些区域区分的是响应如何传播，并不代表八个固定的 loss 指数。
+
+到这里，我们区分了噪声影响如何消退和累积。实际训练还会改变每次注入的强度，而这正是 learning rate 和 batch size schedule 可以控制的部分。
 
 ## 训练 schedule 如何改变响应
 {: #how-training-schedules-transform-the-response}
