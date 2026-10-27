@@ -531,7 +531,7 @@ $$
   <figcaption><strong>forcing 项快速衰减，memory 项尾部缓慢消退。</strong>左：forcing 项的消失速度快于任意负幂。中：单次噪声注入的 memory 项按 \(T^{-3/4}\) 衰减。右：对 20 次运行取平均的 SGD loss 最终沿着这一 memory 尾部衰减。</figcaption>
 </figure>
 
-loss 衰减缓慢，并不一定意味着信号学得慢。forcing 项与 memory 项使用相同的衰减速度，却赋予这些速度不同的权重。仅凭拟合出的 loss 指数，无法判断哪一部分控制着曲线。
+幂律指数告诉我们 loss 下降得多快，却不能单独说明剩余误差从哪里来。初始误差的缓慢消退和训练噪声的长期影响，都可能形成幂律尾部。解释一条学习曲线，需要区分这两部分，而不只是拟合它们相加后的指数。
 {: .research-takeaway #loss-slope-takeaway}
 
 随着训练继续，快方向逐渐消退，慢方向开始占主导。在时刻 \\(T\\)，剩余贡献主要来自满足 \\(\lambda\lesssim1/T\\) 的方向。因此，我们需要分别累加这些方向在 forcing 项和 memory 项中的权重。
