@@ -17,7 +17,7 @@ read_time: true
 reading_guide:
   # Approximate prose-reading time: 300 Chinese characters/minute plus
   # 160 non-Chinese words/minute, excluding math; optional details counted separately.
-  main_minutes: 24
+  main_minutes: 26
   optional_minutes: 7
   navigation_label: 文章导航
   sections_label: 文章章节
@@ -366,7 +366,23 @@ $$
 
 某些方向上误差消除的速度比另一些方向更快。对于特征固定、输出权重可训练的模型，我们可以显式算出这些速度，[Paquette 等人对计算最优缩放的分析](https://proceedings.neurips.cc/paper_files/paper/2024/hash/1dccfc3ee01871d05e33457c61037d59-Abstract-Conference.html)就采用了这一思路。
 
-考虑模型 \\(f_a(x)=a^\top\phi(x)\\)，其特征 \\(\phi\\) 固定，权重 \\(a\\) 可训练，并使用 squared loss。用 \\(\rho_{j,t}\\) 表示沿 Hessian 矩阵某个特征向量方向的参数误差，对应的特征值为 \\(\lambda_j\\)。当全梯度更新的步长较小时，
+考虑模型 \\(f_a(x)=a^\top\phi(x)\\)，其特征 \\(\phi\\) 固定，权重 \\(a\\) 可训练，并使用 squared loss。
+
+这种速度差异可以从 loss landscape 的形状看出来。在固定特征的 squared-loss 模型中，沿 Hessian 的不同特征向量方向看，loss 可以有不同的曲率。下图左侧展示了一个二次 loss 的示意：蓝色方向较陡，橙色方向较平缓。
+
+<figure id="fast-slow-landscape">
+  <a href="{{ '/images/power-laws-have-a-clock/fast-slow-landscape.png' | relative_url }}" aria-label="放大快方向与慢方向的 landscape 示意图">
+    <img src="{{ '/images/power-laws-have-a-clock/fast-slow-landscape.png' | relative_url }}" alt="左图为同一二次 loss landscape 的蓝色陡截面与橙色平缓截面；右图在相同坐标尺度下比较两个方向，从相同参数偏差出发、以相同 learning rate 进行四次全梯度更新。蓝色方向的误差缩小较多，橙色方向缩小较少。" width="2271" height="1091" loading="lazy" decoding="async" style="display:block;width:100%;height:auto;">
+  </a>
+</figure>
+
+右图将这两个方向的截面放在同一坐标系中，横轴表示参数偏差，纵轴表示该方向的 loss 贡献。两个空心圆对应相同大小的初始参数偏差。使用相同的 learning rate，经过四次全梯度更新后，蓝色方向上的误差已经大幅缩小，橙色方向上的误差却只减少了一小部分。实心点记录每次更新的位置，下方箭头表示这四次更新带来的参数移动。
+
+为什么会有这样的差别？记第 \\(j\\) 个方向上的参数误差为 \\(\rho_j\\)，对应的 Hessian 特征值为 \\(\lambda_j\\)。这一方向的 loss 贡献为 \\(\frac12\lambda_j\rho_j^2\\)，梯度分量则为 \\(\lambda_j\rho_j\\)。因此，对于同样的参数偏差，正特征值越大，landscape 越陡，产生的梯度也越大。在相同且足够小的 learning rate 下，每次更新便能消除更大比例的误差。
+
+我们将误差消退较快的方向简称为“快方向”，消退较慢的方向简称为“慢方向”。这里的快慢，指的是消除已有误差的速度。
+
+用 \\(\rho_{j,t}\\) 表示第 \\(t\\) 步在这一方向上的参数误差。反复进行全梯度更新，在小步长近似下，
 
 $$
 \rho_{j,t}\approx\rho_{j,0}e^{-\lambda_jT_t},
@@ -374,7 +390,7 @@ $$
 T_t=\sum_{s<t}\eta_s.
 $$
 
-这里的时钟 \\(T_t\\) 称为 **intrinsic time**。正特征值越大，学习就越快；特征值越小，误差就越持久，其学习时间与 \\(1/\lambda_j\\) 成正比。
+这里的时钟 \\(T_t\\) 称为 **intrinsic time**。将某一方向的误差缩小到原来的固定比例，所需的 intrinsic time 与 \\(1/\lambda_j\\) 成正比。
 
 loss 是各个方向上平方误差的加权和。如果某个方向上的初始误差几乎为零，即使这个方向学得很慢，它对 loss 的贡献也很小。学习速度和对 loss 的重要性，是两回事。
 

@@ -114,3 +114,12 @@
 - The forcing term retains its finite-batch second-moment correction. Memory here is the accumulated contribution, not the one-injection response kernel in the following triptych. Values below the plot limits are not replaced with artificial floors.
 - Image: 2560 × 1760; SHA-256 `5f961da4625899fced7669c4ad19212b737de3ac7781a41d37117ca43acba225`.
 - Source data SHA-256: `260f58c83b1a70095f8ef3740716f10ef499144acd74cdaf7bdd7889225c743d`. The review validation reports a maximum component-identity residual of 8.67e-19 and confirms that the source data were unchanged.
+
+# Fast and slow Hessian directions
+
+- File: `fast-slow-landscape.png`. Added to the Chinese blog on 2026-10-27. This is the reviewed text-free two-panel version, copied without resampling or pixel edits from `output/preview/fast-slow-landscape-minimal.png` in the enclosing research workspace.
+- Original analytical illustration, not empirical training data. Renderer: `output/preview/plot_fast_slow_landscape_minimal.py` in the enclosing workspace; generated with NumPy and Matplotlib.
+- Quadratic excess loss: `L(x,y) = (4*x^2 + 0.5*y^2)/2`. The blue and orange central sections have Hessian eigenvalues 4 and 0.5. The left panel preserves equal units in the two parameter directions; the right panel places both directional loss contributions on the same horizontal and vertical scales.
+- Each direction starts at parameter error 1 and undergoes four exact full-gradient updates with learning rate 0.1. The error multipliers are 0.6 and 0.95, leaving errors 0.1296 and 0.81450625 after four updates. Hollow circles mark initial positions, filled circles mark updates, and horizontal arrows show the total parameter displacement. These are parameter-error comparisons, not percentage reductions in loss.
+- The figure uses discrete updates, not the small-step exponential approximation introduced immediately afterward in the article. No minibatch noise is simulated.
+- Image: 2271 × 1091; SHA-256 `12e7387b27e3e3e1a99dda51eddcdf6498f672930fe1318a244de6c58486ad9a`.
