@@ -17,7 +17,7 @@ read_time: true
 reading_guide:
   # Approximate prose-reading time: 300 Chinese characters/minute plus
   # 160 non-Chinese words/minute, excluding math; optional details counted separately.
-  main_minutes: 29
+  main_minutes: 28
   optional_minutes: 7
   navigation_label: 文章导航
   sections_label: 文章章节
@@ -34,8 +34,6 @@ reading_guide:
       id: three-kinds-of-memory
     - title: 训练 schedule 如何改变 loss
       id: how-training-schedules-transform-the-response
-    - title: 从 schedule 规律到 schedule 设计
-      id: from-schedule-laws-to-schedule-design
     - title: 在 LLM 中检验理论
       id: from-theory-to-llm-pretraining
     - title: 为什么 memory exponent 接近 1
@@ -768,23 +766,6 @@ $$
 </figure>
 
 固定 \\(q_0\\)，沿水平方向向右移动，也就是增大 \\(\vartheta\\)。如果 \\(q_0<q_{\mathcal K}\\)，我们最终会从**改变**区域进入**保持**区域：此时额外 loss 的衰减速度至少与 clean-label SGD 的 excess loss 一样快。如果 \\(q_0>q_{\mathcal K}\\)，无论向右移动多远，这条水平线始终在 memory ceiling 之上。额外 loss 的衰减指数以 \\(q_{\mathcal K}\\) 为上限，因此更激进地抑制噪声，也无法恢复 clean-label SGD 的指数。
-
-## 从 schedule 规律到 schedule 设计
-{: #from-schedule-laws-to-schedule-design}
-
-即使指数存在上限，仍有一个实际选择需要做：在数据预算和终点 intrinsic time \\(T\\) 固定时，额外样本应该用在哪些时刻？如果某个时刻的噪声原本会一直影响到训练结束，那么在那里投入样本以抑制噪声，就更有价值。
-
-在 LM/IM 响应模型中，平衡噪声源的强度及其未来影响，可以得到最优比值
-
-$$
-r_T^\star(u)
-\propto
-\sqrt{k(T-u)\bigl[F(u)+\sigma^2\bigr]}.
-$$
-
-数据预算决定归一化常数。平方根平衡了当前产生的噪声与它的未来影响：有些早期扰动到训练结束时已经消退，另一些则仍然有影响。仅看当前 loss，无法捕捉这一区别。[Bordelon 与 Mori 的最优控制分析](https://arxiv.org/abs/2602.04774)为 learning rate 设计提供了一条互补的路径。
-
-Learning rate schedule 与 batch size schedule 可以实现同一条比值路径。进一步优化训练时长和模型宽度，就能得到依赖于不同区域的数据与计算 scaling law。这也连接了开篇提到的两个尺度：单次训练的学习曲线，决定了我们在不同模型之间进行选择时能够达到什么结果。
 
 ## 从理论走向 LLM 预训练
 {: #from-theory-to-llm-pretraining}
