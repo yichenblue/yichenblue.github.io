@@ -17,7 +17,7 @@ read_time: true
 reading_guide:
   # Approximate prose-reading time: 300 Chinese characters/minute plus
   # 160 non-Chinese words/minute, excluding math; optional details counted separately.
-  main_minutes: 28
+  main_minutes: 29
   optional_minutes: 7
   navigation_label: 文章导航
   sections_label: 文章章节
@@ -770,9 +770,7 @@ $$
 ## 从理论走向 LLM 预训练
 {: #from-theory-to-llm-pretraining}
 
-与前面的固定特征模型不同，LLM 的表示会持续变化。但要描述它的 loss，未必需要复现参数的每一次变化。
-
-这留下了一种更广泛的可能性：**forcing–memory 分解可能是 SGD 的一种粗粒度响应规律，而不只是对线性模型的描述。**不同的参数轨迹可能产生相似的 loss 响应。改变训练 schedule，就能检验这种响应是否可以迁移。
+前面的分析将 schedule 的作用分成了两部分：intrinsic time 记录学习过程推进了多少，\\(r(T)\\) 控制沿途的噪声注入。对于表示不断变化的 LLM，这两个量是否仍然有用？我们先比较同一条比值路径的不同实现，再检验改变这条路径后，能否预测新的 loss 曲线。
 
 ### 同一条比值路径的两种实现
 {: #two-implementations-of-the-same-ratio-path}
@@ -789,12 +787,14 @@ $$
   <figcaption><strong>步数不同，intrinsic time 下的曲线却近乎相同。</strong> 动画将横轴从 optimizer step 切换为 \(T=\sum_t\eta_t\)，画出 8-1-1 拟合以及固定所有参数后的 WSD 预测，再将曲线展开为三层。这里，\(q_{\mathcal K}\) 自由参与拟合；下一节会将它固定为 1。</figcaption>
 </figure>
 
-这正是我们观察到的现象。成对的曲线以 optimizer step 为横轴时相互分离，以 intrinsic time 为横轴时则近乎重合。当时钟和比值路径匹配时，改变 learning rate 或 batch size 会产生非常相近的 loss 响应。
+先看蓝色的两条 WSD 曲线：以 optimizer step 为横轴时，它们相互分离；换成 intrinsic time 后，它们便近乎重合。橙色的两条 8-1-1 曲线也出现了同样的变化。两种实现处理相同数据所需的更新次数不同，因此直接比较 step 会错开它们的训练进程。
+
+蓝色与橙色并没有合成同一条曲线，因为 WSD 与 8-1-1 采用了不同的 \\(r(T)\\) 路径。这个比较说明，在这些运行中，同一条路径可以通过改变 learning rate 或 batch size 来实现，并产生非常相近的 loss 响应。
 
 ### 拟合一种 schedule，预测另一种
 {: #fit-one-schedule-and-predict-another}
 
-上面的配对运行共享同一条比值路径。更严格的检验是改变这条路径：从 8-1-1 的突然降档中学到的响应，能否预测 WSD 的逐渐衰减？
+相同路径的不同实现可以对齐，接下来要解释的是不同路径之间的差异：从 8-1-1 的两次 learning-rate 降档中拟合出的响应，能否预测 WSD 逐渐衰减 learning rate 时的 loss？
 
 对于 LLM 的 validation loss，我们保留 forcing–memory 分解的结构，但通过拟合确定各分量函数，而不直接使用 random feature model 中的精确量。沿着 [Li 等人的 functional scaling law 方法](https://arxiv.org/abs/2509.19189)，我们采用以下七参数 surrogate：
 
@@ -807,13 +807,19 @@ $$
 \,\mathrm du.
 $$
 
-前两项构成一条拟合得到的 baseline，而不是单独测量得到的无噪声轨迹。积分项描述早先噪声按其留存程度加权后的影响；其中噪声源的幅度 \\(A_0,A_1\\) 是自由参数，并不由 \\(L_\infty\\) 和 \\(A_{\mathcal F}\\) 固定。各参数描述有效响应，而 \\(r(u)\\) 提供 schedule。
+这个公式沿用前文的结构，将 baseline 与历次噪声注入留下的影响相加：
 
-我们固定 \\(q_{\mathcal K}=1\\)，用固定 batch size 的 8-1-1 运行所测得的原始 validation loss 拟合其余六个参数。随后固定所有参数，仅将比值路径替换为 WSD 的路径。拟合过程中没有使用任何 WSD loss。
+- \\(L_\infty+A_{\mathcal F}(1+T)^{-q_{\mathcal F}}\\) 描述 baseline 如何下降并接近 floor。
+- \\(A_0+A_1(1+u)^{-q_{\mathcal F}}\\) 将噪声源分成不随时间下降的一部分，以及随训练逐渐减弱的一部分。除以 \\(r(u)\\)，就得到 schedule 调节后的注入强度。
+- \\(\bigl(1+c_{\mathcal K}(T-u)\bigr)^{-q_{\mathcal K}}\\) 描述时刻 \\(u\\) 的注入到 \\(T\\) 时还留下多少影响。其中 \\(c_{\mathcal K}\\) 设置消退的时间尺度，\\(q_{\mathcal K}\\) 控制长时间后的衰减速度。
 
-预测曲线跟随了 WSD 实测 validation loss 的变化，也捕捉到了它发生在不同时间的下降。这一变化来自输入 schedule 的改变，而不是为了拟合另一条运行曲线而调整了响应。
+这些分量由 loss 曲线拟合得到；baseline 并不是单独测出的无噪声轨迹，噪声源幅度 \\(A_0,A_1\\) 也不由 \\(L_\infty,A_{\mathcal F}\\) 固定。我们沿用的是“注入强度乘以留存程度”的结构，而不是把 random feature model 的各个量直接搬到 LLM 中。
 
-8-1-1 拟合的 RMSE 为 \\(1.31\times10^{-3}\\) nats/token，固定所有参数后的 WSD 预测的 RMSE 为 \\(1.58\times10^{-3}\\)。
+这里取 \\(q_{\mathcal K}=1\\) 作为简化，因为后文展示的自由拟合在不同数据集和模型大小下，都给出了接近 1 的 memory exponent。我们用固定 batch size 的 8-1-1 运行所测得的 validation loss 拟合其余六个参数，随后固定所有参数，仅将比值路径替换为 WSD 的路径。拟合过程中没有使用 WSD 分叉后的 loss。
+
+下面左图中，surrogate 拟合了 8-1-1 的两次阶梯式下降。换入 WSD 的比值路径后，中图的预测就变成了逐渐加快下降的曲线，并跟随了实测 loss。点线之前，两次运行共享同一段训练历史；真正检验跨 schedule 预测的是点线之后的 WSD 尾段。
+
+8-1-1 拟合的 RMSE 为 \\(1.31\times10^{-3}\\) nats/token。固定所有参数后，对 WSD 分叉后尾段的预测 RMSE 为 \\(1.58\times10^{-3}\\)。
 
 <figure>
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;align-items:end;">
@@ -824,12 +830,12 @@ $$
   <figcaption><strong>8-1-1 拟合（左），不重新拟合的 WSD 预测（中）。</strong> 这两幅图中的竖直点线标记共同的 checkpoint。右：固定不同的 \(q_{\mathcal K}\)，重复上述过程，其余参数仅用 8-1-1 拟合。每条误差曲线都除以自身在所测试指数中的最小值，因此其最佳值为 1。WSD 预测在指数接近 1 时最准确。</figcaption>
 </figure>
 
-与分别拟合两条曲线相比，这样的检验更能揭示模型的预测能力。
+同一套拟合参数能够描述两种不同的 schedule，支持了 forcing–memory 结构在 LLM loss 预测中的作用。
 
 一个学习曲线模型，应当通过预测训练发生变化后的结果来赢得我们的信任。
 {: .research-takeaway #prediction-takeaway}
 
-这里，同一个响应描述了两种不同的噪声注入历史。
+右图进一步检查这一预测对 memory exponent 的选择有多敏感。对每个给定的 \\(q_{\mathcal K}\\)，我们都重新用 8-1-1 拟合其余六个参数，再固定这些参数预测 WSD。归一化预测误差在 \\(q_{\mathcal K}\\) 接近 1 时最小。这里比较的是不同 exponent 的预测表现，并不是独立测出了真实的 memory exponent。
 
 <details markdown="1">
 <summary><strong>实验与 surrogate 细节</strong></summary>
@@ -838,7 +844,7 @@ $$
 
 **Surrogate 参数。**七个参数分别是 loss floor \\(L_\infty\\)、forcing 项幅度 \\(A_{\mathcal F}\\)、噪声源幅度 \\(A_0,A_1\\)、memory 项的时间尺度参数 \\(c_{\mathcal K}\\)，以及指数 \\(q_{\mathcal F},q_{\mathcal K}\\)。这一近似将有效响应分离为 \\(K(n,s)\approx J(T_s)k(T_n-T_s)\\)，其中 \\(J\\) 是噪声源幅度，\\(k\\) 是传播 kernel。
 
-当 \\(q_{\mathcal K}=1\\) 时，其余六个参数只用原始、未平滑的 8-1-1 测量值拟合；拟合中没有使用任何 WSD loss。指数扫描图对每个固定指数重复这一过程，并评估由此得到的 WSD 预测误差。
+当 \\(q_{\mathcal K}=1\\) 时，其余六个参数只用原始、未平滑的 8-1-1 测量值拟合；拟合中没有使用 WSD 分叉后的 loss。指数扫描图对每个固定指数重复这一过程，并评估由此得到的 WSD 预测误差。
 
 **Hybrid Muon。**一次简短的校准为这些运行选出了不同的时钟和比值：\\(\widetilde T=\sum_t\eta_t^2\\) 和 \\(\widetilde r=B/\eta^2\\)。这些经校准的量同样使其配对曲线靠拢。
 
@@ -847,9 +853,7 @@ $$
 ## 为什么 memory exponent 总是落在 1 附近？
 {: #why-does-the-memory-exponent-keep-landing-near-one}
 
-在刚才的检验中，我们将 memory exponent 固定为 1。如果让拟合来选择它，会发生什么？
-
-在另一些独立拟合中，我们让全部七个参数自由变化。跨越不同数据集和两种模型大小，得到的 memory exponent 都接近 1：
+下面汇总前面提到的自由拟合结果。在这些独立拟合中，我们只使用 8-1-1 曲线，让全部七个参数自由变化。跨越不同数据集和两种模型大小，得到的 memory exponent 都接近 1：
 
 | 数据集与设置 | \\(q_{\mathcal K}\\) | \\(q_{\mathcal F}\\) |
 |---|---:|---:|
