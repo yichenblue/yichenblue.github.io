@@ -17,7 +17,7 @@ read_time: true
 reading_guide:
   # Approximate prose-reading time: 300 Chinese characters/minute plus
   # 160 non-Chinese words/minute, excluding math; optional details counted separately.
-  main_minutes: 29
+  main_minutes: 28
   optional_minutes: 7
   navigation_label: 文章导航
   sections_label: 文章章节
@@ -650,9 +650,7 @@ $$
 - **Long memory（LM）：**单次影响虽然在消退，但消退得不够快，持续注入会让累积响应继续增长。上一节的 \\(q_{\mathcal K}=3/4\\) 就属于这一类，等强度注入的累积响应按 \\(T^{1/4}\\) 增长。
 - **Integrable memory（IM）：**单次影响消退得足够快，即使持续注入，累积响应也可以趋于有限值。
 
-在边界 \\(q_{\mathcal K}=1\\) 处，累积响应按对数增长。这些增长规律描述的是大宽度下的幂律时间区间；对固定的有限模型，尾部最终会被截断。
-
-这是固定注入强度的比较，并不意味着 LM 中的实际 loss 必须增长。训练中的噪声强度还会随剩余误差和 schedule 改变。
+在边界 \\(q_{\mathcal K}=1\\) 处，累积响应按对数增长。
 
 为了比较不同数据与目标对应的响应，接下来让目标系数也按幂律衰减：
 
@@ -686,7 +684,7 @@ $$
 
 先看左图的水平实线：它在 \\(q_{\mathcal K}=1\\) 处把 LM 与 IM 分开，对应上面积分的两种行为。右图把这一分界对应到谱的衰减速度 \\(\alpha=1/2\\)；FB 则单独占据 \\(\alpha<1/4\\) 的区域。
 
-更细的区域比较目标相关的 forcing 衰减项与 memory 的衰减速度，以及前者的时间积分是否有限。左图中的斜虚线对应 \\(q_{\mathcal F}=q_{\mathcal K}\\)，竖虚线对应 \\(q_{\mathcal F}=1\\)。这些区域区分的是响应如何传播，并不代表八个固定的 loss 指数。
+更细的区域比较目标相关的 forcing 衰减项与 memory 的衰减速度，以及前者的时间积分是否有限。左图中的斜虚线对应 \\(q_{\mathcal F}=q_{\mathcal K}\\)，竖虚线对应 \\(q_{\mathcal F}=1\\)。
 
 到这里，我们区分了噪声影响如何消退和累积。实际训练还会改变每次注入的强度，而这正是 learning rate 和 batch size schedule 可以控制的部分。
 
