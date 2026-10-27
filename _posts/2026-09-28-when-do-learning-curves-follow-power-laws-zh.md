@@ -17,7 +17,7 @@ read_time: true
 reading_guide:
   # Approximate prose-reading time: 300 Chinese characters/minute plus
   # 160 non-Chinese words/minute, excluding math; optional details counted separately.
-  main_minutes: 28
+  main_minutes: 29
   optional_minutes: 7
   navigation_label: 文章导航
   sections_label: 文章章节
@@ -691,14 +691,14 @@ $$
 ## 训练 schedule 如何改变响应
 {: #how-training-schedules-transform-the-response}
 
-Learning rate 衰减常常会让训练曲线发生明显变化：原本缓慢下降的 loss 开始加速下落。在 [warmup–stable–decay（WSD）训练](https://arxiv.org/abs/2404.06395)中，learning rate 在 warmup 后保持不变，直到最后的衰减阶段。观察下面 MiniCPM 实验中的灰绿色曲线：衰减一开始，原先平缓的下降就变成了陡降。同样的现象出现在多个不同的训练阶段。
+改变噪声注入的强度，可以直接改变 loss 曲线的形状。一个熟悉的例子是 learning-rate decay：learning rate 开始下降后，loss 反而可能下降得更快。在 [warmup–stable–decay（WSD）训练](https://arxiv.org/abs/2404.06395)中，learning rate 在 warmup 后保持不变，直到最后的衰减阶段。观察下面 MiniCPM 实验中的灰绿色曲线：衰减一开始，原先平缓的下降就变成了陡降。同样的现象出现在多个不同的训练阶段。
 
 <figure style="display:block;max-width:680px;margin:2em auto;">
   <img src="{{ '/images/power-laws-have-a-clock/hu-2024-minicpm-wsd-loss.svg' | relative_url }}" alt="0.036B 模型的 C4 loss 随训练 token 数的变化：灰绿色 WSD 曲线在多个训练阶段的衰减期间陡降；橙色曲线采用 cosine decay。" style="display:block;width:100%;height:auto;margin:0 auto 1rem;">
   <figcaption><strong>训练不同阶段出现的 loss 陡降。</strong> 灰绿色曲线采用 WSD，衰减的开始时间和持续时长各不相同；橙色曲线采用 cosine decay。Token 数以模型参数量 \(N\) 的倍数表示。图片原样转载自 <a href="https://arxiv.org/html/2404.06395v3#S4.F6.fig1">Hu et al. (2024), MiniCPM, Figure 5</a>，遵循 <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a> 许可。</figcaption>
 </figure>
 
-这些向下的拐点看起来像是降低 learning rate 让模型学得更快了。但 loss 下降更快，未必意味着模型更快地学到了目标：减少随机更新造成的误差同样会降低 loss。究竟是哪一种效应解释了这次下降？如果退火确实有帮助，为什么不能用更激进的 schedule 让 loss 不断加速下降？
+为什么减小更新步长，loss 反而下降得更快？这些向下的拐点看起来像是模型学得更快了，但减少随机更新造成的误差同样会降低 loss。要解释这次下降，就需要区分这两种效应。如果退火确实有帮助，为什么不能用更激进的 schedule 让 loss 不断加速下降？
 
 要区分这两种效应，我们从普通 SGD 出发，回到 intrinsic time。降低 learning rate 既会缩短全梯度更新的步长，也会减小更新噪声；增大 batch size 则能在不缩短这一步长的情况下减小噪声。对应的时钟以及 batch size 与 learning rate 的比值为
 
@@ -708,11 +708,19 @@ T_t=\sum_{s<t}\eta_s,
 r_t=\frac{B_t}{\eta_t}.
 $$
 
-一次更新让时钟前进 \\(\eta_t\\)，并注入尺度为 \\(\eta_t^2/B_t\\) 的方差。因此，\\(1/r_t\\) 是每单位 intrinsic time 的噪声尺度。用 \\(r(T)\\) 表示沿这一时钟变化的比值。
+一次更新让时钟前进 \\(\eta_t\\)，并注入尺度为 \\(\eta_t^2/B_t\\) 的方差。除以这次推进的时间，就得到每单位 intrinsic time 的噪声尺度：
+
+$$
+\frac{\eta_t^2/B_t}{\eta_t}
+=\frac{\eta_t}{B_t}
+=\frac{1}{r_t}.
+$$
+
+降低 learning rate，一方面让每次更新推进的 intrinsic time 更少，另一方面也减少噪声。\\(T_t\\) 记录前文的确定性学习过程推进了多少，\\(1/r_t\\) 则描述每单位推进伴随的噪声尺度。用 \\(r(T)\\) 表示沿这一时钟变化的比值，就能把这两种效应分开。
 
 这将[增大 batch size 与衰减 learning rate](https://arxiv.org/abs/1711.00489)联系了起来：两者都会降低每单位 intrinsic time 的噪声。由于先前的噪声仍可能影响 loss，我们必须匹配整个比值路径，而不仅是它的终值。
 
-回到幂律 random feature model，LM 和 IM 的 scaling law 可以写成连续形式
+上一节将单次响应累加起来。现在，各个时刻产生的噪声不再具有相同强度：我们仍然累加它们留到终点的影响，只是每次注入都要乘上当时的强度。回到幂律 random feature model，在 LM/IM 的稳定 schedule 下，计入噪声反馈后，可用下面的量级关系描述预测风险：
 
 $$
 R(T)\asymp
@@ -722,15 +730,19 @@ F(T)+
 \,k(T-u)\,\mathrm du.
 $$
 
-这里，\\(R\\) 是预测风险，\\(F\\) 是 random feature model 的 forcing 项，其中包含有限宽度带来的 loss floor。精确递推式中反馈的是 \\(R_s+\sigma^2\\)。在 LM/IM 的 schedule 与稳定性假设下，计入反复反馈后，可得到上式中使用 \\(F(u)+\sigma^2\\) 的比较关系，允许相差乘法常数。这并不等于令 \\(R=F\\)。
+这里，\\(R\\) 是预测风险，\\(F\\) 是 random feature model 的 forcing 项，其中包含有限宽度带来的 loss floor；\\(\asymp\\) 允许相差乘法常数。
 
-即使没有 label noise，剩余的预测误差也会产生 minibatch noise；label noise 会在此基础上继续增加噪声。比值 \\(r(u)\\) 控制每单位 intrinsic time 的噪声注入强度，现在它被写在归一化 kernel \\(k(T-u)\\) 之外；这个 kernel 描述每次注入的噪声有多少会留存到 \\(T\\) 时刻。
+对于过去的某个时刻 \\(u\\)，\\(F(u)+\sigma^2\\) 在这一量级关系中表示剩余预测误差和 label noise 提供的噪声来源。除以 \\(r(u)\\)，是让 schedule 调整当时每单位 intrinsic time 的注入强度；再乘以 \\(k(T-u)\\)，就得到它对终点 \\(T\\) 的贡献。即使没有 label noise，剩余预测误差仍会产生 minibatch noise，因此积分项不会随 \\(\sigma^2=0\\) 一起消失。
 
 来看一个具体例子：在有限宽度带来的 loss floor 尚未产生显著影响时，取一个满足 \\(F(T)\asymp T^{-1/2}\\) 和 \\(k(T)\asymp T^{-3/2}\\) 的 IM 区域。选择 \\(r(T)\propto(1+T)^\vartheta\\)，并使其整体尺度足够大，以保证反馈稳定。
 
 在积分中令 \\(\sigma^2=0\\)，仍会留下由剩余预测误差产生的 minibatch noise。对下面三种 schedule，这部分贡献比 forcing 项衰减得更快，因此 clean-label SGD 的 loss 具有 \\(T^{-1/2}\\) 的量级。其衰减指数因而为 \\(q_0=1/2\\)：在这里，它等于 \\(q_{\mathcal F}\\)，但一般情况下并非如此。
 
-现在，为每次运行加入相同的 label noise 方差 \\(\sigma^2>0\\)。在 IM 中，与相同 schedule 下的 clean-label SGD 相比，额外 loss 的量级为 \\(T^{-\min\lbrace\vartheta,3/2\rbrace}\\)。衰减较慢的那一项决定总 loss。忽略常数因子，三种 schedule 分别给出：
+现在，为每次运行加入相同的 label noise 方差 \\(\sigma^2>0\\)。与相同 schedule 下的 clean-label SGD 相比，这些额外噪声的影响受到两种速度的限制。
+
+最近产生的噪声还没有充分消退。由于 IM 的累积响应有限，近期注入的贡献跟随当前的注入强度，按 \\(1/r(T)\sim T^{-\vartheta}\\) 减弱。另一方面，即使后来的噪声被压得很小，早期已经产生的误差仍会留下 \\(k(T)\sim T^{-3/2}\\) 的尾部。在这个 IM 例子中，额外 loss 的下降指数由这两种限制中较慢的一种决定，因此其量级为 \\(T^{-\min\lbrace\vartheta,3/2\rbrace}\\)。
+
+再把额外 loss 与 clean loss 相加，衰减较慢的部分决定总 loss。忽略常数因子，三种 schedule 分别给出：
 
 | 比值 \\(r(T)\\) 的增长 | label noise 带来的额外 loss | 总 loss |
 |---|---|---|
@@ -738,7 +750,9 @@ $$
 | \\(T\\) | \\(T^{-1}\\) | \\(T^{-1/2}\\) |
 | \\(T^2\\) | \\(T^{-3/2}\\) | \\(T^{-1/2}\\) |
 
-第一行中，label noise 改变了观测到的指数；第二行中，它的影响消退得足够快，因此保留了 clean-label SGD 的指数。最后一行达到了 **memory ceiling**：继续增大 \\(\vartheta\\)，也无法让额外 loss 比早先噪声注入留下的 \\(T^{-3/2}\\) 尾部衰减得更快。此时，总 loss 已经受 forcing 项限制，维持在 \\(T^{-1/2}\\) 的量级。
+第一行中，label noise 带来的额外 loss 下降得更慢，将总 loss 的指数变为 \\(1/4\\)。第二行中，额外 loss 已经下降得比 clean loss 更快，因此总 loss 的指数恢复到 \\(1/2\\)。
+
+第三行展示的是额外噪声自身的 **memory ceiling**：继续增大 \\(\vartheta\\)，也无法让这部分 loss 比早先噪声注入留下的 \\(T^{-3/2}\\) 尾部衰减得更快。这里有两个不同的上限：额外噪声的下降指数最多达到 \\(3/2\\)，而总 loss 从第二行起就已受 clean exponent \\(1/2\\) 限制，不会继续提高到 \\(3/2\\)。
 
 当 memory 项和比值增长都服从幂律时，将额外 loss 与 clean-label SGD 的 loss 比较，会得到三种结果：
 
