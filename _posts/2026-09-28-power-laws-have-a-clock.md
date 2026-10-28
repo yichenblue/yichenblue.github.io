@@ -22,7 +22,7 @@ reading_guide:
   main_minutes: 27
   optional_minutes: 8
   sections:
-    - title: Why SGD has memory
+    - title: SGD has memory
       id: why-sgd-has-memory
     - title: Different learning speeds
       id: different-directions-learn-at-different-speeds
@@ -160,7 +160,7 @@ Compare the 144M model across the two panels: cosine decay raises its fitted lat
 
 These examples connect several questions: when loss follows a power law, why power laws arise ([Liu and Gore (2026)](https://arxiv.org/abs/2606.25008)), and how data and task structure interact with the training schedule to determine the exponent ([Maloney et al. (2022)](https://arxiv.org/abs/2210.16859)). To answer them, we start with the updates of stochastic gradient descent (SGD).
 
-## Why SGD has memory
+## SGD has memory
 {: #why-sgd-has-memory}
 
 SGD estimates gradients with minibatches. Compared with full-gradient updates, sampling error randomly perturbs the parameters. Later updates continue from those changed parameters, so a perturbation can affect loss for many steps.
