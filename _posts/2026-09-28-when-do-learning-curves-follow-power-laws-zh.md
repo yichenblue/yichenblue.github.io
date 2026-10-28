@@ -17,7 +17,7 @@ read_time: true
 reading_guide:
   # Approximate prose-reading time: 300 Chinese characters/minute plus
   # 160 non-Chinese words/minute, excluding math; optional details counted separately.
-  main_minutes: 26
+  main_minutes: 24
   optional_minutes: 7
   navigation_label: 文章导航
   sections_label: 文章章节
@@ -91,9 +91,9 @@ $$
 L(N,D)\approx L_\infty+\frac{A_N}{N^\alpha}+\frac{A_D}{D^\beta}.
 $$
 
-其中，\\(L_\infty\\) 是拟合得到的 loss floor；另外两项分别描述模型规模和训练 token 数有限所带来的额外 loss，\\(A_N,A_D\\) 是拟合幅度，\\(\alpha,\beta\\) 是拟合指数。这些规律使幂律成为规划大规模训练的有用工具。
+其中，\\(L_\infty\\) 是拟合得到的 loss floor；另外两项分别描述模型规模和训练 token 数有限所带来的额外 loss，\\(A_N,A_D\\) 是拟合幅度，\\(\alpha,\beta\\) 是拟合指数。
 
-把拟合曲线延伸到已有观测范围之外很容易，难的是判断什么时候可以相信它。幂律趋势未必会一直持续；模型和数据会改变幂律规律，即使模型和数据不变，调整 learning rate 或 batch size，也可能改变下降指数。看似属于学习任务本身的曲线，其实也取决于训练方式。要判断这样的外推何时可信，就需要理解这种依赖从何而来。
+把拟合曲线延伸到已有观测范围之外很容易，难的是判断什么时候可以相信它。模型、数据和训练方案都可能改变这些规律。
 
 在 [Qiu 等人的合成回归实验](https://www.opt-ml.org/papers/2024/paper78.pdf#page=6)中，MLP 学习一个频率分布呈指数衰减的目标时，得到的 compute–loss frontier 无法用幂律很好地描述。训练方案同样重要。在 [Porian 等人的语言模型实验](https://arxiv.org/html/2406.19146v4#A9)中，幂律在调优后的训练方案下能够较好地外推，但在其他方案下，外推效果明显变差。
 
@@ -357,7 +357,7 @@ $$
 R_t=F_t+\sum_{s<t}K_{t,s}\bigl(R_s+\sigma^2\bigr).
 $$
 
-在这个模型中，前面的 forcing–memory 结构可以写成精确递推。\\(F_t\\) 描述初始误差的传播，历史求和项描述训练噪声的累积影响。第 \\(s\\) 步的剩余预测误差 \\(R_s\\) 和 label noise 方差 \\(\sigma^2\\) 共同提供噪声来源，而 \\(K_{t,s}\\) 描述这些噪声对第 \\(t\\) 步 loss 的影响。
+\\(F_t\\) 描述初始误差的传播，历史求和项描述训练噪声的累积影响。第 \\(s\\) 步的剩余预测误差 \\(R_s\\) 和 label noise 方差 \\(\sigma^2\\) 共同提供噪声来源，而 \\(K_{t,s}\\) 描述这些噪声对第 \\(t\\) 步 loss 的影响。
 
 **bias–variance 提供了对同一动力学的另一种分组方式。**考虑模型能够表示无噪声目标的情形，并假设 label noise 独立于输入且均值为零。沿用 [Zou、Wu 等人](https://arxiv.org/html/2103.12692v3#S4.SS2)按误差来源作出的分解，用 \\(B_t\\) 表示 clean-label SGD 所产生的误差，用 \\(V_t\\) 表示从零初始误差出发、由 label noise 驱动的误差。仅在这段比较中，\\(B_t\\) 表示 bias，而非 batch size。在每一步，
 
@@ -410,11 +410,9 @@ $$
 ## 不同方向的学习速度不同
 {: #different-directions-learn-at-different-speeds}
 
-某些方向上误差消除的速度比另一些方向更快。对于特征固定、输出权重可训练的模型，我们可以显式算出这些速度，[Paquette 等人对计算最优缩放的分析](https://proceedings.neurips.cc/paper_files/paper/2024/hash/1dccfc3ee01871d05e33457c61037d59-Abstract-Conference.html)就采用了这一思路。
+沿用前面的模型 \\(f_a(x)=a^\top\phi(x)\\)，其中 \\(\phi\\) 为固定特征，\\(a\\) 为可训练权重。我们可以显式计算各方向上的误差消退速度，[Paquette 等人对计算最优缩放的分析](https://proceedings.neurips.cc/paper_files/paper/2024/hash/1dccfc3ee01871d05e33457c61037d59-Abstract-Conference.html)就采用了这一思路。
 
-考虑模型 \\(f_a(x)=a^\top\phi(x)\\)，其特征 \\(\phi\\) 固定，权重 \\(a\\) 可训练，并使用 squared loss。
-
-这种速度差异可以从 loss landscape 的形状看出来。在固定特征的 squared-loss 模型中，沿 Hessian 的不同特征向量方向看，loss 可以有不同的曲率。下图左侧展示了一个二次 loss 的示意：蓝色方向较陡，橙色方向较平缓。
+这种速度差异可以从 loss landscape 的形状看出来：沿 Hessian 的不同特征向量方向看，loss 可以有不同的曲率。下图左侧展示了一个二次 loss 的示意：蓝色方向较陡，橙色方向较平缓。
 
 <figure id="fast-slow-landscape">
   <a href="{{ '/images/power-laws-have-a-clock/fast-slow-landscape.png' | relative_url }}" aria-label="放大快方向与慢方向的 landscape 示意图">
@@ -574,17 +572,15 @@ $$
   <figcaption><strong>forcing 项快速衰减，memory 项尾部缓慢消退。</strong>左：forcing 项的消失速度快于任意负幂。中：单次噪声注入的 memory 项按 \(T^{-3/4}\) 衰减。右：对 20 次运行取平均的 SGD loss 最终沿着这一 memory 尾部衰减。</figcaption>
 </figure>
 
-左图中的 forcing 快于任何幂律衰减；中图中的单次 memory response 则按 \\(T^{-3/4}\\) 衰减，对应 \\(q_{\mathcal K}=3/4\\)。右图展示了两者如何影响实际 SGD loss：前期下降主要跟随 forcing，后期则进入由采样噪声的历史影响控制的幂律区间。**同一组特征值，并不意味着 forcing 和 memory 必须具有相同的下降规律。**
-
-上述充要关系分别适用于 forcing 和单次 memory response，并不直接给出总 loss 的指数。要得到整条 SGD loss 曲线，还需要把历次噪声注入的影响累积起来。
+右图展示了两者如何影响实际 SGD loss：前期下降主要跟随 forcing，后期则进入由采样噪声的历史影响控制的幂律区间。**同一组特征值，并不意味着 forcing 和 memory 必须具有相同的下降规律。**
 
 幂律指数告诉我们 loss 下降得多快，却不能单独说明剩余误差从哪里来。初始误差的缓慢消退和训练噪声的长期影响，都可能形成幂律尾部。解释一条学习曲线，需要区分这两部分，而不只是拟合它们相加后的指数。
 {: .research-takeaway #loss-slope-takeaway}
 
+上述充要关系分别适用于 forcing 和单次 memory response，并不直接给出总 loss 的指数。要得到整条 SGD loss 曲线，还需要把历次噪声注入的影响累积起来。
+
 ## 三类记忆
 {: #three-kinds-of-memory}
-
-上一节中，一次噪声注入留下的影响按 \\(T^{-3/4}\\) 消退。但训练并不会在这次注入后停止产生噪声。每次留下的影响都在下降，它们不断叠加后的总量，又会怎样变化？
 
 以 intrinsic time 计，用 \\(k(v)\\) 表示经过延迟 \\(v\\) 后的归一化 memory response：对于作为参照的恒定 schedule，\\(k(T)=(B/\eta^2)K_W(T)\\)。噪声注入强度单独给出。为了只看响应本身，先考虑每单位 intrinsic time 都注入相同强度噪声的参考情形。若 \\(k(v)\asymp(1+v)^{-q_{\mathcal K}}\\)，到 \\(T\\) 时刻各次注入留下的影响相加，量级为
 
@@ -649,7 +645,7 @@ $$
   <figcaption><strong>训练不同阶段出现的 loss 陡降。</strong> 灰绿色曲线采用 WSD，衰减的开始时间和持续时长各不相同；橙色曲线采用 cosine decay。Token 数以模型参数量 \(N\) 的倍数表示。图片原样转载自 <a href="https://arxiv.org/html/2404.06395v3#S4.F6.fig1">Hu et al. (2024), MiniCPM, Figure 5</a>，遵循 <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a> 许可。</figcaption>
 </figure>
 
-为什么减小更新步长，loss 反而下降得更快？这些向下的拐点看起来像是模型学得更快了，但减少随机更新造成的误差同样会降低 loss。要解释这次下降，就需要区分这两种效应。如果退火确实有帮助，为什么不能用更激进的 schedule 让 loss 不断加速下降？
+为什么减小更新步长，loss 反而下降得更快？这些向下的拐点看起来像是模型学得更快了，但减少随机更新造成的误差同样会降低 loss。如果退火确实有帮助，为什么不能用更激进的 schedule 让 loss 不断加速下降？
 
 要区分这两种效应，我们从普通 SGD 出发，回到 intrinsic time。降低 learning rate 既会缩短全梯度更新的步长，也会减小更新噪声；增大 batch size 则能在不缩短这一步长的情况下减小噪声。对应的时钟以及 batch size 与 learning rate 的比值为
 
@@ -667,7 +663,7 @@ $$
 =\frac{1}{r_t}.
 $$
 
-降低 learning rate，一方面让每次更新推进的 intrinsic time 更少，另一方面也减少噪声。\\(T_t\\) 记录前文的确定性学习过程推进了多少，\\(1/r_t\\) 则描述每单位推进伴随的噪声尺度。用 \\(r(T)\\) 表示沿这一时钟变化的比值，就能把这两种效应分开。
+\\(T_t\\) 记录前文的确定性学习过程推进了多少，\\(1/r_t\\) 则描述每单位推进伴随的噪声尺度。用 \\(r(T)\\) 表示沿这一时钟变化的比值，就能把这两种效应分开。
 
 这将[增大 batch size 与衰减 learning rate](https://arxiv.org/abs/1711.00489)联系了起来：两者都会降低每单位 intrinsic time 的噪声。由于先前的噪声仍可能影响 loss，我们必须匹配整个比值路径，而不仅是它的终值。
 
@@ -750,7 +746,7 @@ $$
 - \\(A_0+A_1(1+u)^{-q_{\mathcal F}}\\) 将噪声源分成不随时间下降的一部分，以及随训练逐渐减弱的一部分。除以 \\(r(u)\\)，就得到 schedule 调节后的注入强度。
 - \\(\bigl(1+c_{\mathcal K}(T-u)\bigr)^{-q_{\mathcal K}}\\) 描述时刻 \\(u\\) 的注入到 \\(T\\) 时还留下多少影响。其中 \\(c_{\mathcal K}\\) 设置消退的时间尺度，\\(q_{\mathcal K}\\) 控制长时间后的衰减速度。
 
-这些分量由 loss 曲线拟合得到；baseline 并不是单独测出的无噪声轨迹，噪声源幅度 \\(A_0,A_1\\) 也不由 \\(L_\infty,A_{\mathcal F}\\) 固定。我们沿用的是“注入强度乘以留存程度”的结构，而不是把 random feature model 的各个量直接搬到 LLM 中。
+这些分量由 loss 曲线拟合得到；baseline 并不是单独测出的无噪声轨迹，噪声源幅度 \\(A_0,A_1\\) 也不由 \\(L_\infty,A_{\mathcal F}\\) 固定。
 
 这里取 \\(q_{\mathcal K}=1\\) 作为简化，因为后文展示的自由拟合在不同数据集和模型大小下，都给出了接近 1 的 memory exponent。我们用固定 batch size 的 8-1-1 运行所测得的 validation loss 拟合其余六个参数，随后固定所有参数，仅将比值路径替换为 WSD 的路径。拟合过程中没有使用 WSD 分叉后的 loss。
 
@@ -767,12 +763,10 @@ $$
   <figcaption><strong>8-1-1 拟合（左），不重新拟合的 WSD 预测（中）。</strong> 这两幅图中的竖直点线标记共同的 checkpoint。右：固定不同的 \(q_{\mathcal K}\)，重复上述过程，其余参数仅用 8-1-1 拟合。每条误差曲线都除以自身在所测试指数中的最小值，因此其最佳值为 1。WSD 预测在指数接近 1 时最准确。</figcaption>
 </figure>
 
-同一套拟合参数能够描述两种不同的 schedule，支持了 forcing–memory 结构在 LLM loss 预测中的作用。
+右图进一步检查这一预测对 memory exponent 的选择有多敏感。归一化预测误差在 \\(q_{\mathcal K}\\) 接近 1 时最小。这里比较的是不同 exponent 的预测表现，并不是独立测出了真实的 memory exponent。
 
 一个学习曲线模型，应当通过预测训练发生变化后的结果来赢得我们的信任。
 {: .research-takeaway #prediction-takeaway}
-
-右图进一步检查这一预测对 memory exponent 的选择有多敏感。对每个给定的 \\(q_{\mathcal K}\\)，我们都重新用 8-1-1 拟合其余六个参数，再固定这些参数预测 WSD。归一化预测误差在 \\(q_{\mathcal K}\\) 接近 1 时最小。这里比较的是不同 exponent 的预测表现，并不是独立测出了真实的 memory exponent。
 
 <details markdown="1">
 <summary><strong>实验与 surrogate 细节</strong></summary>
@@ -798,8 +792,6 @@ $$
 | FineWeb sample-10BT subset, 124M, 2.5B tokens | 0.952 | 0.405 |
 | peS2o V2 s2orc full text, 124M, 2.5B tokens | 0.995 | 0.365 |
 | OpenWebText, 300M, 6.5B tokens | 0.989 | 0.291 |
-
-三个数据集上的 124M 模型，以及更大、训练更久的 300M 模型，拟合出的 \\(q_{\mathcal K}\\) 都落在 0.952–1.017 之间。换了数据和训练设置，memory exponent 仍然集中在一个较窄的范围内。
 
 当 \\(q_{\mathcal K}=1\\) 时，surrogate 中的 kernel 在足够长的时间间隔下按 \\(1/(T-u)\\) 消退。这正好对应前文累积响应从有限值转向持续增长的边界；在边界上，等强度注入的累积响应按对数增长。因此，这些拟合得到的响应指数都接近理论中的 LM/IM 边界。
 
