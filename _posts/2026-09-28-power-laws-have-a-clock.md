@@ -62,7 +62,7 @@ We show a sufficient and necessary condition of scaling laws (partially), point 
       <img src="{{ '/images/power-laws-have-a-clock/llm-global-wsd-prediction.png' | relative_url }}" alt="300M nanoGPT validation loss under WSD, with a prediction using parameters frozen from the 8-1-1 fit; the inset enlarges the continuation after the shared checkpoint." width="1609" height="1072" decoding="async">
     </a>
   </div>
-  <figcaption><strong>Fit one schedule, predict another.</strong> Validation loss from our 300M nanoGPT experiment, using our joint-schedule surrogate and the fit-then-transfer protocol of <a href="https://arxiv.org/html/2509.19189v4#S6.SS2">Li et al.</a> Fit on 8-1-1 (left), then freeze the parameters and predict WSD's continuation without refitting (right). The runs share a training prefix and branch at the dotted line; the insets enlarge the late-training response. Intrinsic time is \(T=\sum_t\eta_t\), with learning rate \(\eta_t\). Select either panel to enlarge.</figcaption>
+  <figcaption><strong>Fit one schedule, predict another.</strong> Validation loss from our 300M nanoGPT experiment, using our joint-schedule surrogate and the fit-then-transfer protocol of <a href="https://arxiv.org/html/2509.19189v4#S6.SS2">Li et al. (2025)</a>. Fit on 8-1-1 (left), then freeze the parameters and predict WSD's continuation without refitting (right). The runs share a training prefix and branch at the dotted line; the insets enlarge the late-training response. Intrinsic time is \(T=\sum_t\eta_t\), with learning rate \(\eta_t\). Select either panel to enlarge.</figcaption>
 </figure>
 
 Scaling laws describe how language-model loss changes with model size, training data, and compute. In many experiments, these relationships are well approximated by power laws. They help us estimate the gains from scaling up and choose a model size and token budget within a fixed compute budget.
@@ -83,7 +83,7 @@ Scaling laws describe how language-model loss changes with model size, training 
   <figcaption><strong>Regular scaling across compute, data, and model size.</strong> <a href="https://arxiv.org/html/2001.08361v1#S1.F1">Kaplan et al. (2020), Figure 1</a>.</figcaption>
 </figure>
 
-At a fixed compute budget, a larger model leaves fewer tokens for training. [Chinchilla](https://arxiv.org/html/2203.15556v1#S3.SS3) captures this trade-off by fitting a **power-law scaling law** for the final loss of a model with \\(N\\) parameters trained on \\(D\\) tokens:
+At a fixed compute budget, a larger model leaves fewer tokens for training. Chinchilla ([Hoffmann et al. (2022)](https://arxiv.org/html/2203.15556v1#S3.SS3)) captures this trade-off by fitting a **power-law scaling law** for the final loss of a model with \\(N\\) parameters trained on \\(D\\) tokens:
 
 $$
 L(N,D)\approx L_\infty+\frac{A_N}{N^\alpha}+\frac{A_D}{D^\beta}.
@@ -93,7 +93,7 @@ Here \\(L_\infty\\) is the fitted loss floor. The two excess-loss terms decay as
 
 Extending a fitted curve beyond the observed range is easy; knowing when to trust it is harder. Models, data, and training recipes can all change these relationships.
 
-In [Qiu et al.'s synthetic regression experiment](https://www.opt-ml.org/papers/2024/paper78.pdf#page=6), MLPs learning a target with an exponential frequency distribution produce a compute–loss frontier that is not well described by a power law. The training recipe matters too. In [Porian et al.'s language-model experiments](https://arxiv.org/html/2406.19146v4#A9), a power law extrapolates well under a tuned recipe, but poorly under other recipes.
+In the synthetic regression experiment of [Qiu et al. (2024)](https://www.opt-ml.org/papers/2024/paper78.pdf#page=6), MLPs learning a target with an exponential frequency distribution produce a compute–loss frontier that is not well described by a power law. The training recipe matters too. In the language-model experiments of [Porian et al. (2024)](https://arxiv.org/html/2406.19146v4#A9), a power law extrapolates well under a tuned recipe, but poorly under other recipes.
 
 <figure id="scaling-frontier-triptych" class="research-frontier-triptych">
   <div class="research-frontier-triptych__scroll" role="region" aria-label="Three compute-frontier panels; scroll horizontally on narrow screens" tabindex="0">
@@ -119,7 +119,7 @@ In [Qiu et al.'s synthetic regression experiment](https://www.opt-ml.org/papers/
     </div>
   </div>
   <div class="research-frontier-triptych__hint">Scroll sideways to view all three panels; select a panel to enlarge.</div>
-  <figcaption><strong>Power-law fits across tasks and training recipes.</strong> (a) Synthetic MLP regression; dashed line: best power-law fit. Cropped from <a href="https://www.opt-ml.org/papers/2024/paper78.pdf#page=6">Qiu et al., OPT 2024, Figure 3(c)</a>. (b–c) Estimated optimal language-model loss versus compute; open markers: optimal-loss estimates; dashed lines: extrapolation. Cropped from <a href="https://arxiv.org/pdf/2406.19146v4#page=28">Porian et al. (2024), Figure 19</a> (<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>).</figcaption>
+  <figcaption><strong>Power-law fits across tasks and training recipes.</strong> (a) Synthetic MLP regression; dashed line: best power-law fit. Cropped from <a href="https://www.opt-ml.org/papers/2024/paper78.pdf#page=6">Qiu et al. (2024), Figure 3(c)</a>. (b–c) Estimated optimal language-model loss versus compute; open markers: optimal-loss estimates; dashed lines: extrapolation. Cropped from <a href="https://arxiv.org/pdf/2406.19146v4#page=28">Porian et al. (2024), Figure 19</a> (<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>).</figcaption>
 </figure>
 
 To understand when these frontiers follow power laws—and when they do not—we first need to understand the individual training curves that make them up: with model and data fixed, when does loss decay as a power law, and how does training change that law?
@@ -132,7 +132,7 @@ $$
 
 where \\(t\\) counts training steps, \\(a\\) is the fitted amplitude, and \\(p\\) is the phase's decay exponent. To see how training affects \\(p\\), compare runs with different learning-rate schedules.
 
-[Mircea et al.](https://arxiv.org/html/2506.05447v1#A3.SS3) compared separate runs with the same architecture, data, and other settings: one used warmup followed by a constant learning rate; the other used warmup followed by cosine decay.
+[Mircea et al. (2025)](https://arxiv.org/html/2506.05447v1#A3.SS3) compared separate runs with the same architecture, data, and other settings: one used warmup followed by a constant learning rate; the other used warmup followed by cosine decay.
 
 <figure id="learning-rate-scaling-exponents" style="display:block;max-width:620px;margin:1.4em auto;">
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;background:#fff;padding:8px;border-radius:4px;">
@@ -158,7 +158,7 @@ where \\(t\\) counts training steps, \\(a\\) is the fitted amplitude, and \\(p\\
 
 Compare the 144M model across the two panels: cosine decay raises its fitted late-training exponent from **0.023 to 0.036**. The fitted slope depends on the training schedule, not just the model and dataset.
 
-These examples connect several questions: when loss follows a power law, [why power laws arise](https://arxiv.org/abs/2606.25008), and how [data and task structure](https://arxiv.org/abs/2210.16859) interact with the training schedule to determine the exponent. To answer them, we start with the updates of stochastic gradient descent (SGD).
+These examples connect several questions: when loss follows a power law, why power laws arise ([Liu and Gore (2026)](https://arxiv.org/abs/2606.25008)), and how data and task structure interact with the training schedule to determine the exponent ([Maloney et al. (2022)](https://arxiv.org/abs/2210.16859)). To answer them, we start with the updates of stochastic gradient descent (SGD).
 
 ## Why SGD has memory
 {: #why-sgd-has-memory}
@@ -357,7 +357,7 @@ $$
 
 \\(F_t\\) describes how the initial error propagates, while the history sum describes the accumulated effects of training noise. The remaining prediction error \\(R_s\\) at step \\(s\\) and the label-noise variance \\(\sigma^2\\) both contribute to the noise, and \\(K_{t,s}\\) describes its effect on loss at step \\(t\\).
 
-**Bias–variance gives another grouping of the same dynamics.** Consider a target the model can represent, and assume label noise is independent of the input and has mean zero. Following the decomposition by error source in [Zou, Wu et al.](https://arxiv.org/html/2103.12692v3#S4.SS2), write \\(B_t\\) for the error from clean-label SGD and \\(V_t\\) for the error driven by label noise from zero initial error. Only in this comparison, \\(B_t\\) denotes bias rather than batch size. At every step,
+**Bias–variance gives another grouping of the same dynamics.** Consider a target the model can represent, and assume label noise is independent of the input and has mean zero. Following the decomposition by error source in [Zou et al. (2021)](https://arxiv.org/html/2103.12692v3#S4.SS2), write \\(B_t\\) for the error from clean-label SGD and \\(V_t\\) for the error driven by label noise from zero initial error. Only in this comparison, \\(B_t\\) denotes bias rather than batch size. At every step,
 
 $$
 \begin{aligned}
@@ -408,7 +408,7 @@ These decompositions identify the effects that contribute to loss, but do not ye
 ## Different directions learn at different speeds
 {: #different-directions-learn-at-different-speeds}
 
-Continue with the model \\(f_a(x)=a^\top\phi(x)\\), with fixed features \\(\phi\\) and trainable weights \\(a\\). We can explicitly calculate how quickly errors fade in each direction, as in [Paquette et al.'s analysis of compute-optimal scaling](https://proceedings.neurips.cc/paper_files/paper/2024/hash/1dccfc3ee01871d05e33457c61037d59-Abstract-Conference.html).
+Continue with the model \\(f_a(x)=a^\top\phi(x)\\), with fixed features \\(\phi\\) and trainable weights \\(a\\). We can explicitly calculate how quickly errors fade in each direction, as in the compute-optimal scaling analysis of [Paquette et al. (2024)](https://proceedings.neurips.cc/paper_files/paper/2024/hash/1dccfc3ee01871d05e33457c61037d59-Abstract-Conference.html).
 
 These differences in speed are visible in the loss landscape: its curvature can vary across Hessian eigenvector directions. The left panel below sketches a quadratic loss, with a steep blue direction and a flatter orange direction.
 
@@ -636,11 +636,11 @@ We have now distinguished how the effects of noise fade and accumulate. Actual t
 ## How training schedules transform the response
 {: #how-training-schedules-transform-the-response}
 
-Changing the strength of noise injection can directly change the shape of a loss curve. Learning-rate decay offers a familiar example: once the learning rate starts to fall, loss may fall faster. In [warmup–stable–decay (WSD) training](https://arxiv.org/abs/2404.06395), the learning rate stays constant after warmup until a final decay phase. Follow the gray-green curves in the MiniCPM experiment below: their gradual decline gives way to a sharp drop when decay begins. The same pattern appears at several different stages of training.
+Changing the strength of noise injection can directly change the shape of a loss curve. Learning-rate decay offers a familiar example: once the learning rate starts to fall, loss may fall faster. In warmup–stable–decay (WSD) training ([Hu et al. (2024)](https://arxiv.org/abs/2404.06395)), the learning rate stays constant after warmup until a final decay phase. Follow the gray-green curves in the MiniCPM experiment below: their gradual decline gives way to a sharp drop when decay begins. The same pattern appears at several different stages of training.
 
 <figure style="display:block;max-width:680px;margin:2em auto;">
   <img src="{{ '/images/power-laws-have-a-clock/hu-2024-minicpm-wsd-loss.svg' | relative_url }}" alt="Loss on C4 versus training tokens for a 0.036B model: gray-green WSD curves show sharp drops during decay at several training stages; the orange curve uses cosine decay." style="display:block;width:100%;height:auto;margin:0 auto 1rem;">
-  <figcaption><strong>A sharp loss drop at different stages of training.</strong> The gray-green curves use WSD with different decay timings and durations; orange shows cosine decay. Token counts are expressed as multiples of the model's parameter count, \(N\). Figure reproduced unchanged from <a href="https://arxiv.org/html/2404.06395v3#S4.F6.fig1">Hu et al. (2024), MiniCPM, Figure 5</a>, under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>.</figcaption>
+  <figcaption><strong>A sharp loss drop at different stages of training.</strong> The gray-green curves use WSD with different decay timings and durations; orange shows cosine decay. Token counts are expressed as multiples of the model's parameter count, \(N\). Figure reproduced unchanged from the MiniCPM paper, <a href="https://arxiv.org/html/2404.06395v3#S4.F6.fig1">Hu et al. (2024), Figure 5</a>, under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>.</figcaption>
 </figure>
 
 Why does taking smaller updates make loss fall faster? These downward turns look as though the model has begun to learn faster, but reducing the error caused by stochastic updates also lowers loss. If annealing helps, why can't a more aggressive schedule keep making loss fall faster?
@@ -661,9 +661,9 @@ $$
 =\frac{1}{r_t}.
 $$
 
-\\(T_t\\) records how far the deterministic learning process described earlier has advanced, while \\(1/r_t\\) describes the noise scale per unit of progress. Writing \\(r(T)\\) for the ratio along this clock lets us separate the two effects. This separation also appears in [Li et al.'s functional scaling law (FSL)](https://arxiv.org/html/2509.19189v4#S3): their kernel-regression theory uses intrinsic time to describe learning progress, the learning-rate-to-batch-size ratio to control noise injection, and a forgetting kernel to track its later effects on loss.
+\\(T_t\\) records how far the deterministic learning process described earlier has advanced, while \\(1/r_t\\) describes the noise scale per unit of progress. Writing \\(r(T)\\) for the ratio along this clock lets us separate the two effects. This separation also appears in the functional scaling law (FSL) of [Li et al. (2025)](https://arxiv.org/html/2509.19189v4#S3): their kernel-regression theory uses intrinsic time to describe learning progress, the learning-rate-to-batch-size ratio to control noise injection, and a forgetting kernel to track its later effects on loss.
 
-This connects [increasing batch size with decaying learning rate](https://arxiv.org/abs/1711.00489): both reduce noise per unit of intrinsic time. Since earlier noise can still affect loss, we must match the whole ratio path, not just its final value.
+This connects increasing batch size with decaying learning rate ([Smith et al. (2018)](https://arxiv.org/abs/1711.00489)): both reduce noise per unit of intrinsic time. Since earlier noise can still affect loss, we must match the whole ratio path, not just its final value.
 
 The previous section added up individual responses. Now the noise generated at different times varies in strength: we still add up its surviving effects at the endpoint, but weight each injection by its strength at the time. Returning to the power-law random-feature model, under stable LM/IM schedules and accounting for noise feedback, prediction risk obeys the scaling relation
 
@@ -727,7 +727,7 @@ Blue and orange do not collapse onto a single curve because WSD and 8-1-1 follow
 
 Different implementations of the same path can align. The next question concerns differences between paths: can a response fitted to the two learning-rate drops in 8-1-1 predict loss under WSD's gradual learning-rate decay?
 
-For LLM validation loss, we fit the component functions rather than use the random-feature model's exact quantities. Our starting point is [Li et al.'s practical seven-parameter FSL](https://arxiv.org/html/2509.19189v4#A2.SS2), which they fitted on 8-1-1 to predict unseen WSD and cosine curves. We follow that fit-then-transfer protocol and adapt the parameterization: their fixed-batch surrogate describes the response to learning-rate drops, whereas ours weights noise injections directly by the inverse batch-to-learning-rate ratio. This gives a forcing–memory surrogate that also accommodates changing batch size at fixed learning rate:
+For LLM validation loss, we fit the component functions rather than use the random-feature model's exact quantities. Our starting point is the practical seven-parameter FSL of [Li et al. (2025)](https://arxiv.org/html/2509.19189v4#A2.SS2), which they fitted on 8-1-1 to predict unseen WSD and cosine curves. We follow that fit-then-transfer protocol and adapt the parameterization: their fixed-batch surrogate describes the response to learning-rate drops, whereas ours weights noise injections directly by the inverse batch-to-learning-rate ratio. This gives a forcing–memory surrogate that also accommodates changing batch size at fixed learning rate:
 
 $$
 \widehat L(T)
@@ -798,12 +798,12 @@ One possible explanation is that different text corpora share statistical struct
 ## Further reading
 {: #further-reading}
 
-- **Empirical scaling laws:** Kaplan et al. (2020), [Scaling Laws for Neural Language Models](https://arxiv.org/abs/2001.08361). How language-model loss depends on model size, data, and compute.
-- **Spectral models:** Paquette et al. (2024), [4+3 Phases of Compute-Optimal Neural Scaling Laws](https://proceedings.neurips.cc/paper_files/paper/2024/hash/1dccfc3ee01871d05e33457c61037d59-Abstract-Conference.html). A solvable model connecting data and target structure to compute-optimal regimes.
-- **Learning rate and batch size:** Smith et al. (2018), [Don't Decay the Learning Rate, Increase the Batch Size](https://arxiv.org/abs/1711.00489). Experiments replacing learning-rate decay with batch-size growth.
-- **Predicting full trajectories:** Li et al. (2025), [Functional Scaling Laws in Kernel Regression: Loss Dynamics and Learning Rate Schedules](https://arxiv.org/abs/2509.19189). Intrinsic-time theory and surrogate prediction of LLM learning curves.
-- **Optimal schedules:** Bordelon and Mori (2026), [Theory of Optimal Learning Rate Schedules and Scaling Laws for a Random Feature Model](https://arxiv.org/abs/2602.04774). How optimal annealing depends on the spectrum and task.
+- **Empirical scaling laws:** [Kaplan et al. (2020)](https://arxiv.org/abs/2001.08361), Scaling Laws for Neural Language Models. How language-model loss depends on model size, data, and compute.
+- **Spectral models:** [Paquette et al. (2024)](https://proceedings.neurips.cc/paper_files/paper/2024/hash/1dccfc3ee01871d05e33457c61037d59-Abstract-Conference.html), 4+3 Phases of Compute-Optimal Neural Scaling Laws. A solvable model connecting data and target structure to compute-optimal regimes.
+- **Learning rate and batch size:** [Smith et al. (2018)](https://arxiv.org/abs/1711.00489), Don't Decay the Learning Rate, Increase the Batch Size. Experiments replacing learning-rate decay with batch-size growth.
+- **Predicting full trajectories:** [Li et al. (2025)](https://arxiv.org/abs/2509.19189), Functional Scaling Laws in Kernel Regression: Loss Dynamics and Learning Rate Schedules. Intrinsic-time theory and surrogate prediction of LLM learning curves.
+- **Optimal schedules:** [Bordelon and Mori (2026)](https://arxiv.org/abs/2602.04774), Theory of Optimal Learning Rate Schedules and Scaling Laws for a Random Feature Model. How optimal annealing depends on the spectrum and task.
 
 ---
 
-*This post is based on [From Spectra to Joint Schedules in LLM Pre-training: 3+3(+2) Scaling-Law Regimes](https://arxiv.org/abs/2609.40148), joint work by Yichen Wang, Fanghui Liu, and Yudong Chen.*
+*This post is based on From Spectra to Joint Schedules in LLM Pre-training: 3+3(+2) Scaling-Law Regimes ([Wang et al. (2026)](https://arxiv.org/abs/2609.40148)), joint work by Yichen Wang, Fanghui Liu, and Yudong Chen.*

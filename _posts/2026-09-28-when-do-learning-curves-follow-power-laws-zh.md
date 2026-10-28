@@ -68,7 +68,7 @@ header:
       <img src="{{ '/images/power-laws-have-a-clock/llm-global-wsd-prediction.png' | relative_url }}" alt="300M nanoGPT 在 WSD schedule 下的 validation loss，以及固定 8-1-1 拟合参数后得到的预测；插图放大了从共同 checkpoint 分叉后的轨迹。" width="1609" height="1072" decoding="async">
     </a>
   </div>
-  <figcaption><strong>拟合一种 schedule，预测另一种 schedule。</strong>图中是我们在 300M nanoGPT 实验中得到的 validation loss，使用本文的 joint-schedule surrogate，并沿用 <a href="https://arxiv.org/html/2509.19189v4#S6.SS2">Li 等人</a>先拟合、再跨 schedule 预测的检验流程。先拟合 8-1-1（左），再固定所有参数，不重新拟合，直接预测 WSD 后续的 loss（右）。两次训练共用前期轨迹，并在虚线处开始分叉；插图放大了训练后期的响应。intrinsic time 为 \(T=\sum_t\eta_t\)，其中 \(\eta_t\) 是 learning rate。点击任一面板可放大查看。</figcaption>
+  <figcaption><strong>拟合一种 schedule，预测另一种 schedule。</strong>图中是我们在 300M nanoGPT 实验中得到的 validation loss，使用本文的 joint-schedule surrogate，并沿用 <a href="https://arxiv.org/html/2509.19189v4#S6.SS2">Li et al. (2025)</a> 先拟合、再跨 schedule 预测的检验流程。先拟合 8-1-1（左），再固定所有参数，不重新拟合，直接预测 WSD 后续的 loss（右）。两次训练共用前期轨迹，并在虚线处开始分叉；插图放大了训练后期的响应。intrinsic time 为 \(T=\sum_t\eta_t\)，其中 \(\eta_t\) 是 learning rate。点击任一面板可放大查看。</figcaption>
 </figure>
 
 Scaling law 描述了语言模型的 loss 如何随模型规模、训练数据量和计算量变化。在许多实验中，这些关系可以用幂律近似描述。借助这些规律，我们可以估计扩大训练规模能带来多少收益，并在有限的计算预算下决定模型该做多大、该训练多少 token。
@@ -86,10 +86,10 @@ Scaling law 描述了语言模型的 loss 如何随模型规模、训练数据�
       <img src="{{ '/images/power-laws-have-a-clock/kaplan-2020-scaling-laws.svg' | relative_url }}" alt="Kaplan 等人的参数量缩放图：test loss 与非 embedding 参数量之间近似遵循幂律。" style="display:block;width:283.201761%;max-width:none;height:auto;margin:0;clip-path:inset(0 0 0 68.400243%);transform:translateX(-66.544864%);">
     </div>
   </div>
-  <figcaption><strong>计算量、数据量与模型规模上的 scaling law。</strong><a href="https://arxiv.org/html/2001.08361v1#S1.F1">Kaplan 等（2020），图 1</a>。</figcaption>
+  <figcaption><strong>计算量、数据量与模型规模上的 scaling law。</strong><a href="https://arxiv.org/html/2001.08361v1#S1.F1">Kaplan et al. (2020), Figure 1</a>。</figcaption>
 </figure>
 
-计算预算固定时，模型越大，能用于训练的 token 就越少。[Chinchilla](https://arxiv.org/html/2203.15556v1#S3.SS3) 用**幂律形式的 scaling law** 拟合这种权衡：一个具有 \\(N\\) 个参数、训练了 \\(D\\) 个 token 的模型，其最终 loss 近似为
+计算预算固定时，模型越大，能用于训练的 token 就越少。Chinchilla（[Hoffmann et al. (2022)](https://arxiv.org/html/2203.15556v1#S3.SS3)） 用**幂律形式的 scaling law** 拟合这种权衡：一个具有 \\(N\\) 个参数、训练了 \\(D\\) 个 token 的模型，其最终 loss 近似为
 
 $$
 L(N,D)\approx L_\infty+\frac{A_N}{N^\alpha}+\frac{A_D}{D^\beta}.
@@ -99,7 +99,7 @@ $$
 
 把拟合曲线延伸到已有观测范围之外很容易，难的是判断什么时候可以相信它。模型、数据和训练方案都可能改变这些规律。
 
-在 [Qiu 等人的合成回归实验](https://www.opt-ml.org/papers/2024/paper78.pdf#page=6)中，MLP 学习一个频率分布呈指数衰减的目标时，得到的 compute–loss frontier 无法用幂律很好地描述。训练方案同样重要。在 [Porian 等人的语言模型实验](https://arxiv.org/html/2406.19146v4#A9)中，幂律在调优后的训练方案下能够较好地外推，但在其他方案下，外推效果明显变差。
+在 [Qiu et al. (2024)](https://www.opt-ml.org/papers/2024/paper78.pdf#page=6) 的合成回归实验中，MLP 学习一个频率分布呈指数衰减的目标时，得到的 compute–loss frontier 无法用幂律很好地描述。训练方案同样重要。在 [Porian et al. (2024)](https://arxiv.org/html/2406.19146v4#A9) 的语言模型实验中，幂律在调优后的训练方案下能够较好地外推，但在其他方案下，外推效果明显变差。
 
 <figure id="scaling-frontier-triptych" class="research-frontier-triptych">
   <div class="research-frontier-triptych__scroll" role="region" aria-label="三幅 compute-optimal frontier 图；窄屏下可横向滚动" tabindex="0">
@@ -125,7 +125,7 @@ $$
     </div>
   </div>
   <div class="research-frontier-triptych__hint">横向滚动可查看全部三幅图；点击面板可放大。</div>
-  <figcaption><strong>不同任务与训练方案下的幂律拟合。</strong>(a) 合成 MLP 回归；虚线为最佳幂律拟合。裁剪自 <a href="https://www.opt-ml.org/papers/2024/paper78.pdf#page=6">Qiu 等，OPT 2024，图 3(c)</a>。(b–c) 语言模型的估计最优 loss 与计算量的关系；空心标记为最优 loss 估计，虚线为外推结果。裁剪自 <a href="https://arxiv.org/pdf/2406.19146v4#page=28">Porian 等（2024），图 19</a>（<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>）。</figcaption>
+  <figcaption><strong>不同任务与训练方案下的幂律拟合。</strong>(a) 合成 MLP 回归；虚线为最佳幂律拟合。裁剪自 <a href="https://www.opt-ml.org/papers/2024/paper78.pdf#page=6">Qiu et al. (2024), Figure 3(c)</a>。(b–c) 语言模型的估计最优 loss 与计算量的关系；空心标记为最优 loss 估计，虚线为外推结果。裁剪自 <a href="https://arxiv.org/pdf/2406.19146v4#page=28">Porian et al. (2024), Figure 19</a>（<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>）。</figcaption>
 </figure>
 
 要理解这些 frontier 何时遵循幂律、何时不遵循，需要先看构成它们的单模型训练曲线：模型和数据固定后，loss 在什么条件下呈幂律下降，训练方式又怎样改变这一规律。
@@ -138,7 +138,7 @@ $$
 
 其中，\\(t\\) 是训练步数，\\(a\\) 是拟合幅度，\\(p\\) 是这一阶段的下降指数。比较不同 learning-rate schedule 下的训练，就能看到训练方式如何影响 \\(p\\)。
 
-[Mircea 等人](https://arxiv.org/html/2506.05447v1#A3.SS3)比较了架构、数据和其他设置相同的两组独立训练：一组在 warmup 后使用 constant learning rate，另一组在 warmup 后使用 cosine decay。
+[Mircea et al. (2025)](https://arxiv.org/html/2506.05447v1#A3.SS3) 比较了架构、数据和其他设置相同的两组独立训练：一组在 warmup 后使用 constant learning rate，另一组在 warmup 后使用 cosine decay。
 
 <figure id="learning-rate-scaling-exponents" style="display:block;max-width:620px;margin:1.4em auto;">
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;background:#fff;padding:8px;border-radius:4px;">
@@ -159,12 +159,12 @@ $$
       </a>
     </div>
   </div>
-  <figcaption><strong>schedule 改变，拟合指数也会改变。</strong><a href="https://arxiv.org/html/2506.05447v1#A3.SS3">Mircea 等（2025），图 2 和图 29</a>。</figcaption>
+  <figcaption><strong>schedule 改变，拟合指数也会改变。</strong><a href="https://arxiv.org/html/2506.05447v1#A3.SS3">Mircea et al. (2025), Figures 2 and 29</a>。</figcaption>
 </figure>
 
 比较两个面板中的 144M 模型：cosine decay 将训练后期的拟合指数从 **0.023 提高到 0.036**。拟合斜率不仅取决于模型和数据，也取决于训练 schedule。
 
-这些例子把几个问题连在了一起：loss 何时呈幂律下降，[幂律为什么会出现](https://arxiv.org/abs/2606.25008)，以及[数据与任务结构](https://arxiv.org/abs/2210.16859)和训练 schedule 如何共同影响它的指数。要回答这些问题，我们从随机梯度下降（SGD）的更新过程看起。
+这些例子把几个问题连在了一起：loss 何时呈幂律下降，幂律为什么会出现（[Liu and Gore (2026)](https://arxiv.org/abs/2606.25008)），以及数据与任务结构和训练 schedule 如何共同影响它的指数（[Maloney et al. (2022)](https://arxiv.org/abs/2210.16859)）。要回答这些问题，我们从随机梯度下降（SGD）的更新过程看起。
 
 ## 为什么 SGD 会留下记忆
 {: #why-sgd-has-memory}
@@ -363,7 +363,7 @@ $$
 
 \\(F_t\\) 描述初始误差的传播，历史求和项描述训练噪声的累积影响。第 \\(s\\) 步的剩余预测误差 \\(R_s\\) 和 label noise 方差 \\(\sigma^2\\) 共同提供噪声来源，而 \\(K_{t,s}\\) 描述这些噪声对第 \\(t\\) 步 loss 的影响。
 
-**bias–variance 提供了对同一动力学的另一种分组方式。**考虑模型能够表示无噪声目标的情形，并假设 label noise 独立于输入且均值为零。沿用 [Zou、Wu 等人](https://arxiv.org/html/2103.12692v3#S4.SS2)按误差来源作出的分解，用 \\(B_t\\) 表示 clean-label SGD 所产生的误差，用 \\(V_t\\) 表示从零初始误差出发、由 label noise 驱动的误差。仅在这段比较中，\\(B_t\\) 表示 bias，而非 batch size。在每一步，
+**bias–variance 提供了对同一动力学的另一种分组方式。**考虑模型能够表示无噪声目标的情形，并假设 label noise 独立于输入且均值为零。沿用 [Zou et al. (2021)](https://arxiv.org/html/2103.12692v3#S4.SS2) 按误差来源作出的分解，用 \\(B_t\\) 表示 clean-label SGD 所产生的误差，用 \\(V_t\\) 表示从零初始误差出发、由 label noise 驱动的误差。仅在这段比较中，\\(B_t\\) 表示 bias，而非 batch size。在每一步，
 
 $$
 \begin{aligned}
@@ -414,7 +414,7 @@ $$
 ## 不同方向的学习速度不同
 {: #different-directions-learn-at-different-speeds}
 
-沿用前面的模型 \\(f_a(x)=a^\top\phi(x)\\)，其中 \\(\phi\\) 为固定特征，\\(a\\) 为可训练权重。我们可以显式计算各方向上的误差消退速度，[Paquette 等人对计算最优缩放的分析](https://proceedings.neurips.cc/paper_files/paper/2024/hash/1dccfc3ee01871d05e33457c61037d59-Abstract-Conference.html)就采用了这一思路。
+沿用前面的模型 \\(f_a(x)=a^\top\phi(x)\\)，其中 \\(\phi\\) 为固定特征，\\(a\\) 为可训练权重。我们可以显式计算各方向上的误差消退速度，[Paquette et al. (2024)](https://proceedings.neurips.cc/paper_files/paper/2024/hash/1dccfc3ee01871d05e33457c61037d59-Abstract-Conference.html) 对计算最优缩放的分析就采用了这一思路。
 
 这种速度差异可以从 loss landscape 的形状看出来：沿 Hessian 的不同特征向量方向看，loss 可以有不同的曲率。下图左侧展示了一个二次 loss 的示意：蓝色方向较陡，橙色方向较平缓。
 
@@ -642,11 +642,11 @@ $$
 ## 训练 schedule 如何改变响应
 {: #how-training-schedules-transform-the-response}
 
-改变噪声注入的强度，可以直接改变 loss 曲线的形状。一个熟悉的例子是 learning-rate decay：learning rate 开始下降后，loss 反而可能下降得更快。在 [warmup–stable–decay（WSD）训练](https://arxiv.org/abs/2404.06395)中，learning rate 在 warmup 后保持不变，直到最后的衰减阶段。观察下面 MiniCPM 实验中的灰绿色曲线：衰减一开始，原先平缓的下降就变成了陡降。同样的现象出现在多个不同的训练阶段。
+改变噪声注入的强度，可以直接改变 loss 曲线的形状。一个熟悉的例子是 learning-rate decay：learning rate 开始下降后，loss 反而可能下降得更快。在 warmup–stable–decay（WSD）训练（[Hu et al. (2024)](https://arxiv.org/abs/2404.06395)）中，learning rate 在 warmup 后保持不变，直到最后的衰减阶段。观察下面 MiniCPM 实验中的灰绿色曲线：衰减一开始，原先平缓的下降就变成了陡降。同样的现象出现在多个不同的训练阶段。
 
 <figure style="display:block;max-width:680px;margin:2em auto;">
   <img src="{{ '/images/power-laws-have-a-clock/hu-2024-minicpm-wsd-loss.svg' | relative_url }}" alt="0.036B 模型的 C4 loss 随训练 token 数的变化：灰绿色 WSD 曲线在多个训练阶段的衰减期间陡降；橙色曲线采用 cosine decay。" style="display:block;width:100%;height:auto;margin:0 auto 1rem;">
-  <figcaption><strong>训练不同阶段出现的 loss 陡降。</strong> 灰绿色曲线采用 WSD，衰减的开始时间和持续时长各不相同；橙色曲线采用 cosine decay。Token 数以模型参数量 \(N\) 的倍数表示。图片原样转载自 <a href="https://arxiv.org/html/2404.06395v3#S4.F6.fig1">Hu et al. (2024), MiniCPM, Figure 5</a>，遵循 <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a> 许可。</figcaption>
+  <figcaption><strong>训练不同阶段出现的 loss 陡降。</strong> 灰绿色曲线采用 WSD，衰减的开始时间和持续时长各不相同；橙色曲线采用 cosine decay。Token 数以模型参数量 \(N\) 的倍数表示。图片原样转载自 MiniCPM 论文中的 <a href="https://arxiv.org/html/2404.06395v3#S4.F6.fig1">Hu et al. (2024), Figure 5</a>，遵循 <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a> 许可。</figcaption>
 </figure>
 
 为什么减小更新步长，loss 反而下降得更快？这些向下的拐点看起来像是模型学得更快了，但减少随机更新造成的误差同样会降低 loss。如果退火确实有帮助，为什么不能用更激进的 schedule 让 loss 不断加速下降？
@@ -667,9 +667,9 @@ $$
 =\frac{1}{r_t}.
 $$
 
-\\(T_t\\) 记录前文的确定性学习过程推进了多少，\\(1/r_t\\) 则描述每单位推进伴随的噪声尺度。用 \\(r(T)\\) 表示沿这一时钟变化的比值，就能把这两种效应分开。这种区分也出现在 [Li 等人的 functional scaling law（FSL）](https://arxiv.org/html/2509.19189v4#S3) 中：他们在 kernel regression 中用 intrinsic time 描述训练进程，用 learning rate 与 batch size 的比值控制噪声注入，再通过 forgetting kernel 追踪噪声对后续 loss 的影响。
+\\(T_t\\) 记录前文的确定性学习过程推进了多少，\\(1/r_t\\) 则描述每单位推进伴随的噪声尺度。用 \\(r(T)\\) 表示沿这一时钟变化的比值，就能把这两种效应分开。这种区分也出现在 [Li et al. (2025)](https://arxiv.org/html/2509.19189v4#S3) 的 functional scaling law（FSL） 中：他们在 kernel regression 中用 intrinsic time 描述训练进程，用 learning rate 与 batch size 的比值控制噪声注入，再通过 forgetting kernel 追踪噪声对后续 loss 的影响。
 
-这将[增大 batch size 与衰减 learning rate](https://arxiv.org/abs/1711.00489)联系了起来：两者都会降低每单位 intrinsic time 的噪声。由于先前的噪声仍可能影响 loss，我们必须匹配整个比值路径，而不仅是它的终值。
+这将增大 batch size 与衰减 learning rate 联系了起来（[Smith et al. (2018)](https://arxiv.org/abs/1711.00489)）：两者都会降低每单位 intrinsic time 的噪声。由于先前的噪声仍可能影响 loss，我们必须匹配整个比值路径，而不仅是它的终值。
 
 上一节将单次响应累加起来。现在，各个时刻产生的噪声不再具有相同强度：我们仍然累加它们留到终点的影响，只是每次注入都要乘上当时的强度。回到幂律 random feature model，在 LM/IM 的稳定 schedule 下，计入噪声反馈后，可用下面的量级关系描述预测风险：
 
@@ -733,7 +733,7 @@ $$
 
 相同路径的不同实现可以对齐，接下来要解释的是不同路径之间的差异：从 8-1-1 的两次 learning-rate 降档中拟合出的响应，能否预测 WSD 逐渐衰减 learning rate 时的 loss？
 
-对于 LLM 的 validation loss，我们通过拟合确定各分量函数，而不直接使用 random feature model 中的精确量。我们的起点是 [Li 等人的七参数实用 FSL](https://arxiv.org/html/2509.19189v4#A2.SS2)：他们已在 8-1-1 上拟合，并用拟合结果预测未参与拟合的 WSD 和 cosine 曲线。我们沿用这一先拟合、再跨 schedule 预测的流程，并改编其参数化方式：他们的固定 batch size surrogate 描述 learning rate 降档带来的响应，而我们直接用 batch size 与 learning rate 比值的倒数为噪声注入加权。这样得到的 forcing–memory surrogate 也能用于固定 learning rate、改变 batch size 的情形：
+对于 LLM 的 validation loss，我们通过拟合确定各分量函数，而不直接使用 random feature model 中的精确量。我们的起点是 [Li et al. (2025)](https://arxiv.org/html/2509.19189v4#A2.SS2) 的七参数实用 FSL：他们已在 8-1-1 上拟合，并用拟合结果预测未参与拟合的 WSD 和 cosine 曲线。我们沿用这一先拟合、再跨 schedule 预测的流程，并改编其参数化方式：他们的固定 batch size surrogate 描述 learning rate 降档带来的响应，而我们直接用 batch size 与 learning rate 比值的倒数为噪声注入加权。这样得到的 forcing–memory surrogate 也能用于固定 learning rate、改变 batch size 的情形：
 
 $$
 \widehat L(T)
@@ -804,12 +804,12 @@ $$
 ## 延伸阅读
 {: #further-reading}
 
-- **经验 scaling law：**Kaplan et al. (2020), [Scaling Laws for Neural Language Models](https://arxiv.org/abs/2001.08361)。语言模型 loss 如何依赖模型大小、数据量和计算量。
-- **谱模型：**Paquette et al. (2024), [4+3 Phases of Compute-Optimal Neural Scaling Laws](https://proceedings.neurips.cc/paper_files/paper/2024/hash/1dccfc3ee01871d05e33457c61037d59-Abstract-Conference.html)。一个可求解模型，将数据与目标的结构联系到计算最优的不同区域。
-- **Learning rate 与 batch size：**Smith et al. (2018), [Don't Decay the Learning Rate, Increase the Batch Size](https://arxiv.org/abs/1711.00489)。用增大 batch size 替代 learning rate 衰减的实验。
-- **预测完整轨迹：**Li et al. (2025), [Functional Scaling Laws in Kernel Regression: Loss Dynamics and Learning Rate Schedules](https://arxiv.org/abs/2509.19189)。Intrinsic time 理论，以及对 LLM 学习曲线的 surrogate 预测。
-- **最优 schedule：**Bordelon and Mori (2026), [Theory of Optimal Learning Rate Schedules and Scaling Laws for a Random Feature Model](https://arxiv.org/abs/2602.04774)。最优退火如何依赖谱与任务。
+- **经验 scaling law：**[Kaplan et al. (2020)](https://arxiv.org/abs/2001.08361), Scaling Laws for Neural Language Models。语言模型 loss 如何依赖模型大小、数据量和计算量。
+- **谱模型：**[Paquette et al. (2024)](https://proceedings.neurips.cc/paper_files/paper/2024/hash/1dccfc3ee01871d05e33457c61037d59-Abstract-Conference.html), 4+3 Phases of Compute-Optimal Neural Scaling Laws。一个可求解模型，将数据与目标的结构联系到计算最优的不同区域。
+- **Learning rate 与 batch size：**[Smith et al. (2018)](https://arxiv.org/abs/1711.00489), Don't Decay the Learning Rate, Increase the Batch Size。用增大 batch size 替代 learning rate 衰减的实验。
+- **预测完整轨迹：**[Li et al. (2025)](https://arxiv.org/abs/2509.19189), Functional Scaling Laws in Kernel Regression: Loss Dynamics and Learning Rate Schedules。Intrinsic time 理论，以及对 LLM 学习曲线的 surrogate 预测。
+- **最优 schedule：**[Bordelon and Mori (2026)](https://arxiv.org/abs/2602.04774), Theory of Optimal Learning Rate Schedules and Scaling Laws for a Random Feature Model。最优退火如何依赖谱与任务。
 
 ---
 
-*本文基于 [From Spectra to Joint Schedules in LLM Pre-training: 3+3(+2) Scaling-Law Regimes](https://arxiv.org/abs/2609.40148)，由 Yichen Wang、Fanghui Liu 和 Yudong Chen 合作完成。*
+*本文基于 From Spectra to Joint Schedules in LLM Pre-training: 3+3(+2) Scaling-Law Regimes（[Wang et al. (2026)](https://arxiv.org/abs/2609.40148)），由 Yichen Wang、Fanghui Liu 和 Yudong Chen 合作完成。*
