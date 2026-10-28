@@ -669,7 +669,7 @@ $$
 
 \\(T_t\\) 记录前文的确定性学习过程推进了多少，\\(1/r_t\\) 则描述每单位推进伴随的噪声尺度。用 \\(r(T)\\) 表示沿这一时钟变化的比值，就能把这两种效应分开。
 
-这为前面 WSD 中的陡降提供了一种解释：持续注入的新噪声会抵消一部分误差消退带来的下降。固定 batch size 时，降低 learning rate 会减弱这种抵消；如果这一收益超过学习推进变慢的代价，loss 就可能暂时下降得更快，但这并不说明信号学得更快。
+步长变小后，loss 仍可能暂时下降得更快，因为旧误差在消退的同时，新噪声也在不断产生误差。固定 batch size 时，降低 learning rate 既减少每一步推进的 intrinsic time，也减少新噪声对 loss 下降的抵消。如果降噪的收益超过推进变慢的代价，就可能出现前面 WSD 图中的陡降；这并不说明模型学习信号的速度加快了。
 
 这种区分也出现在 [Li et al. (2025)](https://arxiv.org/html/2509.19189v4#S3) 的 functional scaling law（FSL） 中：他们在 kernel regression 中用 intrinsic time 描述训练进程，用 learning rate 与 batch size 的比值控制噪声注入，再通过 forgetting kernel 追踪噪声对后续 loss 的影响。
 
@@ -693,7 +693,7 @@ $$
 
 在上述幂律区间内，即使后续注入被压得很小，早期噪声仍会留下按 \\(k(T)\sim T^{-q_{\mathcal K}}\\) 衰减的尾部。因此，额外 loss 的下降指数不会超过 \\(q_{\mathcal K}\\)，这就是 **memory ceiling**。
 
-这里的上限针对额外 loss 在 intrinsic time 下的幂律指数，并不直接限制图中按 token 计的短期陡降。在 batch size 固定时，更快地降低 learning rate 还会让同样 token 预算内积累的 intrinsic time 更少，从而放慢信号学习和旧误差的消退。因此，更强的退火既不能立即清除历史噪声，也有推进变慢的代价。
+更激进的退火不能保证 loss 持续加速下降，因为它受到两种限制。首先，减少新噪声不会立即清除早期噪声：上面的 memory ceiling 限制了这部分额外 loss 在 intrinsic time 下的幂律指数，而不是图中按 token 计的短期下降速度。其次，更快地降低 learning rate 也会减慢时钟：固定 batch size 和 token 预算时，积累的 intrinsic time 更少，信号学习和旧误差消退的进展也更少。因此，退火能够减少新误差，却不能跳过旧误差的消退过程；过强的退火还会拖慢这一过程。
 
 当单次 memory response 和比值增长都服从幂律时，将额外 loss 与 clean-label SGD 的 excess loss 比较，会得到三种结果：
 

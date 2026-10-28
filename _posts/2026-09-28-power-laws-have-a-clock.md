@@ -663,7 +663,7 @@ $$
 
 \\(T_t\\) records how far the deterministic learning process described earlier has advanced, while \\(1/r_t\\) describes the noise scale per unit of progress. Writing \\(r(T)\\) for the ratio along this clock lets us separate the two effects.
 
-This offers one explanation for the sharp WSD drops above: new noise keeps adding error even as existing errors fade. At fixed batch size, lowering the learning rate reduces those additions. If this benefit outweighs the cost of slower learning progress, loss can fall faster for a while, but that does not imply faster signal learning.
+Smaller updates can still make loss fall faster for a while because existing errors fade while new noise keeps adding error. At fixed batch size, lowering the learning rate advances intrinsic time less per update, but also reduces the noise that offsets the decline in loss. If the benefit of noise reduction outweighs the cost of slower progress, loss can drop sharply. This offers one explanation for the WSD curves above, without implying that the model is learning the signal faster.
 
 This separation also appears in the functional scaling law (FSL) of [Li et al. (2025)](https://arxiv.org/html/2509.19189v4#S3): their kernel-regression theory uses intrinsic time to describe learning progress, the learning-rate-to-batch-size ratio to control noise injection, and a forgetting kernel to track its later effects on loss.
 
@@ -687,7 +687,7 @@ Adding label noise creates extra loss relative to clean-label SGD under the same
 
 Within the power-law range above, even if later injections become very small, early noise still leaves a tail that decays as \\(k(T)\sim T^{-q_{\mathcal K}}\\). The decay exponent of the extra loss therefore cannot exceed \\(q_{\mathcal K}\\). This is the **memory ceiling**.
 
-This ceiling concerns the power-law exponent of the extra loss in intrinsic time, not the short-term drop per token in the figure. At fixed batch size, a more aggressive learning-rate decay also means less intrinsic time within the same token budget, slowing both signal learning and the fading of earlier errors. Stronger annealing therefore cannot instantly remove past noise, and it comes at the cost of slower training progress.
+More aggressive annealing does not guarantee ever-faster loss decay, for two reasons. First, suppressing new noise does not immediately remove earlier noise: the memory ceiling above limits the power-law exponent of this extra loss in intrinsic time, not the short-term rate of decline per token in the figure. Second, lowering the learning rate more aggressively also slows the clock. At fixed batch size and token budget, less intrinsic time accumulates, leaving less progress in both signal learning and the decay of earlier errors. Annealing can therefore reduce new errors, but it cannot bypass the decay of old ones; pushing it too far can slow that decay down.
 
 When both the individual memory response and ratio growth follow power laws, comparing the extra loss with the excess loss of clean-label SGD gives three outcomes:
 
