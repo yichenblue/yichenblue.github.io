@@ -17,7 +17,7 @@ read_time: true
 reading_guide:
   # Approximate prose-reading time: 300 Chinese characters/minute plus
   # 160 non-Chinese words/minute, excluding math; optional details counted separately.
-  main_minutes: 29
+  main_minutes: 30
   optional_minutes: 7
   navigation_label: 文章导航
   sections_label: 文章章节
@@ -36,7 +36,7 @@ reading_guide:
       id: how-training-schedules-transform-the-response
     - title: 在 LLM 中检验理论
       id: from-theory-to-llm-pretraining
-    - title: 为什么 memory exponent 接近 1
+    - title: 为什么拟合出的 memory exponent 接近 1
       id: why-does-the-memory-exponent-keep-landing-near-one
     - title: 这意味着什么
       id: the-larger-lesson
@@ -850,10 +850,10 @@ $$
 
 </details>
 
-## 为什么 memory exponent 总是落在 1 附近？
+## 为什么拟合出的 memory exponent 接近 1？
 {: #why-does-the-memory-exponent-keep-landing-near-one}
 
-下面汇总前面提到的自由拟合结果。在这些独立拟合中，我们只使用 8-1-1 曲线，让全部七个参数自由变化。跨越不同数据集和两种模型大小，得到的 memory exponent 都接近 1：
+上一节比较了不同 memory exponent 下的 WSD 预测表现。这里换一种检查方式：只使用 8-1-1 曲线，让全部七个参数自由参与拟合，不预先指定 \\(q_{\mathcal K}\\)。在不同数据集和模型大小下，拟合得到的值仍然接近 1：
 
 | 数据集与设置 | \\(q_{\mathcal K}\\) | \\(q_{\mathcal F}\\) |
 |---|---:|---:|
@@ -862,9 +862,11 @@ $$
 | peS2o V2 s2orc full text, 124M, 2.5B tokens | 0.995 | 0.365 |
 | OpenWebText, 300M, 6.5B tokens | 0.989 | 0.291 |
 
-1 正是 LM/IM 的边界：一侧的累积记忆量有限，另一侧则持续增长，而在 1 处按对数增长。这些不同任务中拟合得到的响应，都落在这条边界附近。
+三个数据集上的 124M 模型，以及更大、训练更久的 300M 模型，拟合出的 \\(q_{\mathcal K}\\) 都落在 0.952–1.017 之间。换了数据和训练设置，memory exponent 仍然集中在一个较窄的范围内。
 
-这些任务是否共享某种有效的记忆时间分布？还是有限的训练窗口以及拟合参数之间的权衡，将估计值拉向了同一个数值？现有曲线无法区分这些解释。改变训练时长，并测量模型对主动施加的扰动的响应，会有助于区分它们。
+当 \\(q_{\mathcal K}=1\\) 时，surrogate 中的 kernel 在足够长的时间间隔下按 \\(1/(T-u)\\) 消退。这正好对应前文累积响应从有限值转向持续增长的边界；在边界上，等强度注入的累积响应按对数增长。因此，这些拟合得到的响应指数都接近理论中的 LM/IM 边界。
+
+目前观察到的是有限训练窗口内反复出现的拟合结果，为什么会接近 1，仍然没有确定的解释。可以延长训练并改变拟合区间，检查这一估计是否稳定；也可以短暂改变噪声注入，再恢复原 schedule，观察额外影响如何消退，为整条 loss 曲线的拟合提供另一种检验。
 
 ## 更广泛的启示
 {: #the-larger-lesson}
