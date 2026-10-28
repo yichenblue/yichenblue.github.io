@@ -17,7 +17,7 @@ read_time: true
 reading_guide:
   # Approximate prose-reading time: 300 Chinese characters/minute plus
   # 160 non-Chinese words/minute, excluding math; optional details counted separately.
-  main_minutes: 29
+  main_minutes: 27
   optional_minutes: 7
   navigation_label: 文章导航
   sections_label: 文章章节
@@ -67,9 +67,7 @@ header:
   <figcaption><strong>拟合一种 schedule，预测另一种 schedule。</strong>图中是 300M nanoGPT 的 validation loss。先拟合 8-1-1（左），再固定所有参数，不重新拟合，直接预测 WSD 后续的 loss（右）。两次训练共用前期轨迹，并在虚线处开始分叉；插图放大了训练后期的响应。intrinsic time 为 \(T=\sum_t\eta_t\)，其中 \(\eta_t\) 是 learning rate。点击任一面板可放大查看。</figcaption>
 </figure>
 
-语言模型训练尚未结束，loss 曲线就可能已经显露出规律：在一段相当长的训练过程中，它可能按幂律下降。通过拟合已经走过的这段曲线，就能估计继续训练后，loss 还有多少下降空间。因此，不必等到训练结束，学习曲线就已经能帮助我们做判断。
-
-幂律也常被用于比较不同规模的训练，描述模型大小、数据量和计算预算变化时，能够达到的 loss 如何变化。
+Scaling law 描述了语言模型的 loss 如何随模型规模、训练数据量和计算量变化。在许多实验中，这些关系可以用幂律近似描述。借助这些规律，我们可以估计扩大训练规模能带来多少收益，并在有限的计算预算下决定模型该做多大、该训练多少 token。
 
 <figure id="scaling-law-overview" style="display:block;max-width:680px;margin:1.4em auto;">
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0;background:#fff;padding:6px;border-radius:4px;">
@@ -93,11 +91,7 @@ $$
 L(N,D)\approx L_\infty+\frac{A_N}{N^\alpha}+\frac{A_D}{D^\beta}.
 $$
 
-其中，\\(L_\infty\\) 是拟合得到的 loss floor；另外两项分别描述模型规模和训练 token 数有限所带来的额外 loss，\\(A_N,A_D\\) 是拟合幅度，\\(\alpha,\beta\\) 是拟合指数。
-
-对于 dense Transformer，训练计算量近似为 \\(C\approx6ND\\)。在每个计算预算下，选择使拟合 loss 最小的模型规模和 token 数，就得到了 compute-optimal frontier。
-
-这些规律使幂律成为规划大规模训练的有用工具。
+其中，\\(L_\infty\\) 是拟合得到的 loss floor；另外两项分别描述模型规模和训练 token 数有限所带来的额外 loss，\\(A_N,A_D\\) 是拟合幅度，\\(\alpha,\beta\\) 是拟合指数。这些规律使幂律成为规划大规模训练的有用工具。
 
 把拟合曲线延伸到已有观测范围之外很容易，难的是判断什么时候可以相信它。幂律趋势未必会一直持续；模型和数据会改变幂律规律，即使模型和数据不变，调整 learning rate 或 batch size，也可能改变下降指数。看似属于学习任务本身的曲线，其实也取决于训练方式。要判断这样的外推何时可信，就需要理解这种依赖从何而来。
 
@@ -166,7 +160,7 @@ $$
 
 比较两个面板中的 144M 模型：cosine decay 将训练后期的拟合指数从 **0.023 提高到 0.036**。拟合斜率不仅取决于模型和数据，也取决于训练 schedule。
 
-前面的例子把几个问题连在了一起：loss 何时呈幂律下降，[幂律为什么会出现](https://arxiv.org/abs/2606.25008)，以及[数据与任务结构](https://arxiv.org/abs/2210.16859)和训练 schedule 如何共同影响它的指数。要回答这些问题，我们从随机梯度下降（SGD）的更新过程看起。
+这些例子把几个问题连在了一起：loss 何时呈幂律下降，[幂律为什么会出现](https://arxiv.org/abs/2606.25008)，以及[数据与任务结构](https://arxiv.org/abs/2210.16859)和训练 schedule 如何共同影响它的指数。要回答这些问题，我们从随机梯度下降（SGD）的更新过程看起。
 
 ## 为什么 SGD 会留下记忆
 {: #why-sgd-has-memory}
@@ -186,7 +180,7 @@ $$
 
 这里的期望以训练历史为条件，\\(\Sigma\\) 是单样本梯度协方差。因此，参数扰动 \\(-\eta_t\xi_t\\) 的方差尺度为 \\(\eta_t^2/B_t\\)：减小 learning rate 或增大 batch size，都能减小扰动。对于后续 loss 而言，关键是之后的更新如何传播这一扰动。
 
-小噪声展开让我们可以把这些影响加起来。记 \\(F(n)\\) 为无噪声的 validation loss，\\(K(n,s)\\) 为在第 \\(n\\) 次更新时对第 \\(s\\) 次更新注入噪声的响应，其中已除去方差尺度：
+小噪声展开让我们可以把这些影响加起来。记 \\(F(n)\\) 为无噪声的 validation loss，\\(K(n,s)\\) 为在第 \\(n\\) 次更新时对第 \\(s\\) 次更新注入噪声的响应：
 
 $$
 \mathbb E L_{\mathrm{val}}(\theta_n)
@@ -197,7 +191,7 @@ $$
 \underbrace{K(n,s)}_{\text{effect on the final loss}}.
 $$
 
-第一项对应从相同初始化出发、采用相同 learning-rate schedule 的全梯度更新；求和项汇总了 minibatch noise 的影响。这里的 \\(K(n,s)\\) 仍包含噪声随状态变化的强度，而不只是噪声的传播过程。这是 **forcing–memory 分解**的起点。
+第一项对应从相同初始化出发、采用相同 learning-rate schedule 的全梯度更新；求和项汇总了 minibatch noise 的影响。这是 **forcing–memory 分解**的起点。
 
 <details markdown="1">
 <summary><strong>推导细节：从 SGD 更新到 memory response</strong></summary>
@@ -363,7 +357,7 @@ $$
 R_t=F_t+\sum_{s<t}K_{t,s}\bigl(R_s+\sigma^2\bigr).
 $$
 
-在这个模型中，前面的 forcing–memory 结构可以写成精确递推。\\(F_t\\) 描述初始误差的传播，历史求和项描述训练噪声的累积影响。第 \\(s\\) 步的剩余预测误差 \\(R_s\\) 和 label noise 方差 \\(\sigma^2\\) 共同提供噪声来源，而 \\(K_{t,s}\\) 描述这些噪声对第 \\(t\\) 步 loss 的影响，其中已包含注入尺度 \\(\eta_s^2/B_s\\)。
+在这个模型中，前面的 forcing–memory 结构可以写成精确递推。\\(F_t\\) 描述初始误差的传播，历史求和项描述训练噪声的累积影响。第 \\(s\\) 步的剩余预测误差 \\(R_s\\) 和 label noise 方差 \\(\sigma^2\\) 共同提供噪声来源，而 \\(K_{t,s}\\) 描述这些噪声对第 \\(t\\) 步 loss 的影响。
 
 **bias–variance 提供了对同一动力学的另一种分组方式。**考虑模型能够表示无噪声目标的情形，并假设 label noise 独立于输入且均值为零。沿用 [Zou、Wu 等人](https://arxiv.org/html/2103.12692v3#S4.SS2)按误差来源作出的分解，用 \\(B_t\\) 表示 clean-label SGD 所产生的误差，用 \\(V_t\\) 表示从零初始误差出发、由 label noise 驱动的误差。仅在这段比较中，\\(B_t\\) 表示 bias，而非 batch size。在每一步，
 
@@ -428,11 +422,9 @@ $$
   </a>
 </figure>
 
-右图将这两个方向的截面放在同一坐标系中，横轴表示参数偏差，纵轴表示该方向的 loss 贡献。两个空心圆对应相同大小的初始参数偏差。使用相同的 learning rate，经过四次全梯度更新后，蓝色方向上的误差已经大幅缩小，橙色方向上的误差却只减少了一小部分。实心点记录每次更新的位置，下方箭头表示这四次更新带来的参数移动。
+右图将这两个方向的截面放在同一坐标系中，横轴表示参数偏差，纵轴表示该方向的 loss 贡献。两个空心圆对应相同大小的初始参数偏差。使用相同的 learning rate，经过四次全梯度更新后，蓝色方向上的误差已经大幅缩小，橙色方向上的误差却只减少了一小部分。
 
-为什么会有这样的差别？记第 \\(j\\) 个方向上的参数误差为 \\(\rho_j\\)，对应的 Hessian 特征值为 \\(\lambda_j\\)。这一方向的 loss 贡献为 \\(\frac12\lambda_j\rho_j^2\\)，梯度分量则为 \\(\lambda_j\rho_j\\)。因此，对于同样的参数偏差，正特征值越大，landscape 越陡，产生的梯度也越大。在相同且足够小的 learning rate 下，每次更新便能消除更大比例的误差。
-
-我们将误差消退较快的方向简称为“快方向”，消退较慢的方向简称为“慢方向”。这里的快慢，指的是消除已有误差的速度。
+为什么会有这样的差别？记第 \\(j\\) 个方向上的参数误差为 \\(\rho_j\\)，对应的 Hessian 特征值为 \\(\lambda_j\\)。这一方向的 loss 贡献为 \\(\frac12\lambda_j\rho_j^2\\)，梯度分量则为 \\(\lambda_j\rho_j\\)。因此，对于同样的参数偏差，正特征值越大，landscape 越陡，产生的梯度也越大。在相同且足够小的 learning rate 下，每次更新便能消除更大比例的误差。因此，我们将误差消退较快的方向简称为“快方向”，消退较慢的方向简称为“慢方向”。
 
 用 \\(\rho_{j,t}\\) 表示第 \\(t\\) 步在这一方向上的参数误差。反复进行全梯度更新，在小步长近似下，
 
@@ -532,69 +524,9 @@ $$
 ## 这些学习速度何时会产生幂律？
 {: #when-do-these-learning-speeds-produce-a-power-law}
 
-每个方向上的误差都按指数衰减，为什么加起来之后，反而可能下降得更慢，形成幂律？关键在于：随着已经学得较快的方向逐渐不再贡献误差，是否还有越来越慢的方向接替它们，以及这些方向还剩下多少贡献。
+在恒定且稳定的 schedule 下，各方向的贡献近似按 \\(e^{-2\lambda T}\\) 衰减。到时刻 \\(T\\)，大特征值方向的贡献已大幅减弱，因此剩余响应主要取决于特征值在 \\(1/T\\) 附近及以下的累计权重。
 
-先考虑恒定且稳定的 schedule。forcing 中高于 loss floor 的部分，以及一次噪声注入的 memory response，都可以在相应的时间尺度上近似写成
-
-$$
-S(T)\approx\sum_{\lambda_j>0}w_j e^{-2\lambda_jT}.
-$$
-
-这里暂用 \\(S(T)\\) 表示其中任一分量，\\(w_j\geq0\\) 是第 \\(j\\) 个方向的贡献权重。对于 forcing，权重取决于目标在各方向上的分量；对于 memory，权重描述一次噪声注入在各方向上的影响。后一种情形中的 \\(T\\)，指注入后经过的 intrinsic time。
-
-在时刻 \\(T\\)，满足 \\(\lambda_jT\gg1\\) 的方向已经大幅衰减，而满足 \\(\lambda_jT\lesssim1\\) 的方向仍保留明显贡献。因此，要估计还剩下多少，重点是累计特征值在 \\(1/T\\) 附近及以下的权重。这里没有一道突然切断的边界，只是指数因子让更大的特征值受到更强的抑制。
-
-**\\(q\\) 就来自这些权重在小特征值附近的分布。**如果特征值不超过 \\(x\\) 的累计权重满足
-
-$$
-\sum_{0<\lambda_j\leq x}w_j\propto x^q,
-$$
-
-那么，将训练时间对应的阈值 \\(x\sim1/T\\) 代入，就得到
-
-$$
-S(T)\asymp
-\sum_{0<\lambda_j\lesssim1/T}w_j
-\propto T^{-q}.
-$$
-
-时间翻倍，仍然保留明显贡献的特征值范围大约缩小一半；如果这个范围内的累计权重随之变为原来的 \\(2^{-q}\\)，总响应便按 \\(T^{-q}\\) 下降。单个方向仍在指数衰减，但主导剩余响应的方向不断向更小的特征值移动。
-
-这也说明，\\(q\\) 不是由“指数衰减”自动产生的。它取决于特征值如何分布，以及各方向有多大的权重。
-
-以三联图采用的谱构造为例，
-
-$$
-\lambda_j=j^{-0.8}.
-$$
-
-单次 memory response 的权重为 \\(\lambda_j^2=j^{-1.6}\\)。特征值不超过 \\(x\\)，对应的下标就是 \\(j\geq x^{-1.25}\\)。在有限维截断尚未起作用的区间内，累计权重因此满足
-
-$$
-\sum_{\lambda_j\leq x}\lambda_j^2
-=
-\sum_{j\geq x^{-1.25}}j^{-1.6}
-\asymp
-\int_{x^{-1.25}}^\infty u^{-1.6}\,\mathrm du
-\propto x^{3/4}.
-$$
-
-于是，\\(q_{\mathcal K}=3/4\\)，单次 memory response 按 \\(T^{-3/4}\\) 衰减。这个指数可以从谱上的累计权重算出来，而不只是从时间曲线上拟合出来。
-
-图中同时选取了快速衰减的目标系数 \\(\lvert\theta_j^\star\rvert^2=e^{-j}\\)。因此，特征值越小的方向，目标在其中的分量也越小。它们虽然消除误差很慢，却几乎没有初始信号需要学习；minibatch 采样仍然可能在这些方向上引入误差。
-
-<figure>
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;align-items:end;">
-    <img src="{{ '/images/power-laws-have-a-clock/main-fig2-forcing.png' | relative_url }}" alt="按目标加权的 forcing 项以快于任意负幂的速度衰减。">
-    <img src="{{ '/images/power-laws-have-a-clock/main-fig2-memory.png' | relative_url }}" alt="单次噪声注入的 memory 项呈现四分之三次幂的幂律尾部。">
-    <img src="{{ '/images/power-laws-have-a-clock/main-fig2-loss.png' | relative_url }}" alt="小 batch size 下的 SGD 风险逐渐进入由 memory 项控制的幂律尾部。">
-  </div>
-  <figcaption><strong>forcing 项快速衰减，memory 项尾部缓慢消退。</strong>左：forcing 项的消失速度快于任意负幂。中：单次噪声注入的 memory 项按 \(T^{-3/4}\) 衰减。右：对 20 次运行取平均的 SGD loss 最终沿着这一 memory 尾部衰减。</figcaption>
-</figure>
-
-左图中的 forcing 因而快速下降；中图中的单次 memory response 则保留了 \\(T^{-3/4}\\) 的尾部。右图展示了两者如何影响实际 SGD loss：前期下降主要跟随 forcing，后期则进入由采样噪声的历史影响控制的幂律区间。**同一组特征值，并不意味着 forcing 和 memory 必须具有相同的下降规律。**
-
-在我们的 random feature model 中，这两种权重可以明确写出来。固定特征为 \\(\phi(x)=W^\top x\\)，无噪声目标为 \\(x^\top\theta^\star\\)，输入协方差为 \\(\Lambda\\)。记 \\(\widehat\lambda_j,\widehat u_j\\) 为 \\(\Lambda^{1/2}WW^\top\Lambda^{1/2}\\) 的特征值及单位特征向量。从零输出权重出发，两种累计权重分别为
+在我们的 random feature model 中，forcing 和单次 memory response 的累计权重可以明确写出来。固定特征为 \\(\phi(x)=W^\top x\\)，无噪声目标为 \\(x^\top\theta^\star\\)，输入协方差为 \\(\Lambda\\)。记 \\(\widehat\lambda_j,\widehat u_j\\) 为 \\(\Lambda^{1/2}WW^\top\Lambda^{1/2}\\) 的特征值及单位特征向量。从零输出权重出发，两种累计权重分别为
 
 $$
 \begin{aligned}
@@ -606,9 +538,9 @@ $$
 \end{aligned}
 $$
 
-第一行累计目标在这些方向上的能量；第二行累计单次 memory response 的权重。因此，二者在小特征值附近可以有不同的指数，分别记为 \\(q_{\mathcal F}\\) 和 \\(q_{\mathcal K}\\)。
+第一行累计目标在这些方向上的能量；第二行累计单次 memory response 的权重。当它们在小特征值附近呈幂律时，将对应的正指数分别记为 \\(q_{\mathcal F}\\) 和 \\(q_{\mathcal K}\\)。
 
-前面的解释从谱上的累计权重推到了时间上的幂律。**我们的理论还给出了反方向：在论文的大宽度、长时间极限及谱窗口条件下，某个分量呈幂律衰减，也要求它的累计谱权重具有对应的指数。**示意地写成
+我们的理论表明：在论文的大宽度、长时间极限及谱窗口条件下，forcing 和单次 memory response 呈幂律衰减，当且仅当各自的累计谱权重具有对应的幂律形式。示意地写成
 
 $$
 \begin{aligned}
@@ -621,9 +553,30 @@ F_{W,>0}(T)\propto T^{-q_{\mathcal F}},\\
 \end{aligned}
 $$
 
-这里，\\(F_{W,>0}\\) 是 forcing 高于 loss floor 的部分，\\(K_W\\) 是恒定 schedule 下的单次 memory kernel；乘以 \\(B/\eta^2\\) 是为了除去噪声注入尺度。对有限模型，这种幂律可以出现在一个很长的中间时间区间，而不是无限持续。
+这里，\\(F_{W,>0}\\) 是 forcing 高于 loss floor 的部分，\\(K_W\\) 是恒定 schedule 下的单次 memory kernel；乘以 \\(B/\eta^2\\) 是为了除去噪声注入尺度。对单次 memory response，\\(T\\) 指注入后经过的 intrinsic time。
 
-这个结论分别适用于 forcing 和单次 memory response，并不直接给出总 loss 的指数。要得到整条 SGD loss 曲线，还需要把历次噪声注入的影响累积起来。
+直观上，累计权重随阈值按某个幂次变化，而训练将这个阈值降到约 \\(1/T\\)，于是同一个指数出现在时间上的衰减规律中。对有限模型，这种幂律可以出现在一个很长的中间时间区间，而不是无限持续。
+
+下面的三联图采用谱构造
+
+$$
+\lambda_j=j^{-0.8}.
+$$
+
+图中同时选取了快速衰减的目标系数 \\(\lvert\theta_j^\star\rvert^2=e^{-j}\\)。因此，特征值越小的方向，目标在其中的分量也越小。它们虽然消除误差很慢，却几乎没有初始信号需要学习；minibatch 采样仍然可能在这些方向上引入误差。
+
+<figure>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;align-items:end;">
+    <img src="{{ '/images/power-laws-have-a-clock/main-fig2-forcing.png' | relative_url }}" alt="按目标加权的 forcing 项以快于任意负幂的速度衰减。">
+    <img src="{{ '/images/power-laws-have-a-clock/main-fig2-memory.png' | relative_url }}" alt="单次噪声注入的 memory 项呈现四分之三次幂的幂律尾部。">
+    <img src="{{ '/images/power-laws-have-a-clock/main-fig2-loss.png' | relative_url }}" alt="小 batch size 下的 SGD 风险逐渐进入由 memory 项控制的幂律尾部。">
+  </div>
+  <figcaption><strong>forcing 项快速衰减，memory 项尾部缓慢消退。</strong>左：forcing 项的消失速度快于任意负幂。中：单次噪声注入的 memory 项按 \(T^{-3/4}\) 衰减。右：对 20 次运行取平均的 SGD loss 最终沿着这一 memory 尾部衰减。</figcaption>
+</figure>
+
+左图中的 forcing 快于任何幂律衰减；中图中的单次 memory response 则按 \\(T^{-3/4}\\) 衰减，对应 \\(q_{\mathcal K}=3/4\\)。右图展示了两者如何影响实际 SGD loss：前期下降主要跟随 forcing，后期则进入由采样噪声的历史影响控制的幂律区间。**同一组特征值，并不意味着 forcing 和 memory 必须具有相同的下降规律。**
+
+上述充要关系分别适用于 forcing 和单次 memory response，并不直接给出总 loss 的指数。要得到整条 SGD loss 曲线，还需要把历次噪声注入的影响累积起来。
 
 幂律指数告诉我们 loss 下降得多快，却不能单独说明剩余误差从哪里来。初始误差的缓慢消退和训练噪声的长期影响，都可能形成幂律尾部。解释一条学习曲线，需要区分这两部分，而不只是拟合它们相加后的指数。
 {: .research-takeaway #loss-slope-takeaway}
@@ -660,7 +613,7 @@ $$
 
 这里 \\(\lambda_j\\) 是按顺序排列的数据协方差特征值，\\(\theta_j^\star\\) 是对应的目标系数。\\(\alpha\\) 越大，谱越陡；\\(\beta\\) 越大，目标在慢方向上的权重越小。
 
-在目标能量有限的 LM/IM 区域内，沿用上一节的尾和计算，目标相关的 forcing 项与单次 memory response 对应的指数为
+在目标能量有限的 LM/IM 区域内，利用上一节的累计谱权重判据，目标相关的 forcing 项与单次 memory response 对应的指数为
 
 $$
 q_{\mathcal F}=\frac{2\alpha+2\beta-1}{2\alpha},
