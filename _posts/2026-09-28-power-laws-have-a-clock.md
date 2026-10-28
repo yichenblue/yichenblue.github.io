@@ -2,8 +2,9 @@
 layout: single
 title: "When Do Learning Curves Follow Power Laws?"
 date: 2026-09-28
-permalink: /posts/when-do-learning-curves-follow-power-laws/
+permalink: /posts/power-laws/
 redirect_from:
+  - /posts/when-do-learning-curves-follow-power-laws/
   - /posts/power-laws-have-a-clock/
 excerpt: "The origins of power-law learning curves, how training schedules reshape them, and a response model that predicts LLM loss across schedules."
 tags:
@@ -18,7 +19,7 @@ read_time: true
 reading_guide:
   # Approximate prose-reading times at the site's 160 words/minute.
   # Excludes mathematical source; optional details are counted separately.
-  main_minutes: 26
+  main_minutes: 27
   optional_minutes: 8
   sections:
     - title: Why SGD has memory
@@ -44,7 +45,7 @@ header:
   teaser: /images/power-laws-have-a-clock/main-fig2-loss.png
 ---
 
-[Paper (arXiv)](https://arxiv.org/abs/2609.40148) · [Code (GitHub)](https://github.com/yichenblue/spectra-to-schedules-in-pretraining) · [中文版]({{ '/posts/when-do-learning-curves-follow-power-laws/zh/' | relative_url }})
+[Paper (arXiv)](https://arxiv.org/abs/2609.40148) · [Code (GitHub)](https://github.com/yichenblue/spectra-to-schedules-in-pretraining) · [中文版]({{ '/posts/power-laws/zh/' | relative_url }})
 {: .research-links}
 
 We show a sufficient and necessary condition of scaling laws (partially), point out that the scaling laws can be controlled by the intrinsic time and the ratio between the batch size and learning rate, and validate a successful prediction on 300M nano-GPT training. It can be a good example of how a simple model sparks LLM pre-training.
@@ -61,7 +62,7 @@ We show a sufficient and necessary condition of scaling laws (partially), point 
       <img src="{{ '/images/power-laws-have-a-clock/llm-global-wsd-prediction.png' | relative_url }}" alt="300M nanoGPT validation loss under WSD, with a prediction using parameters frozen from the 8-1-1 fit; the inset enlarges the continuation after the shared checkpoint." width="1609" height="1072" decoding="async">
     </a>
   </div>
-  <figcaption><strong>Fit one schedule, predict another.</strong> Validation loss for a 300M nanoGPT model. Fit on 8-1-1 (left), then freeze the parameters and predict WSD's continuation without refitting (right). The runs share a training prefix and branch at the dotted line; the insets enlarge the late-training response. Intrinsic time is \(T=\sum_t\eta_t\), with learning rate \(\eta_t\). Select either panel to enlarge.</figcaption>
+  <figcaption><strong>Fit one schedule, predict another.</strong> Validation loss from our 300M nanoGPT experiment, using our joint-schedule surrogate and the fit-then-transfer protocol of <a href="https://arxiv.org/html/2509.19189v4#S6.SS2">Li et al.</a> Fit on 8-1-1 (left), then freeze the parameters and predict WSD's continuation without refitting (right). The runs share a training prefix and branch at the dotted line; the insets enlarge the late-training response. Intrinsic time is \(T=\sum_t\eta_t\), with learning rate \(\eta_t\). Select either panel to enlarge.</figcaption>
 </figure>
 
 Scaling laws describe how language-model loss changes with model size, training data, and compute. In many experiments, these relationships are well approximated by power laws. They help us estimate the gains from scaling up and choose a model size and token budget within a fixed compute budget.
@@ -660,7 +661,7 @@ $$
 =\frac{1}{r_t}.
 $$
 
-\\(T_t\\) records how far the deterministic learning process described earlier has advanced, while \\(1/r_t\\) describes the noise scale per unit of progress. Writing \\(r(T)\\) for the ratio along this clock lets us separate the two effects.
+\\(T_t\\) records how far the deterministic learning process described earlier has advanced, while \\(1/r_t\\) describes the noise scale per unit of progress. Writing \\(r(T)\\) for the ratio along this clock lets us separate the two effects. This separation also appears in [Li et al.'s functional scaling law (FSL)](https://arxiv.org/html/2509.19189v4#S3): their kernel-regression theory uses intrinsic time to describe learning progress, the learning-rate-to-batch-size ratio to control noise injection, and a forgetting kernel to track its later effects on loss.
 
 This connects [increasing batch size with decaying learning rate](https://arxiv.org/abs/1711.00489): both reduce noise per unit of intrinsic time. Since earlier noise can still affect loss, we must match the whole ratio path, not just its final value.
 
@@ -726,7 +727,7 @@ Blue and orange do not collapse onto a single curve because WSD and 8-1-1 follow
 
 Different implementations of the same path can align. The next question concerns differences between paths: can a response fitted to the two learning-rate drops in 8-1-1 predict loss under WSD's gradual learning-rate decay?
 
-For LLM validation loss, we keep the forcing–memory structure but fit its component functions rather than use the random-feature model's exact quantities. Following [Li et al.'s functional-scaling-law approach](https://arxiv.org/abs/2509.19189), we use the seven-parameter surrogate
+For LLM validation loss, we fit the component functions rather than use the random-feature model's exact quantities. Our starting point is [Li et al.'s practical seven-parameter FSL](https://arxiv.org/html/2509.19189v4#A2.SS2), which they fitted on 8-1-1 to predict unseen WSD and cosine curves. We follow that fit-then-transfer protocol and adapt the parameterization: their fixed-batch surrogate describes the response to learning-rate drops, whereas ours weights noise injections directly by the inverse batch-to-learning-rate ratio. This gives a forcing–memory surrogate that also accommodates changing batch size at fixed learning rate:
 
 $$
 \widehat L(T)

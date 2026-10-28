@@ -2,7 +2,9 @@
 layout: single
 title: "学习曲线何时遵循幂律？"
 date: 2026-09-28
-permalink: /posts/when-do-learning-curves-follow-power-laws/zh/
+permalink: /posts/power-laws/zh/
+redirect_from:
+  - /posts/when-do-learning-curves-follow-power-laws/zh/
 lang: zh-CN
 locale: zh-CN
 date_format: "%Y年%m月%d日"
@@ -19,7 +21,7 @@ read_time: true
 reading_guide:
   # Approximate prose-reading time: 300 Chinese characters/minute plus
   # 160 non-Chinese words/minute, excluding math; optional details counted separately.
-  main_minutes: 24
+  main_minutes: 25
   optional_minutes: 7
   navigation_label: 文章导航
   sections_label: 文章章节
@@ -49,7 +51,7 @@ header:
   teaser: /images/power-laws-have-a-clock/main-fig2-loss.png
 ---
 
-[论文（arXiv）](https://arxiv.org/abs/2609.40148) · [代码（GitHub）](https://github.com/yichenblue/spectra-to-schedules-in-pretraining) · [English]({{ '/posts/when-do-learning-curves-follow-power-laws/' | relative_url }})
+[论文（arXiv）](https://arxiv.org/abs/2609.40148) · [代码（GitHub）](https://github.com/yichenblue/spectra-to-schedules-in-pretraining) · [English]({{ '/posts/power-laws/' | relative_url }})
 {: .research-links}
 
 我们（部分地）给出了幂律 scaling law 成立的充要条件，指出 intrinsic time 以及 batch size 与 learning rate 的比值可以调控这些规律，并在 300M nano-GPT 的训练中成功预测了 loss 曲线。这也展示了一个简单模型如何为 LLM 预训练提供思路。
@@ -66,7 +68,7 @@ header:
       <img src="{{ '/images/power-laws-have-a-clock/llm-global-wsd-prediction.png' | relative_url }}" alt="300M nanoGPT 在 WSD schedule 下的 validation loss，以及固定 8-1-1 拟合参数后得到的预测；插图放大了从共同 checkpoint 分叉后的轨迹。" width="1609" height="1072" decoding="async">
     </a>
   </div>
-  <figcaption><strong>拟合一种 schedule，预测另一种 schedule。</strong>图中是 300M nanoGPT 的 validation loss。先拟合 8-1-1（左），再固定所有参数，不重新拟合，直接预测 WSD 后续的 loss（右）。两次训练共用前期轨迹，并在虚线处开始分叉；插图放大了训练后期的响应。intrinsic time 为 \(T=\sum_t\eta_t\)，其中 \(\eta_t\) 是 learning rate。点击任一面板可放大查看。</figcaption>
+  <figcaption><strong>拟合一种 schedule，预测另一种 schedule。</strong>图中是我们在 300M nanoGPT 实验中得到的 validation loss，使用本文的 joint-schedule surrogate，并沿用 <a href="https://arxiv.org/html/2509.19189v4#S6.SS2">Li 等人</a>先拟合、再跨 schedule 预测的检验流程。先拟合 8-1-1（左），再固定所有参数，不重新拟合，直接预测 WSD 后续的 loss（右）。两次训练共用前期轨迹，并在虚线处开始分叉；插图放大了训练后期的响应。intrinsic time 为 \(T=\sum_t\eta_t\)，其中 \(\eta_t\) 是 learning rate。点击任一面板可放大查看。</figcaption>
 </figure>
 
 Scaling law 描述了语言模型的 loss 如何随模型规模、训练数据量和计算量变化。在许多实验中，这些关系可以用幂律近似描述。借助这些规律，我们可以估计扩大训练规模能带来多少收益，并在有限的计算预算下决定模型该做多大、该训练多少 token。
@@ -665,7 +667,7 @@ $$
 =\frac{1}{r_t}.
 $$
 
-\\(T_t\\) 记录前文的确定性学习过程推进了多少，\\(1/r_t\\) 则描述每单位推进伴随的噪声尺度。用 \\(r(T)\\) 表示沿这一时钟变化的比值，就能把这两种效应分开。
+\\(T_t\\) 记录前文的确定性学习过程推进了多少，\\(1/r_t\\) 则描述每单位推进伴随的噪声尺度。用 \\(r(T)\\) 表示沿这一时钟变化的比值，就能把这两种效应分开。这种区分也出现在 [Li 等人的 functional scaling law（FSL）](https://arxiv.org/html/2509.19189v4#S3) 中：他们在 kernel regression 中用 intrinsic time 描述训练进程，用 learning rate 与 batch size 的比值控制噪声注入，再通过 forgetting kernel 追踪噪声对后续 loss 的影响。
 
 这将[增大 batch size 与衰减 learning rate](https://arxiv.org/abs/1711.00489)联系了起来：两者都会降低每单位 intrinsic time 的噪声。由于先前的噪声仍可能影响 loss，我们必须匹配整个比值路径，而不仅是它的终值。
 
@@ -731,7 +733,7 @@ $$
 
 相同路径的不同实现可以对齐，接下来要解释的是不同路径之间的差异：从 8-1-1 的两次 learning-rate 降档中拟合出的响应，能否预测 WSD 逐渐衰减 learning rate 时的 loss？
 
-对于 LLM 的 validation loss，我们保留 forcing–memory 分解的结构，但通过拟合确定各分量函数，而不直接使用 random feature model 中的精确量。沿着 [Li 等人的 functional scaling law 方法](https://arxiv.org/abs/2509.19189)，我们采用以下七参数 surrogate：
+对于 LLM 的 validation loss，我们通过拟合确定各分量函数，而不直接使用 random feature model 中的精确量。我们的起点是 [Li 等人的七参数实用 FSL](https://arxiv.org/html/2509.19189v4#A2.SS2)：他们已在 8-1-1 上拟合，并用拟合结果预测未参与拟合的 WSD 和 cosine 曲线。我们沿用这一先拟合、再跨 schedule 预测的流程，并改编其参数化方式：他们的固定 batch size surrogate 描述 learning rate 降档带来的响应，而我们直接用 batch size 与 learning rate 比值的倒数为噪声注入加权。这样得到的 forcing–memory surrogate 也能用于固定 learning rate、改变 batch size 的情形：
 
 $$
 \widehat L(T)
