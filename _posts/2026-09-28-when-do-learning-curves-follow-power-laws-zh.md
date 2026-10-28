@@ -17,7 +17,7 @@ read_time: true
 reading_guide:
   # Approximate prose-reading time: 300 Chinese characters/minute plus
   # 160 non-Chinese words/minute, excluding math; optional details counted separately.
-  main_minutes: 27
+  main_minutes: 26
   optional_minutes: 7
   navigation_label: 文章导航
   sections_label: 文章章节
@@ -685,33 +685,17 @@ $$
 
 对于过去的某个时刻 \\(u\\)，\\(F(u)+\sigma^2\\) 在这一量级关系中表示剩余预测误差和 label noise 提供的噪声来源。除以 \\(r(u)\\)，是让 schedule 调整当时每单位 intrinsic time 的注入强度；再乘以 \\(k(T-u)\\)，就得到它对终点 \\(T\\) 的贡献。即使没有 label noise，剩余预测误差仍会产生 minibatch noise，因此积分项不会随 \\(\sigma^2=0\\) 一起消失。
 
-来看一个具体例子：在有限宽度带来的 loss floor 尚未产生显著影响时，取一个满足 \\(F(T)\asymp T^{-1/2}\\) 和 \\(k(T)\asymp T^{-3/2}\\) 的 IM 区域。选择 \\(r(T)\propto(1+T)^\vartheta\\)，并使其整体尺度足够大，以保证反馈稳定。
+以同一 schedule 下的 clean-label SGD 为基准，加入 label noise 后会产生额外 loss。这部分 loss 既取决于 schedule 如何压低后续噪声注入，也取决于早先注入的影响消退得多快。
 
-在积分中令 \\(\sigma^2=0\\)，仍会留下由剩余预测误差产生的 minibatch noise。对下面三种 schedule，这部分贡献比 forcing 项衰减得更快，因此 clean-label SGD 的 loss 具有 \\(T^{-1/2}\\) 的量级。其衰减指数因而为 \\(q_0=1/2\\)：在这里，它等于 \\(q_{\mathcal F}\\)，但一般情况下并非如此。
+在上述幂律区间内，即使后续注入被压得很小，早期噪声仍会留下按 \\(k(T)\sim T^{-q_{\mathcal K}}\\) 衰减的尾部。因此，额外 loss 的下降指数不会超过 \\(q_{\mathcal K}\\)，这就是 **memory ceiling**。
 
-现在，为每次运行加入相同的 label noise 方差 \\(\sigma^2>0\\)。与相同 schedule 下的 clean-label SGD 相比，这些额外噪声的影响受到两种速度的限制。
-
-最近产生的噪声还没有充分消退。由于 IM 的累积响应有限，近期注入的贡献跟随当前的注入强度，按 \\(1/r(T)\sim T^{-\vartheta}\\) 减弱。另一方面，即使后来的噪声被压得很小，早期已经产生的误差仍会留下 \\(k(T)\sim T^{-3/2}\\) 的尾部。在这个 IM 例子中，额外 loss 的下降指数由这两种限制中较慢的一种决定，因此其量级为 \\(T^{-\min\lbrace\vartheta,3/2\rbrace}\\)。
-
-再把额外 loss 与 clean loss 相加，衰减较慢的部分决定总 loss。忽略常数因子，三种 schedule 分别给出：
-
-| 比值 \\(r(T)\\) 的增长 | label noise 带来的额外 loss | 总 loss |
-|---|---|---|
-| \\(T^{1/4}\\) | \\(T^{-1/4}\\) | \\(T^{-1/4}\\) |
-| \\(T\\) | \\(T^{-1}\\) | \\(T^{-1/2}\\) |
-| \\(T^2\\) | \\(T^{-3/2}\\) | \\(T^{-1/2}\\) |
-
-第一行中，label noise 带来的额外 loss 下降得更慢，将总 loss 的指数变为 \\(1/4\\)。第二行中，额外 loss 已经下降得比 clean loss 更快，因此总 loss 的指数恢复到 \\(1/2\\)。
-
-第三行展示的是额外噪声自身的 **memory ceiling**：继续增大 \\(\vartheta\\)，也无法让这部分 loss 比早先噪声注入留下的 \\(T^{-3/2}\\) 尾部衰减得更快。这里有两个不同的上限：额外噪声的下降指数最多达到 \\(3/2\\)，而总 loss 从第二行起就已受 clean exponent \\(1/2\\) 限制，不会继续提高到 \\(3/2\\)。
-
-当 memory 项和比值增长都服从幂律时，将额外 loss 与 clean-label SGD 的 loss 比较，会得到三种结果：
+当单次 memory response 和比值增长都服从幂律时，将额外 loss 与 clean-label SGD 的 excess loss 比较，会得到三种结果：
 
 - **破坏：**额外 loss 不以正幂次衰减。
-- **改变：**额外 loss 比 clean-label SGD 的 loss 衰减得更慢，从而决定一个新的指数。
+- **改变：**额外 loss 比 clean-label SGD 的 excess loss 衰减得更慢，从而决定一个新的指数。
 - **保持：**额外 loss 的衰减至少同样快，因此 clean-label SGD 的指数保持不变。
 
-下图比较了 clean-label SGD 的 excess-loss 指数 \\(q_0\\)（描述 loss 高于其 floor 的部分按 \\(T^{-q_0}\\) 衰减）与比值增长指数 \\(\vartheta\\)（由 \\(r(T)\sim T^\vartheta\\) 定义）。
+下图比较了 clean-label SGD 的 excess-loss 指数 \\(q_0\\)（描述 loss 高于其 floor 的部分按 \\(T^{-q_0}\\) 衰减）与比值增长指数 \\(\vartheta\\)（由 \\(r(T)\sim T^\vartheta\\) 定义）。clean-label SGD 仍包含 minibatch noise，因此 \\(q_0\\) 一般不等于 forcing 指数 \\(q_{\mathcal F}\\)。
 
 <figure>
   <img src="{{ '/images/power-laws-have-a-clock/main-fig4-schedule-map.png' | relative_url }}" alt="相图展示了 schedule 何时保持、改变或破坏 clean-label SGD 的幂律。" style="display:block;width:min(100%,570px);height:auto;margin-inline:auto;">
