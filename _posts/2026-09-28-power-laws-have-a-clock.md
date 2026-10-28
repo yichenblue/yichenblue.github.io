@@ -19,7 +19,7 @@ read_time: true
 reading_guide:
   # Approximate prose-reading times at the site's 160 words/minute.
   # Excludes mathematical source; optional details are counted separately.
-  main_minutes: 27
+  main_minutes: 28
   optional_minutes: 8
   sections:
     - title: SGD has memory
@@ -661,7 +661,11 @@ $$
 =\frac{1}{r_t}.
 $$
 
-\\(T_t\\) records how far the deterministic learning process described earlier has advanced, while \\(1/r_t\\) describes the noise scale per unit of progress. Writing \\(r(T)\\) for the ratio along this clock lets us separate the two effects. This separation also appears in the functional scaling law (FSL) of [Li et al. (2025)](https://arxiv.org/html/2509.19189v4#S3): their kernel-regression theory uses intrinsic time to describe learning progress, the learning-rate-to-batch-size ratio to control noise injection, and a forgetting kernel to track its later effects on loss.
+\\(T_t\\) records how far the deterministic learning process described earlier has advanced, while \\(1/r_t\\) describes the noise scale per unit of progress. Writing \\(r(T)\\) for the ratio along this clock lets us separate the two effects.
+
+This offers one explanation for the sharp WSD drops above: new noise keeps adding error even as existing errors fade. At fixed batch size, lowering the learning rate reduces those additions. If this benefit outweighs the cost of slower learning progress, loss can fall faster for a while, but that does not imply faster signal learning.
+
+This separation also appears in the functional scaling law (FSL) of [Li et al. (2025)](https://arxiv.org/html/2509.19189v4#S3): their kernel-regression theory uses intrinsic time to describe learning progress, the learning-rate-to-batch-size ratio to control noise injection, and a forgetting kernel to track its later effects on loss.
 
 This connects increasing batch size with decaying learning rate ([Smith et al. (2018)](https://arxiv.org/abs/1711.00489)): both reduce noise per unit of intrinsic time. Since earlier noise can still affect loss, we must match the whole ratio path, not just its final value.
 
@@ -682,6 +686,8 @@ For a past time \\(u\\), \\(F(u)+\sigma^2\\) represents the noise sources suppli
 Adding label noise creates extra loss relative to clean-label SGD under the same schedule. This extra loss depends both on how the schedule suppresses later injections and on how quickly the effects of earlier ones fade.
 
 Within the power-law range above, even if later injections become very small, early noise still leaves a tail that decays as \\(k(T)\sim T^{-q_{\mathcal K}}\\). The decay exponent of the extra loss therefore cannot exceed \\(q_{\mathcal K}\\). This is the **memory ceiling**.
+
+This ceiling concerns the power-law exponent of the extra loss in intrinsic time, not the short-term drop per token in the figure. At fixed batch size, a more aggressive learning-rate decay also means less intrinsic time within the same token budget, slowing both signal learning and the fading of earlier errors. Stronger annealing therefore cannot instantly remove past noise, and it comes at the cost of slower training progress.
 
 When both the individual memory response and ratio growth follow power laws, comparing the extra loss with the excess loss of clean-label SGD gives three outcomes:
 

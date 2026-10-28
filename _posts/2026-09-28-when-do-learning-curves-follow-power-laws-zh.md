@@ -21,14 +21,14 @@ read_time: true
 reading_guide:
   # Approximate prose-reading time: 300 Chinese characters/minute plus
   # 160 non-Chinese words/minute, excluding math; optional details counted separately.
-  main_minutes: 25
+  main_minutes: 26
   optional_minutes: 7
   navigation_label: 文章导航
   sections_label: 文章章节
   title: 本文目录
   overview_label: 概览
   sections:
-    - title: 为什么 SGD 会留下记忆
+    - title: SGD 会留下记忆
       id: why-sgd-has-memory
     - title: 不同方向的学习速度不同
       id: different-directions-learn-at-different-speeds
@@ -166,7 +166,7 @@ $$
 
 这些例子把几个问题连在了一起：loss 何时呈幂律下降，幂律为什么会出现（[Liu and Gore (2026)](https://arxiv.org/abs/2606.25008)），以及数据与任务结构和训练 schedule 如何共同影响它的指数（[Maloney et al. (2022)](https://arxiv.org/abs/2210.16859)）。要回答这些问题，我们从随机梯度下降（SGD）的更新过程看起。
 
-## 为什么 SGD 会留下记忆
+## SGD 会留下记忆
 {: #why-sgd-has-memory}
 
 SGD 用 minibatch 估计梯度。与使用全梯度相比，采样误差会给参数带来随机扰动；后续更新从这些改变后的参数继续，因此，一次扰动对 loss 的影响可能持续多步。
@@ -667,7 +667,11 @@ $$
 =\frac{1}{r_t}.
 $$
 
-\\(T_t\\) 记录前文的确定性学习过程推进了多少，\\(1/r_t\\) 则描述每单位推进伴随的噪声尺度。用 \\(r(T)\\) 表示沿这一时钟变化的比值，就能把这两种效应分开。这种区分也出现在 [Li et al. (2025)](https://arxiv.org/html/2509.19189v4#S3) 的 functional scaling law（FSL） 中：他们在 kernel regression 中用 intrinsic time 描述训练进程，用 learning rate 与 batch size 的比值控制噪声注入，再通过 forgetting kernel 追踪噪声对后续 loss 的影响。
+\\(T_t\\) 记录前文的确定性学习过程推进了多少，\\(1/r_t\\) 则描述每单位推进伴随的噪声尺度。用 \\(r(T)\\) 表示沿这一时钟变化的比值，就能把这两种效应分开。
+
+这为前面 WSD 中的陡降提供了一种解释：持续注入的新噪声会抵消一部分误差消退带来的下降。固定 batch size 时，降低 learning rate 会减弱这种抵消；如果这一收益超过学习推进变慢的代价，loss 就可能暂时下降得更快，但这并不说明信号学得更快。
+
+这种区分也出现在 [Li et al. (2025)](https://arxiv.org/html/2509.19189v4#S3) 的 functional scaling law（FSL） 中：他们在 kernel regression 中用 intrinsic time 描述训练进程，用 learning rate 与 batch size 的比值控制噪声注入，再通过 forgetting kernel 追踪噪声对后续 loss 的影响。
 
 这将增大 batch size 与衰减 learning rate 联系了起来（[Smith et al. (2018)](https://arxiv.org/abs/1711.00489)）：两者都会降低每单位 intrinsic time 的噪声。由于先前的噪声仍可能影响 loss，我们必须匹配整个比值路径，而不仅是它的终值。
 
@@ -688,6 +692,8 @@ $$
 以同一 schedule 下的 clean-label SGD 为基准，加入 label noise 后会产生额外 loss。这部分 loss 既取决于 schedule 如何压低后续噪声注入，也取决于早先注入的影响消退得多快。
 
 在上述幂律区间内，即使后续注入被压得很小，早期噪声仍会留下按 \\(k(T)\sim T^{-q_{\mathcal K}}\\) 衰减的尾部。因此，额外 loss 的下降指数不会超过 \\(q_{\mathcal K}\\)，这就是 **memory ceiling**。
+
+这里的上限针对额外 loss 在 intrinsic time 下的幂律指数，并不直接限制图中按 token 计的短期陡降。在 batch size 固定时，更快地降低 learning rate 还会让同样 token 预算内积累的 intrinsic time 更少，从而放慢信号学习和旧误差的消退。因此，更强的退火既不能立即清除历史噪声，也有推进变慢的代价。
 
 当单次 memory response 和比值增长都服从幂律时，将额外 loss 与 clean-label SGD 的 excess loss 比较，会得到三种结果：
 
