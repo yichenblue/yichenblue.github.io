@@ -2,7 +2,11 @@
   <div style="margin-left: 0.8em;">
     <div>
       {% if post.collection == 'posts' %}
-        <a href="{{ post.url | relative_url }}"><em>{{ post.title }}</em></a>
+        {% if post.external_url %}
+          <a href="{{ post.external_url | escape }}"><em>{{ post.title }}</em></a>
+        {% else %}
+          <a href="{{ post.url | relative_url }}"><em>{{ post.title }}</em></a>
+        {% endif %}
       {% else %}
         <em>{{ post.title }}</em>
       {% endif %}

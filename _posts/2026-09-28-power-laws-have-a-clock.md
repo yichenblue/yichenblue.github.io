@@ -3,6 +3,7 @@ layout: single
 title: "When Do Learning Curves Follow Power Laws?"
 date: 2026-09-28
 permalink: /posts/power-laws/
+external_url: https://yichenblue.github.io/power-laws/
 redirect_from:
   - /posts/when-do-learning-curves-follow-power-laws/
   - /posts/power-laws-have-a-clock/
