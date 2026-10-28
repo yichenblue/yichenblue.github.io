@@ -71,6 +71,8 @@ header:
 
 把拟合曲线向后延伸很容易，难的是判断什么时候可以相信它。幂律趋势未必会一直持续；模型和数据会改变幂律规律，即使模型和数据不变，调整 learning rate 或 batch size，也可能改变下降指数。看似属于学习任务本身的曲线，其实也取决于训练方式。要预测接下来会发生什么，就需要理解这种依赖从何而来。
 
+幂律也常被用于比较不同规模的训练，描述模型大小、数据量和计算预算变化时，能够达到的 loss 如何变化。
+
 <figure id="scaling-law-overview" style="display:block;max-width:680px;margin:1.4em auto;">
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0;background:#fff;padding:6px;border-radius:4px;">
     <!-- Preserve the original unequal panel boundaries and a shared scale when stacking. -->
@@ -128,7 +130,7 @@ $$
   <figcaption><strong>不同任务与训练方案下的幂律拟合。</strong>(a) 合成 MLP 回归；虚线为最佳幂律拟合。裁剪自 <a href="https://www.opt-ml.org/papers/2024/paper78.pdf#page=6">Qiu 等，OPT 2024，图 3(c)</a>。(b–c) 语言模型的估计最优 loss 与计算量的关系；空心标记为最优 loss 估计，虚线为外推结果。裁剪自 <a href="https://arxiv.org/pdf/2406.19146v4#page=28">Porian 等（2024），图 19</a>（<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>）。</figcaption>
 </figure>
 
-训练方式的影响不只体现在跨模型的前沿上，也能在单个模型的训练过程中看到。即使模型和数据都不变，改变 learning-rate schedule，也可能改变 loss 随训练步数下降的拟合幂律指数。
+上面的 frontier 比较了不同训练运行能够达到的 loss。本文更关心单个模型的训练过程：模型和数据固定后，训练方式怎样改变 loss 的下降规律。
 
 在某个训练阶段，原始 training loss 可以拟合为
 
@@ -164,12 +166,12 @@ $$
 
 比较两个面板中的 144M 模型：cosine decay 将训练后期的拟合指数从 **0.023 提高到 0.036**。拟合斜率不仅取决于模型和数据，也取决于训练 schedule。
 
-一个[共同的机制](https://arxiv.org/abs/2606.25008)，需要同时解释幂律为何出现，以及[数据与任务结构](https://arxiv.org/abs/2210.16859)如何与训练方式相互作用。一个有用的检验是：在一种 schedule 下拟合响应，再不经重新拟合地预测另一种 schedule。对于随机梯度下降（SGD），我们可以从单次更新看起：每次更新都会改变参数，它的影响可能延续到后续更新，在 loss 中留下历史。
+前面的例子把几个问题连在了一起：loss 何时呈幂律下降，[幂律为什么会出现](https://arxiv.org/abs/2606.25008)，以及[数据与任务结构](https://arxiv.org/abs/2210.16859)和训练 schedule 如何共同影响它的指数。要回答这些问题，我们从随机梯度下降（SGD）的更新过程看起。
 
 ## 为什么 SGD 会留下记忆
 {: #why-sgd-has-memory}
 
-训练历史保存在参数中，但单个 loss 值掩盖了其中的大部分信息。两次训练即使当前 loss 相同，对下一次更新的响应也可能不同。因此，仅用 loss 来描述训练，就必须考虑它的历史。
+SGD 用 minibatch 估计梯度。与使用全梯度相比，采样误差会给参数带来随机扰动；后续更新从这些改变后的参数继续，因此，一次扰动对 loss 的影响可能持续多步。
 
 对于模型 \\(f_\theta\\)，设其训练目标为 \\(\mathcal L\\)，记 \\(\eta_t\\) 为 learning rate，\\(B_t\\) 为 batch size，\\(\xi_t\\) 为 minibatch 梯度误差。每次使用新采样的独立同分布样本时，SGD 可写为
 
