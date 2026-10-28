@@ -83,13 +83,13 @@ Scaling laws describe how language-model loss changes with model size, training 
   <figcaption><strong>Regular scaling across compute, data, and model size.</strong> <a href="https://arxiv.org/html/2001.08361v1#S1.F1">Kaplan et al. (2020), Figure 1</a>.</figcaption>
 </figure>
 
-At a fixed compute budget, a larger model leaves fewer tokens for training. [Chinchilla](https://arxiv.org/html/2203.15556v1#S3.SS3) captures this trade-off by fitting the final loss of a model with \\(N\\) parameters trained on \\(D\\) tokens:
+At a fixed compute budget, a larger model leaves fewer tokens for training. [Chinchilla](https://arxiv.org/html/2203.15556v1#S3.SS3) captures this trade-off by fitting a **power-law scaling law** for the final loss of a model with \\(N\\) parameters trained on \\(D\\) tokens:
 
 $$
 L(N,D)\approx L_\infty+\frac{A_N}{N^\alpha}+\frac{A_D}{D^\beta}.
 $$
 
-Here \\(L_\infty\\) is the fitted loss floor; the other terms describe extra loss from finite model size and training tokens, with fitted amplitudes \\(A_N,A_D\\) and exponents \\(\alpha,\beta\\).
+Here \\(L_\infty\\) is the fitted loss floor. The two excess-loss terms decay as power laws: \\(N^{-\alpha}\\) in model size and \\(D^{-\beta}\\) in training tokens, with fitted amplitudes \\(A_N,A_D\\) and exponents \\(\alpha,\beta\\).
 
 Extending a fitted curve beyond the observed range is easy; knowing when to trust it is harder. Models, data, and training recipes can all change these relationships.
 

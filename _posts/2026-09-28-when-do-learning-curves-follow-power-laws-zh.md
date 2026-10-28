@@ -89,13 +89,13 @@ Scaling law 描述了语言模型的 loss 如何随模型规模、训练数据�
   <figcaption><strong>计算量、数据量与模型规模上的 scaling law。</strong><a href="https://arxiv.org/html/2001.08361v1#S1.F1">Kaplan 等（2020），图 1</a>。</figcaption>
 </figure>
 
-计算预算固定时，模型越大，能用于训练的 token 就越少。[Chinchilla](https://arxiv.org/html/2203.15556v1#S3.SS3) 用一个拟合公式描述这种权衡：一个具有 \\(N\\) 个参数、训练了 \\(D\\) 个 token 的模型，其最终 loss 近似为
+计算预算固定时，模型越大，能用于训练的 token 就越少。[Chinchilla](https://arxiv.org/html/2203.15556v1#S3.SS3) 用**幂律形式的 scaling law** 拟合这种权衡：一个具有 \\(N\\) 个参数、训练了 \\(D\\) 个 token 的模型，其最终 loss 近似为
 
 $$
 L(N,D)\approx L_\infty+\frac{A_N}{N^\alpha}+\frac{A_D}{D^\beta}.
 $$
 
-其中，\\(L_\infty\\) 是拟合得到的 loss floor；另外两项分别描述模型规模和训练 token 数有限所带来的额外 loss，\\(A_N,A_D\\) 是拟合幅度，\\(\alpha,\beta\\) 是拟合指数。
+其中，\\(L_\infty\\) 是拟合得到的 loss floor。两个额外 loss 项都按幂律下降：模型规模项按 \\(N^{-\alpha}\\) 下降，训练 token 数项按 \\(D^{-\beta}\\) 下降，其中 \\(A_N,A_D\\) 是拟合幅度，\\(\alpha,\beta\\) 是拟合指数。
 
 把拟合曲线延伸到已有观测范围之外很容易，难的是判断什么时候可以相信它。模型、数据和训练方案都可能改变这些规律。
 
