@@ -121,7 +121,7 @@ In [Qiu et al.'s synthetic regression experiment](https://www.opt-ml.org/papers/
 
 To understand when these frontiers follow power laws—and when they do not—we first need to understand the individual training curves that make them up: with model and data fixed, when does loss decay as a power law, and how does training change that law?
 
-Over a particular training phase, its raw training loss can be fitted as
+Within a given training phase, a model's raw training loss can be fitted as
 
 $$
 L_{\mathrm{train}}(t)\approx a\,t^{-p},
@@ -352,7 +352,7 @@ $$
 R_t=F_t+\sum_{s<t}K_{t,s}\bigl(R_s+\sigma^2\bigr).
 $$
 
-\\(F_t\\) describes how the initial error propagates, while the history sum describes the accumulated effects of training noise. The remaining prediction error \\(R_s\\) at step \\(s\\) and the label-noise variance \\(\sigma^2\\) jointly supply the noise, and \\(K_{t,s}\\) describes its effect on loss at step \\(t\\).
+\\(F_t\\) describes how the initial error propagates, while the history sum describes the accumulated effects of training noise. The remaining prediction error \\(R_s\\) at step \\(s\\) and the label-noise variance \\(\sigma^2\\) both contribute to the noise, and \\(K_{t,s}\\) describes its effect on loss at step \\(t\\).
 
 **Bias–variance gives another grouping of the same dynamics.** Consider a target the model can represent, and assume label noise is independent of the input and has mean zero. Following the decomposition by error source in [Zou, Wu et al.](https://arxiv.org/html/2103.12692v3#S4.SS2), write \\(B_t\\) for the error from clean-label SGD and \\(V_t\\) for the error driven by label noise from zero initial error. Only in this comparison, \\(B_t\\) denotes bias rather than batch size. At every step,
 
@@ -405,7 +405,7 @@ These decompositions identify the effects that contribute to loss, but do not ye
 ## Different directions learn at different speeds
 {: #different-directions-learn-at-different-speeds}
 
-Continue with the model \\(f_a(x)=a^\top\phi(x)\\), where \\(\phi\\) gives fixed features and \\(a\\) the trainable weights. We can explicitly calculate how quickly errors fade in each direction, as in [Paquette et al.'s analysis of compute-optimal scaling](https://proceedings.neurips.cc/paper_files/paper/2024/hash/1dccfc3ee01871d05e33457c61037d59-Abstract-Conference.html).
+Continue with the model \\(f_a(x)=a^\top\phi(x)\\), with fixed features \\(\phi\\) and trainable weights \\(a\\). We can explicitly calculate how quickly errors fade in each direction, as in [Paquette et al.'s analysis of compute-optimal scaling](https://proceedings.neurips.cc/paper_files/paper/2024/hash/1dccfc3ee01871d05e33457c61037d59-Abstract-Conference.html).
 
 These differences in speed are visible in the loss landscape: its curvature can vary across Hessian eigenvector directions. The left panel below sketches a quadratic loss, with a steep blue direction and a flatter orange direction.
 
@@ -703,7 +703,7 @@ The analysis above separated two effects of a schedule: intrinsic time records h
 ### Two implementations of the same ratio path
 {: #two-implementations-of-the-same-ratio-path}
 
-First, keep the ratio path the same but implement it differently: lower learning rate at fixed batch size in one run, and increase batch size at fixed learning rate in another. Match their clocks and ratio paths.
+We first compare two implementations of the same ratio path: we lower the learning rate at fixed batch size in one run and increase the batch size at fixed learning rate in another. We match their clocks and ratio paths.
 
 We made this comparison with a 300M LLM trained using plain SGD on 6.5B OpenWebText tokens. All runs share the first 80% of the token budget, then branch from the same checkpoint for the remaining 20%. In the fixed-batch runs, WSD lowers the learning rate gradually over that tail, while 8-1-1 uses two lower-rate stages of 10% each. If intrinsic time and the ratio path capture the main schedule effects, each learning-rate/batch-size pair should follow nearly the same loss curve.
 
@@ -715,7 +715,7 @@ We made this comparison with a 300M LLM trained using plain SGD on 6.5B OpenWebT
   <figcaption><strong>Different step counts, nearly the same intrinsic-time curves.</strong> The animation switches from optimizer step to \(T=\sum_t\eta_t\), draws the 8-1-1 fit and WSD prediction with all parameters fixed, then unfolds the curves into three layers. Here \(q_{\mathcal K}\) is fitted freely; the next section fixes it to 1.</figcaption>
 </figure>
 
-Start with the two blue WSD curves: they separate against optimizer step but nearly coincide against intrinsic time. The two orange 8-1-1 curves show the same change. The two implementations need different numbers of updates to process the same data, so comparing them directly by step misaligns their training progress.
+Start with the two blue WSD curves: they are separated when plotted against optimizer step, but nearly coincide when plotted against intrinsic time. The two orange 8-1-1 curves show the same change. The two implementations need different numbers of updates to process the same data, so comparing them directly by step misaligns their training progress.
 
 Blue and orange do not collapse onto a single curve because WSD and 8-1-1 follow different \\(r(T)\\) paths. In these runs, the comparison shows that changing either learning rate or batch size can implement the same path and produce very similar loss responses.
 
