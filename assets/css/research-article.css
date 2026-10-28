@@ -173,6 +173,79 @@
 .research-article .page__content :is(h2, h3, h4)[tabindex="-1"]:focus { outline: none; }
 .research-article .page__content a:hover img { box-shadow: none; }
 
+/* A small destination preview, using the article's existing blue-gray palette. */
+.research-article .research-link-preview,
+.research-article .research-link-preview * {
+  animation: none;
+  transition: none;
+}
+.research-article .research-link-preview {
+  position: fixed;
+  z-index: 10000;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: max-content;
+  max-width: min(420px, calc(100vw - 24px));
+  padding: 4px 5px 4px 10px;
+  border: 1px solid var(--research-rule);
+  border-radius: 9px;
+  background: var(--research-paper);
+  box-shadow: 0 3px 14px rgb(24 43 58 / 10%);
+  color: var(--research-muted);
+  font: 400 13px/1.4 var(--research-sans);
+  text-align: left;
+  white-space: nowrap;
+}
+.research-article .research-link-preview[hidden] { display: none; }
+.research-article .research-link-preview svg { display: block; width: 15px; height: 15px; }
+.research-article .research-link-preview__icon { flex: 0 0 auto; }
+.research-article .research-link-preview .research-link-preview__url {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--research-muted);
+  text-decoration: none;
+  user-select: text;
+}
+.research-article .research-link-preview .research-link-preview__url:hover { color: var(--research-link); }
+.research-article .research-link-preview__copy {
+  display: grid;
+  place-items: center;
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--research-muted);
+  cursor: pointer;
+}
+.research-article .research-link-preview__copy:is(:hover, :focus-visible) {
+  background: var(--research-wash);
+  color: var(--research-link);
+}
+.research-article .research-link-preview__copy:focus-visible { outline-offset: 1px; }
+.research-article .research-link-preview__status {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+@media print {
+  .research-article .research-link-preview,
+  .research-article .research-link-preview__status { display: none; }
+}
+
 .research-article .page__content figure {
   margin: 2.2em auto;
   width: min(100%, var(--research-measure));
