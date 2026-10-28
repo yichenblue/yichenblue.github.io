@@ -130,7 +130,7 @@ $$
   <figcaption><strong>不同任务与训练方案下的幂律拟合。</strong>(a) 合成 MLP 回归；虚线为最佳幂律拟合。裁剪自 <a href="https://www.opt-ml.org/papers/2024/paper78.pdf#page=6">Qiu 等，OPT 2024，图 3(c)</a>。(b–c) 语言模型的估计最优 loss 与计算量的关系；空心标记为最优 loss 估计，虚线为外推结果。裁剪自 <a href="https://arxiv.org/pdf/2406.19146v4#page=28">Porian 等（2024），图 19</a>（<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>）。</figcaption>
 </figure>
 
-要理解这些 frontier 为何呈现不同的形状，需要先看构成它们的单模型训练曲线：模型和数据固定后，loss 如何随训练推进而下降，训练方式又怎样改变这一规律。
+要理解这些 frontier 何时遵循幂律、何时不遵循，需要先看构成它们的单模型训练曲线：模型和数据固定后，loss 在什么条件下呈幂律下降，训练方式又怎样改变这一规律。
 
 在某个训练阶段，原始 training loss 可以拟合为
 
