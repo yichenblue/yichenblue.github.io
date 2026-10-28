@@ -683,9 +683,7 @@ Here \\(R\\) is prediction risk, and \\(F\\) is the forcing term in the random-f
 
 For a past time \\(u\\), \\(F(u)+\sigma^2\\) represents the noise sources supplied by remaining prediction error and label noise in this scaling relation. Dividing by \\(r(u)\\) lets the schedule adjust the injection strength per unit of intrinsic time; multiplying by \\(k(T-u)\\) gives its contribution at the endpoint \\(T\\). Even without label noise, remaining prediction error still generates minibatch noise, so the integral does not vanish when \\(\sigma^2=0\\).
 
-Adding label noise creates extra loss relative to clean-label SGD under the same schedule. This extra loss depends both on how the schedule suppresses later injections and on how quickly the effects of earlier ones fade.
-
-Within the power-law range above, even if later injections become very small, early noise still leaves a tail that decays as \\(k(T)\sim T^{-q_{\mathcal K}}\\). The decay exponent of the extra loss therefore cannot exceed \\(q_{\mathcal K}\\). This is the **memory ceiling**.
+Label noise adds loss relative to clean-label SGD under the same schedule. Within the power-law range above, even if later injections become very small, early noise still leaves a tail that decays as \\(k(T)\sim T^{-q_{\mathcal K}}\\). The decay exponent of the extra loss therefore cannot exceed \\(q_{\mathcal K}\\). This is the **memory ceiling**.
 
 More aggressive annealing does not guarantee ever-faster loss decay, for two reasons. First, suppressing new noise does not immediately remove earlier noise: the memory ceiling above limits the power-law exponent of this extra loss in intrinsic time, not the short-term rate of decline per token in the figure. Second, lowering the learning rate more aggressively also slows the clock. At fixed batch size and token budget, less intrinsic time accumulates, leaving less progress in both signal learning and the decay of earlier errors. Annealing can therefore reduce new errors, but it cannot bypass the decay of old ones; pushing it too far can slow that decay down.
 

@@ -689,9 +689,7 @@ $$
 
 对于过去的某个时刻 \\(u\\)，\\(F(u)+\sigma^2\\) 在这一量级关系中表示剩余预测误差和 label noise 提供的噪声来源。除以 \\(r(u)\\)，是让 schedule 调整当时每单位 intrinsic time 的注入强度；再乘以 \\(k(T-u)\\)，就得到它对终点 \\(T\\) 的贡献。即使没有 label noise，剩余预测误差仍会产生 minibatch noise，因此积分项不会随 \\(\sigma^2=0\\) 一起消失。
 
-以同一 schedule 下的 clean-label SGD 为基准，加入 label noise 后会产生额外 loss。这部分 loss 既取决于 schedule 如何压低后续噪声注入，也取决于早先注入的影响消退得多快。
-
-在上述幂律区间内，即使后续注入被压得很小，早期噪声仍会留下按 \\(k(T)\sim T^{-q_{\mathcal K}}\\) 衰减的尾部。因此，额外 loss 的下降指数不会超过 \\(q_{\mathcal K}\\)，这就是 **memory ceiling**。
+相对同一 schedule 下的 clean-label SGD，label noise 会带来额外 loss。在上述幂律区间内，即使后续注入被压得很小，早期噪声仍会留下按 \\(k(T)\sim T^{-q_{\mathcal K}}\\) 衰减的尾部。因此，额外 loss 的下降指数不会超过 \\(q_{\mathcal K}\\)，这就是 **memory ceiling**。
 
 更激进的退火不能保证 loss 持续加速下降，因为它受到两种限制。首先，减少新噪声不会立即清除早期噪声：上面的 memory ceiling 限制了这部分额外 loss 在 intrinsic time 下的幂律指数，而不是图中按 token 计的短期下降速度。其次，更快地降低 learning rate 也会减慢时钟：固定 batch size 和 token 预算时，积累的 intrinsic time 更少，信号学习和旧误差消退的进展也更少。因此，退火能够减少新误差，却不能跳过旧误差的消退过程；过强的退火还会拖慢这一过程。
 
