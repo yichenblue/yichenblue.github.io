@@ -130,10 +130,10 @@ $$
 
 要理解这些 frontier 何时遵循幂律、何时不遵循，需要先看构成它们的单模型训练曲线：模型和数据固定后，loss 在什么条件下呈幂律下降，训练方式又怎样改变这一规律。
 
-在某个训练阶段，原始 training loss 可以拟合为
+在某个训练阶段，loss 可以拟合为
 
 $$
-L_{\mathrm{train}}(t)\approx a\,t^{-p},
+L(t)\approx a\,t^{-p},
 $$
 
 其中，\\(t\\) 是训练步数，\\(a\\) 是拟合幅度，\\(p\\) 是这一阶段的下降指数。比较不同 learning-rate schedule 下的训练，就能看到训练方式如何影响 \\(p\\)。
@@ -145,7 +145,7 @@ $$
     <div style="min-width:0;text-align:center;">
       <p style="margin:0 0 8px;font-size:0.85em;font-weight:600;">warmup + constant learning rate</p>
       <a href="https://arxiv.org/html/2506.05447v1#S2.F2" aria-label="查看 Mircea 等人的图 2">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 456" role="img" aria-label="图 2：14M–472M 模型在 warmup 后采用 constant learning rate 的 log–logtraining loss 曲线及分段幂律拟合。" style="display:block;width:100%;height:330px;margin:0;">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 456" role="img" aria-label="图 2：14M–472M 模型在 warmup 后采用 constant learning rate 的 log–log loss 曲线及分段幂律拟合。" style="display:block;width:100%;height:330px;margin:0;">
           <image href="{{ '/images/power-laws-have-a-clock/mircea-2025-constant-lr.svg' | relative_url }}" width="278.56315" height="411.96699" transform="translate(13.973956 16.79999)" />
         </svg>
       </a>
@@ -153,7 +153,7 @@ $$
     <div style="min-width:0;text-align:center;">
       <p style="margin:0 0 8px;font-size:0.85em;font-weight:600;">warmup + cosine decay</p>
       <a href="https://arxiv.org/html/2506.05447v1#A3.SS3" aria-label="查看 Mircea 等人的图 29 及 learning rate 对比">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 456" role="img" aria-label="图 29：采用余弦 learning rate 衰减的 log–logtraining loss 曲线及分段幂律拟合；14M–472M 模型在训练后期的拟合斜率更陡。" style="display:block;width:100%;height:330px;margin:0;">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 456" role="img" aria-label="图 29：采用余弦 learning rate 衰减的 log–log loss 曲线及分段幂律拟合；14M–472M 模型在训练后期的拟合斜率更陡。" style="display:block;width:100%;height:330px;margin:0;">
           <image href="{{ '/images/power-laws-have-a-clock/mircea-2025-cosine-lr.svg' | relative_url }}" width="216" height="360" transform="matrix(1.3333333333333333 0 0 1.25 2.4 1.5)" />
         </svg>
       </a>
