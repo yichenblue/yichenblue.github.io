@@ -17,7 +17,7 @@ read_time: true
 reading_guide:
   # Approximate prose-reading time: 300 Chinese characters/minute plus
   # 160 non-Chinese words/minute, excluding math; optional details counted separately.
-  main_minutes: 30
+  main_minutes: 29
   optional_minutes: 7
   navigation_label: 文章导航
   sections_label: 文章章节
@@ -38,8 +38,6 @@ reading_guide:
       id: from-theory-to-llm-pretraining
     - title: 为什么拟合出的 memory exponent 接近 1
       id: why-does-the-memory-exponent-keep-landing-near-one
-    - title: 这意味着什么
-      id: the-larger-lesson
     - title: 延伸阅读
       id: further-reading
 toc: true
@@ -867,13 +865,6 @@ $$
 当 \\(q_{\mathcal K}=1\\) 时，surrogate 中的 kernel 在足够长的时间间隔下按 \\(1/(T-u)\\) 消退。这正好对应前文累积响应从有限值转向持续增长的边界；在边界上，等强度注入的累积响应按对数增长。因此，这些拟合得到的响应指数都接近理论中的 LM/IM 边界。
 
 目前观察到的是有限训练窗口内反复出现的拟合结果，为什么会接近 1，仍然没有确定的解释。可以延长训练并改变拟合区间，检查这一估计是否稳定；也可以短暂改变噪声注入，再恢复原 schedule，观察额外影响如何消退，为整条 loss 曲线的拟合提供另一种检验。
-
-## 更广泛的启示
-{: #the-larger-lesson}
-
-一条幂律曲线很容易让人误以为已经有了完整解释：拟合斜率、向外推算，故事似乎就结束了。然而，同样的形状既可能来自对剩余信号的学习，也可能来自早先噪声的持续影响。区分这些解释很重要，因为当训练发生变化时，它们意味着不同的响应。
-
-因此，改变 schedule 不只是一个训练选择，也是探查曲线所隐藏信息的方法。如果一种解释无需重新拟合，就能跟随这次变化中的 loss 走势，它所揭示的内容便超出了原先斜率本身能告诉我们的范围。
 
 ## 延伸阅读
 {: #further-reading}
